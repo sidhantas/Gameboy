@@ -1,6 +1,6 @@
 CC=clang
-CFLAGS= -g -Wall -Werror -w -D_XOPEN_SOURCE_EXTENDED 
-LDFLAGS= -lncurses -framework Foundation -framework Cocoa -framework ApplicationServices -framework Carbon -pthread 
+CFLAGS= -g -Wall -Werror -w -D_XOPEN_SOURCE_EXTENDED -D_THREAD_SAFE -I/opt/homebrew/include -I/opt/homebrew/include/SDL2
+LDFLAGS= -lncurses -framework Foundation -framework Cocoa -framework ApplicationServices -framework Carbon -pthread  -L/opt/homebrew/lib -lSDL2
 SRC_DIR := src
 OBJ_DIR := obj
 BIN_DIR := .

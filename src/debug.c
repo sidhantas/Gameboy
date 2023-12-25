@@ -1,21 +1,26 @@
 #include "debug.h"
 #include "decoder.h"
+#include "graphics.h"
 #include "hardware.h"
 #include "utils.h"
 #include <inttypes.h>
 #include <ncurses.h>
 #include <pthread.h>
+#include <signal.h>
 #include <stdlib.h>
+#include <unistd.h>
 
-static void print_register_window(const uint8_t y, const uint8_t x);
-static void print_cpu_window(const uint8_t y, const uint8_t x);
-static void print_flags_window(const uint8_t y, const uint8_t x);
-static void print_stack_window(const uint8_t y, const uint8_t x);
-static void print_memory_window(const uint8_t y, const uint8_t x,
-                                uint16_t start_address);
+static void print_register_window(WINDOW *reg_win);
+static void print_cpu_window(WINDOW *cpu_win);
+static void print_flags_window(WINDOW *flags_win);
+static void print_stack_window(WINDOW *stack_win);
+static void print_memory_window(WINDOW *mem_win, uint16_t start_address);
+static void print_display_buffer_window(WINDOW *display_buf_win,
+                                        const uint16_t start_address);
 
 uint16_t mem_win_addr = 0x8000;
-
+uint16_t display_buf_addr = 0x0;
+void end_debugger() { endwin(); }
 void *initialize_debugger() {
     initscr();
     start_color();
@@ -24,54 +29,86 @@ void *initialize_debugger() {
     cbreak();
     noecho();
     clear();
-    // nodelay(stdscr, TRUE);
-    pthread_t id;
+    nodelay(stdscr, TRUE);
     curs_set(0);
     refresh();
 
+    WINDOW *display_buff_win = newwin(20, 90, 0, 54);
+    WINDOW *registers_win = newwin(15, 21, 0, 0);
+    WINDOW *cpu_win = newwin(20, 31, 0, 23);
+    WINDOW *flags_win = newwin(8, 21, 17, 0);
+    WINDOW *mem_win = newwin(21, 90, 21, 23);
+
     int instruction_count = 0;
     while (1) {
-        if (instruction_count <= 0) {
-            char c = getch();
-            if (c == 'n') {
-                fetch_instruction();
-            } else if (c == 'k') {
-                instruction_count = 5000;
-            } else if (c == 'j') {
-                instruction_count = 500;
-            } else if (c == 'm') {
-                mem_win_addr += 0x100;
-            } else if (c == 'M') {
-                mem_win_addr -= 0x100;
-            }
-        } else {
-            fetch_instruction();
-            instruction_count--;
+        char c = getch();
+        if (c == 'm') {
+            mem_win_addr += 0x100;
+        } else if (c == 'M') {
+            mem_win_addr -= 0x100;
+        } else if (c == 'd') {
+            display_buf_addr += 0x100;
+        } else if (c == 'D') {
+            display_buf_addr -= 0x100;
         }
-        refresh_debugger();
-        if (hardware.pc == 0x40) {
-            instruction_count = 0;
-            getch();
-        }
+        fetch_instruction();
+        refresh_debugger(registers_win, flags_win, cpu_win, mem_win,
+                         display_buff_win);
     }
     return NULL;
 }
 
-void refresh_debugger() {
-    print_register_window(0, 0);
-    print_flags_window(17, 0);
-    print_cpu_window(0, 23);
-    print_stack_window(0, 56);
-    print_memory_window(20, 23, mem_win_addr);
+void refresh_debugger(WINDOW *registers_win, WINDOW *flags_win, WINDOW *cpu_win,
+                      WINDOW *mem_win, WINDOW *disp_win) {
+    print_register_window(registers_win);
+    print_flags_window(flags_win);
+    print_cpu_window(cpu_win);
+    print_memory_window(mem_win, mem_win_addr);
+    print_display_buffer_window(disp_win, display_buf_addr);
 }
 
-void end_debugger() { endwin(); }
+static void print_display_buffer_window(WINDOW *disp_win,
+                                        const uint16_t start_address) {
 
-static void print_memory_window(const uint8_t y, const uint8_t x,
-                                uint16_t start_address) {
-    const uint8_t WIDTH = 90;
-    const uint8_t HEIGHT = 21;
-    WINDOW *mem_win = newwin(HEIGHT, WIDTH, y, x);
+    uint16_t WIDTH = 0;
+    uint16_t HEIGHT = 0;
+
+    getmaxyx(disp_win, HEIGHT, WIDTH);
+    box(disp_win, 0, 0);
+    mvwprintwhcenter(disp_win, 0, 0, WIDTH, "Display");
+    for (int i = 2; i < WIDTH / 5; i++) {
+        mvwprintw(disp_win, 1, i * 5, "0x%X", i - 2);
+        wmove(disp_win, 1, i * 5 - 2);
+        wvline(disp_win, 0, HEIGHT - 2);
+    }
+    wmove(disp_win, 2, 1);
+    whline(disp_win, 0, WIDTH - 2);
+
+    for (int i = 3; i < HEIGHT - 1; i++) {
+        mvwprintw(disp_win, i, 1, "0x%0.4X", start_address + 0x10 * (i - 3));
+        for (int j = 2; j < WIDTH / 5; j++) {
+            if (hardware
+                    .display_buffer[start_address + 0x10 * (i - 3) + (j - 2)]) {
+                wattron(disp_win, COLOR_PAIR(1));
+                mvwprintw(disp_win, i, j * 5 - 1, "0x%0.2X",
+                          hardware.display_buffer[start_address +
+                                                  0x10 * (i - 3) + (j - 2)]);
+                wattroff(disp_win, COLOR_PAIR(1));
+            } else {
+                mvwprintw(disp_win, i, j * 5 - 1, "0x%0.2X",
+                          hardware.display_buffer[start_address +
+                                                  0x10 * (i - 3) + (j - 2)]);
+            }
+        }
+    }
+    wrefresh(disp_win);
+}
+
+static void print_memory_window(WINDOW *mem_win, uint16_t start_address) {
+    uint16_t WIDTH = 0;
+    uint16_t HEIGHT = 0;
+
+    getmaxyx(mem_win, HEIGHT, WIDTH);
     box(mem_win, 0, 0);
     mvwprintwhcenter(mem_win, 0, 0, WIDTH, "Memory");
     for (int i = 2; i < WIDTH / 5; i++) {
@@ -100,11 +137,11 @@ static void print_memory_window(const uint8_t y, const uint8_t x,
     wrefresh(mem_win);
 }
 
-static void print_stack_window(const uint8_t y, const uint8_t x) {
-    const uint8_t WIDTH = 31;
-    const uint8_t HEIGHT = 20;
+static void print_stack_window(WINDOW *stack_win) {
+    uint16_t WIDTH = 0;
+    uint16_t HEIGHT = 0;
 
-    WINDOW *stack_win = newwin(HEIGHT, WIDTH, y, x);
+    getmaxyx(stack_win, HEIGHT, WIDTH);
     box(stack_win, 0, 0);
 
     mvwprintwhcenter(stack_win, 0, 0, WIDTH, "STACK");
@@ -137,11 +174,11 @@ static void print_stack_window(const uint8_t y, const uint8_t x) {
     wrefresh(stack_win);
 }
 
-static void print_cpu_window(const uint8_t y, const uint8_t x) {
-    const uint8_t WIDTH = 31;
-    const uint8_t HEIGHT = 20;
+static void print_cpu_window(WINDOW *cpu_win) {
+    uint16_t WIDTH = 0;
+    uint16_t HEIGHT = 0;
 
-    WINDOW *cpu_win = newwin(HEIGHT, WIDTH, y, x);
+    getmaxyx(cpu_win, HEIGHT, WIDTH);
     box(cpu_win, 0, 0);
 
     mvwprintwhcenter(cpu_win, 0, 0, WIDTH, "CPU");
@@ -157,11 +194,11 @@ static void print_cpu_window(const uint8_t y, const uint8_t x) {
     wrefresh(cpu_win);
 }
 
-static void print_register_window(const uint8_t y, const uint8_t x) {
-    const uint8_t WIDTH = 21;
-    const uint8_t HEIGHT = 15;
+static void print_register_window(WINDOW *registers_win) {
+    uint16_t WIDTH = 0;
+    uint16_t HEIGHT = 0;
 
-    WINDOW *registers_win = newwin(HEIGHT, WIDTH, y, x);
+    getmaxyx(registers_win, HEIGHT, WIDTH);
     box(registers_win, 0, 0);
     // Draw dividing line
     wmove(registers_win, 1, WIDTH / 2);
@@ -217,11 +254,11 @@ static void print_register_window(const uint8_t y, const uint8_t x) {
     wrefresh(registers_win);
 }
 
-static void print_flags_window(const uint8_t y, const uint8_t x) {
-    const uint8_t WIDTH = 21;
-    const uint8_t HEIGHT = 8;
+static void print_flags_window(WINDOW *flags_win) {
+    uint16_t WIDTH = 0;
+    uint16_t HEIGHT = 0;
 
-    WINDOW *flags_win = newwin(HEIGHT, WIDTH, y, x);
+    getmaxyx(flags_win, HEIGHT, WIDTH);
     box(flags_win, 0, 0);
 
     // Draw dividing line

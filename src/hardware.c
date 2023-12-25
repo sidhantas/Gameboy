@@ -9,7 +9,10 @@ void initialize_hardware(Hardware *hardware) {
     if (!(hardware->memory)) {
         fprintf(stderr, "Unable to allocate memory for memory\n");
     }
-    hardware->display = calloc(DISPLAY_SIZE, sizeof(uint8_t));
+    hardware->display_buffer = calloc(DISPLAY_SIZE, sizeof(uint8_t));
+    if (!(hardware->display_buffer)) {
+        fprintf(stderr, "Unable to allocate memory for display buff\n");
+    }
     memset(hardware->registers, 0, REGISTER_COUNT);
     hardware->is_double_speed = false;
     hardware->sp = 0;

@@ -17,7 +17,10 @@
 
 #define MAX_INSTRUCTION_SIZE 3
 #define REGISTER_COUNT 8
-#define DISPLAY_SIZE (2 * 256) / 8 * 256
+#define RESOLUTION_SCALE 3
+#define RESOLUTION_WIDTH 256
+#define RESOLUTION_HEIGHT 256
+#define DISPLAY_SIZE ((256) / 4) * 256
 #define TILE_MAP_SIZE 32 * 32
 
 #define MAX_DECODED_INSTRUCTION_SIZE 25
@@ -38,6 +41,7 @@ static inline char const *LONG_REGISTER_STR(enum LONG_REGS long_reg) {
 
 typedef struct Hardware {
     uint8_t *memory;
+    uint8_t *display_buffer;
     uint8_t registers[REGISTER_COUNT];
     uint16_t sp;
     uint16_t stack_start;
@@ -49,7 +53,6 @@ typedef struct Hardware {
     char oam_mode;
     uint8_t instruction[MAX_INSTRUCTION_SIZE];
     char decoded_instruction[MAX_DECODED_INSTRUCTION_SIZE];
-    uint8_t *display;
 } Hardware;
 
 extern Hardware hardware;

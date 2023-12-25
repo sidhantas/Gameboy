@@ -1,4 +1,6 @@
+#include "SDL.h"
 #include "debug.h"
+#include "ppu.h"
 #include "decoder.h"
 #include "graphics.h"
 #include "hardware.h"
@@ -14,6 +16,7 @@ Hardware hardware;
 
 int main(int argc, const char *argv[]) {
     pthread_t debugger_id;
+    pthread_t ppu_id;
     initialize_hardware(&hardware);
     FILE *dmg = fopen("dmg.bin", "r");
     FILE *game;
@@ -29,16 +32,20 @@ int main(int argc, const char *argv[]) {
             case 'g':
                 game = fopen(optarg, "r");
                 load_rom(game);
-                printf("Game LOADED\n");
+                fclose(game); 
                 break;
             default: exit(1); break;
         }
     }
-    
+
+
     pthread_create(&debugger_id, NULL, initialize_debugger, NULL);
+    pthread_create(&ppu_id, NULL, refresh_loop, NULL);
     open_window();
-    pthread_join(debugger_id, NULL);
     end_debugger();
+    SDL_Quit();
+    pthread_join(debugger_id, NULL);
+    pthread_join(ppu_id, NULL);
 
     return 0;
 }
