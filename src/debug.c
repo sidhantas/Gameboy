@@ -3,6 +3,7 @@
 #include "graphics.h"
 #include "hardware.h"
 #include "utils.h"
+#include "ppu.h"
 #include <inttypes.h>
 #include <ncurses.h>
 #include <pthread.h>
@@ -18,10 +19,18 @@ static void print_memory_window(WINDOW *mem_win, uint16_t start_address);
 static void print_display_buffer_window(WINDOW *display_buf_win,
                                         const uint16_t start_address);
 
-uint16_t mem_win_addr = 0x8000;
+void refresh_debugger(void);
+WINDOW *display_buff_win; 
+WINDOW *registers_win;
+WINDOW *cpu_win;
+WINDOW *flags_win;
+WINDOW *stack_win;
+WINDOW *mem_win; 
+uint16_t mem_win_addr = 0x100;
 uint16_t display_buf_addr = 0x0;
-void end_debugger() { endwin(); }
-void *initialize_debugger() {
+void end_debugger(void) { endwin(); }
+void *initialize_debugger(void *arg) {
+    (void)arg;
     initscr();
     start_color();
     use_default_colors();
@@ -32,16 +41,16 @@ void *initialize_debugger() {
     nodelay(stdscr, TRUE);
     curs_set(0);
     refresh();
+    display_buff_win = newwin(20, 90, 0, 54);
+    registers_win = newwin(15, 21, 0, 0);
+    cpu_win = newwin(20, 31, 0, 23);
+    flags_win = newwin(8, 21, 17, 0);
+    mem_win = newwin(21, 90, 21, 23);
+    stack_win = newwin(21, 31, 21, 114);
 
-    WINDOW *display_buff_win = newwin(20, 90, 0, 54);
-    WINDOW *registers_win = newwin(15, 21, 0, 0);
-    WINDOW *cpu_win = newwin(20, 31, 0, 23);
-    WINDOW *flags_win = newwin(8, 21, 17, 0);
-    WINDOW *mem_win = newwin(21, 90, 21, 23);
-
-    int instruction_count = 0;
     while (1) {
-        char c = getch();
+        char c;
+        c = getch();
         if (c == 'm') {
             mem_win_addr += 0x100;
         } else if (c == 'M') {
@@ -51,20 +60,18 @@ void *initialize_debugger() {
         } else if (c == 'D') {
             display_buf_addr -= 0x100;
         }
-        fetch_instruction();
-        refresh_debugger(registers_win, flags_win, cpu_win, mem_win,
-                         display_buff_win);
+        refresh_debugger();
     }
-    return NULL;
 }
 
-void refresh_debugger(WINDOW *registers_win, WINDOW *flags_win, WINDOW *cpu_win,
-                      WINDOW *mem_win, WINDOW *disp_win) {
+void refresh_debugger(void) {
     print_register_window(registers_win);
     print_flags_window(flags_win);
     print_cpu_window(cpu_win);
     print_memory_window(mem_win, mem_win_addr);
-    print_display_buffer_window(disp_win, display_buf_addr);
+    print_display_buffer_window(display_buff_win, display_buf_addr);
+    print_stack_window(stack_win);
+    refresh();
 }
 
 static void print_display_buffer_window(WINDOW *disp_win,
@@ -119,7 +126,7 @@ static void print_memory_window(WINDOW *mem_win, uint16_t start_address) {
     wmove(mem_win, 2, 1);
     whline(mem_win, 0, WIDTH - 2);
     for (int i = 3; i < HEIGHT - 1; i++) {
-        mvwprintw(mem_win, i, 1, "0x%X", start_address + 0x10 * (i - 3));
+        mvwprintw(mem_win, i, 1, "0x%0.4X", start_address + 0x10 * (i - 3));
         for (int j = 2; j < WIDTH / 5; j++) {
             if (hardware.memory[start_address + 0x10 * (i - 3) + (j - 2)]) {
                 wattron(mem_win, COLOR_PAIR(1));
@@ -175,10 +182,8 @@ static void print_stack_window(WINDOW *stack_win) {
 }
 
 static void print_cpu_window(WINDOW *cpu_win) {
-    uint16_t WIDTH = 0;
-    uint16_t HEIGHT = 0;
+    uint16_t WIDTH = getmaxx(cpu_win);
 
-    getmaxyx(cpu_win, HEIGHT, WIDTH);
     box(cpu_win, 0, 0);
 
     mvwprintwhcenter(cpu_win, 0, 0, WIDTH, "CPU");
@@ -188,8 +193,9 @@ static void print_cpu_window(WINDOW *cpu_win) {
                      hardware.instruction[0], hardware.instruction[1],
                      hardware.instruction[2]);
     mvwprintwhcenter(cpu_win, 6, 0, WIDTH, "Decode:");
+    mvwprintwhcenter(cpu_win, 7, 0, WIDTH, "%-22s", "");
     mvwprintwhcenter(cpu_win, 7, 0, WIDTH, "%s", hardware.decoded_instruction);
-    mvwprintwhcenter(cpu_win, 9, 0, WIDTH, "Is Implemented: %s",
+    mvwprintwhcenter(cpu_win, 9, 0, WIDTH, "Is Implemented: %-5s",
                      hardware.is_implemented ? "True" : "False");
     wrefresh(cpu_win);
 }

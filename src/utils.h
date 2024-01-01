@@ -26,3 +26,5 @@ void set_long_reg_u16(long_reg_t long_reg, uint16_t val);
 uint16_t get_long_reg(long_reg_t long_reg);
 bool half_carry_on_subtract(uint8_t val_1, uint8_t val_2);
 uint8_t sub(uint8_t val_1, uint8_t val_2);
+uint8_t add(uint8_t val_1, uint8_t val_2);
+uint8_t get_crumb(uint8_t byte, uint8_t crumb);

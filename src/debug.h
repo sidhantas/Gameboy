@@ -1,8 +1,8 @@
 #include "hardware.h"
 #include <ncurses.h>
-#define GENERATE_ENUM(ENUM) ENUM,
-#define GENERATE_STRING(STRING) #STRING,
 
-void *initialize_debugger();
-void refresh_debugger(WINDOW *, WINDOW *, WINDOW *, WINDOW *, WINDOW *);
-void end_debugger();
+void *initialize_debugger(void *arg);
+void end_debugger(void);
+
+extern uint16_t mem_win_addr;
+extern uint16_t display_buf_addr;

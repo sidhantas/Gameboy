@@ -17,10 +17,15 @@ void initialize_hardware(Hardware *hardware) {
     hardware->is_double_speed = false;
     hardware->sp = 0;
     hardware->pc = 0;
+    hardware->instruction_count = 0;
 }
 
 inline uint8_t get_memory_byte(uint16_t address) {
     return hardware.memory[address];
+}
+
+void set_memory_byte(uint16_t address, uint8_t byte) {
+    hardware.memory[address] = byte;
 }
 
 inline uint8_t get_flag(flags_t flag) {
@@ -33,7 +38,7 @@ inline void set_flag(flags_t flag) {
     *FLAGS_REGISTER |= (1 << (7 - flag));
 }
 
-inline uint8_t reset_flag(flags_t flag) {
+inline void reset_flag(flags_t flag) {
     uint8_t *FLAGS_REGISTER = &hardware.registers[F];
     *FLAGS_REGISTER &= ~(1 << (7 - flag));
 }

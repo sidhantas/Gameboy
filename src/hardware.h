@@ -14,15 +14,20 @@
 #define TMA 0xFF06
 #define TAC 0xFF07
 #define IF 0xFF0F
+#define LCDY 0xFF44
 
 #define MAX_INSTRUCTION_SIZE 3
 #define REGISTER_COUNT 8
 #define RESOLUTION_SCALE 3
-#define RESOLUTION_WIDTH 256
-#define RESOLUTION_HEIGHT 256
+#define TILE_MAP_WIDTH 256
 #define DISPLAY_SIZE ((256) / 4) * 256
 #define TILE_MAP_SIZE 32 * 32
 
+#define FOUR_CLOCKS 4
+#define EIGHT_CLOCKS 8
+#define TWELVE_CLOCKS 12
+#define SIXTEEN_CLOCKS 16
+#define TWENTY_FOUR_CLOCKS 24
 #define MAX_DECODED_INSTRUCTION_SIZE 25
 typedef enum REGISTERS { B, C, D, E, H, L, F, A } reg_t;
 typedef enum LONG_REGS { BC, DE, HL, SP } long_reg_t;
@@ -51,6 +56,7 @@ typedef struct Hardware {
     bool is_double_speed;
     char vram_mode;
     char oam_mode;
+    uint64_t instruction_count;
     uint8_t instruction[MAX_INSTRUCTION_SIZE];
     char decoded_instruction[MAX_DECODED_INSTRUCTION_SIZE];
 } Hardware;
@@ -59,6 +65,7 @@ extern Hardware hardware;
 
 void initialize_hardware(Hardware *hardware);
 uint8_t get_memory_byte(uint16_t address);
+void set_memory_byte(uint16_t address, uint8_t byte);
 uint8_t get_flag(flags_t flag);
 void set_flag(flags_t flag);
-uint8_t reset_flag(flags_t flag);
+void reset_flag(flags_t flag);

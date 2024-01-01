@@ -2,7 +2,7 @@
 #include "instructions.h"
 #include <ncurses.h>
 
-void BIT_B_R(const uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+uint8_t BIT_B_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     hardware.is_implemented = true;
     const uint8_t OPCODE = get_opcode(instruction);
     reg_t src = (OPCODE & 0x7);
@@ -15,9 +15,10 @@ void BIT_B_R(const uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     set_flag(H_FLAG);
     snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE,
              "BIT %d, %c, %d", bit, REGISTER_CHAR(src), check_bit);
+    return 8;
 }
 
-void RL_R(const uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+uint8_t RL_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     hardware.is_implemented = true;
     const uint8_t OPCODE = get_opcode(instruction);
     uint8_t src = OPCODE & 0x0F;
@@ -30,4 +31,6 @@ void RL_R(const uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 
     snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE,
          "RL %c", REGISTER_CHAR(src));
+
+    return 8;
 }

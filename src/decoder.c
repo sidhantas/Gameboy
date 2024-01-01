@@ -5,16 +5,17 @@
 #include <inttypes.h>
 #include <stdio.h>
 
-static bool is_prefix_byte(uint8_t prefix_byte);
-static void *
-decode_unprefixed_instruction(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
-static void *
-decode_prefixed_instruction(const uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+static uint8_t (
+    *decode_unprefixed_instruction(uint8_t instruction[MAX_INSTRUCTION_SIZE]))(
+    uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+static uint8_t (
+    *decode_prefixed_instruction(uint8_t instruction[MAX_INSTRUCTION_SIZE]))(
+    uint8_t instruction[MAX_INSTRUCTION_SIZE]);
 
-void fetch_instruction() {
-    void (*execute_func)();
+uint8_t (*fetch_instruction(void))(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    uint8_t (*execute_func)(uint8_t *);
     if (get_memory_byte(hardware.pc) == 0xCB) {
-        // Instruction has 0xCB instruction
+        // Instruction has 0xCB prefix
         hardware.instruction[0] = get_memory_byte(post_inc(&hardware.pc));
         hardware.instruction[1] = get_memory_byte(post_inc(&hardware.pc));
         execute_func = decode_prefixed_instruction(hardware.instruction);
@@ -24,14 +25,22 @@ void fetch_instruction() {
         hardware.instruction[2] = 0;
         execute_func = decode_unprefixed_instruction(hardware.instruction);
     }
-    if (execute_func) {
-        hardware.is_implemented = false;
-        (*execute_func)(hardware.instruction);
-    }
+
+    return execute_func;
 }
 
-static void *
-decode_prefixed_instruction(const uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+uint8_t execute_instruction(
+    uint8_t execute_func(uint8_t instruction[MAX_INSTRUCTION_SIZE])) {
+    hardware.instruction_count++;
+    if (execute_func) {
+        hardware.is_implemented = false;
+        return (*execute_func)(hardware.instruction);
+    }
+    return 0;
+}
+
+static uint8_t (*decode_prefixed_instruction(
+    uint8_t instruction[MAX_INSTRUCTION_SIZE]))(uint8_t *instruction) {
     const uint8_t OPCODE = instruction[1];
     switch (OPCODE) {
         case 0x10:
@@ -52,8 +61,9 @@ decode_prefixed_instruction(const uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
             return NULL;
     }
 }
-static void *
-decode_unprefixed_instruction(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+static uint8_t (
+    *decode_unprefixed_instruction(uint8_t instruction[MAX_INSTRUCTION_SIZE]))(
+    uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     const uint8_t OPCODE = instruction[0];
     switch (OPCODE) {
             /* clang-format off */
@@ -77,13 +87,19 @@ decode_unprefixed_instruction(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
             /* clang-format on */
             { return &LD_DEREF_HL_R; }
             /* clang-format off */
-        case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x86: case 0x87:
+        case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x87:
             /* clang-format on */
             { return &ADD_A_R; }
+        case 0x86: {
+            return &ADD_A_DEREF_HL;
+        }
             /* clang-format off */
-        case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: case 0xA6: case 0xA7:
+        case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: case 0xA7:
             /* clang-format on */
             { return &AND_A_R; }
+        case 0xA6: {
+            return &AND_A_DEREF_HL;
+        }
             /* clang-format off */
         case 0x06: case 0x16: case 0x26: case 0x0E: case 0x1E: case 0x2E: case 0x3E:
             /* clang-format on */

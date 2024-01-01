@@ -94,13 +94,35 @@ void load_rom(FILE *rom) {
 }
 
 bool half_carry_on_subtract(uint8_t val_1, uint8_t val_2) {
-   return (int)(val_2 & 0x0F) - (int)(val_2 & 0x0F) < 0; 
+   return (int)(val_1 & 0x0F) - (int)(val_2 & 0x0F) & 0x10; 
 }
 
 uint8_t sub(uint8_t val_1, uint8_t val_2) {
     uint8_t res = val_1 - val_2;
-    half_carry_on_subtract(val_1, val_2) ? set_flag(Z_FLAG) : reset_flag(Z_FLAG);
+    half_carry_on_subtract(val_1, val_2) ? set_flag(H_FLAG) : reset_flag(H_FLAG);
     set_flag(N_FLAG);
+    res > 0 ? reset_flag(Z_FLAG) : set_flag(Z_FLAG);
+    reset_flag(C_FLAG);
+    return res;
+}
+
+bool half_carry_on_add(uint8_t val_1, uint8_t val_2) {
+    return (((val_1 & 0xf) + (val_2 & 0xf)) & 0x10) == 0x10;
+}
+
+uint8_t add(uint8_t val_1, uint8_t val_2) {
+    uint16_t res = val_1 + val_2;
+    half_carry_on_add(val_1, val_2) ? set_flag(H_FLAG) : reset_flag(H_FLAG);
+    set_flag(N_FLAG);
+    if (res > 255) {
+        set_flag(C_FLAG);
+        res -= 256;
+    } else {
+        reset_flag(C_FLAG);
+    }
     res ? reset_flag(Z_FLAG) : set_flag(Z_FLAG);
     return res;
+}
+uint8_t get_crumb(uint8_t byte, uint8_t crumb) {
+    return (byte >> ((3 - crumb) * 2)) & 0x03;
 }
