@@ -87,19 +87,20 @@ void load_rom(FILE *rom) {
     int16_t read_size;
     fseek(rom, ROM_START, SEEK_SET);
     do {
-        read_size = fread(&hardware.memory[ROM_START + sectors_read * SECTOR_SIZE],
-                 SECTOR_SIZE, 1, rom);
-    }
-    while (read_size == SECTOR_SIZE);
+        read_size =
+            fread(&hardware.memory[ROM_START + sectors_read * SECTOR_SIZE],
+                  SECTOR_SIZE, 1, rom);
+    } while (read_size == SECTOR_SIZE);
 }
 
 bool half_carry_on_subtract(uint8_t val_1, uint8_t val_2) {
-   return (int)(val_1 & 0x0F) - (int)(val_2 & 0x0F) & 0x10; 
+    return (int)(val_1 & 0x0F) - (int)(val_2 & 0x0F) & 0x10;
 }
 
 uint8_t sub(uint8_t val_1, uint8_t val_2) {
     uint8_t res = val_1 - val_2;
-    half_carry_on_subtract(val_1, val_2) ? set_flag(H_FLAG) : reset_flag(H_FLAG);
+    half_carry_on_subtract(val_1, val_2) ? set_flag(H_FLAG)
+                                         : reset_flag(H_FLAG);
     set_flag(N_FLAG);
     res > 0 ? reset_flag(Z_FLAG) : set_flag(Z_FLAG);
     reset_flag(C_FLAG);

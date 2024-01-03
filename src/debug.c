@@ -2,8 +2,8 @@
 #include "decoder.h"
 #include "graphics.h"
 #include "hardware.h"
-#include "utils.h"
 #include "ppu.h"
+#include "utils.h"
 #include <inttypes.h>
 #include <ncurses.h>
 #include <pthread.h>
@@ -20,12 +20,12 @@ static void print_display_buffer_window(WINDOW *display_buf_win,
                                         const uint16_t start_address);
 
 void refresh_debugger(void);
-WINDOW *display_buff_win; 
+WINDOW *display_buff_win;
 WINDOW *registers_win;
 WINDOW *cpu_win;
 WINDOW *flags_win;
 WINDOW *stack_win;
-WINDOW *mem_win; 
+WINDOW *mem_win;
 uint16_t mem_win_addr = 0x100;
 uint16_t display_buf_addr = 0x0;
 void end_debugger(void) { endwin(); }

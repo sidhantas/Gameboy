@@ -1,9 +1,10 @@
 #include "SDL.h"
 #include "debug.h"
-#include "ppu.h"
 #include "decoder.h"
 #include "graphics.h"
 #include "hardware.h"
+#include "instructions.h"
+#include "ppu.h"
 #include "utils.h"
 #include <getopt.h>
 #include <ncurses.h>
@@ -36,20 +37,18 @@ int main(int argc, char **argv) {
             case 'g':
                 game = fopen(optarg, "r");
                 load_rom(game);
-                fclose(game); 
+                fclose(game);
                 break;
             default: exit(1); break;
         }
     }
 
-
     pthread_create(&debugger_id, NULL, initialize_debugger, NULL);
     pthread_create(&ppu_id, NULL, refresh_loop, NULL);
-    open_window(); 
+    open_window();
     main_loop();
     close_window();
     end_debugger();
-    SDL_Quit();
     pthread_join(debugger_id, NULL);
     pthread_join(ppu_id, NULL);
 
@@ -57,15 +56,15 @@ int main(int argc, char **argv) {
 }
 
 void main_loop(void) {
-    uint16_t exec_count = 0;
+    uint32_t exec_count = 0;
     while (1) {
         if (hardware.pc == 0x100) {
             break;
         }
-        uint8_t (*func)(uint8_t *) = fetch_instruction();
-        uint8_t clocks = execute_instruction(func);
+        clock_cycles_t (*func)(uint8_t *) = fetch_instruction();
+        clock_cycles_t clocks = execute_instruction(func);
         uint16_t dots = clocks * 4;
-        update_pixel_buff(dots, exec_count);
+        update_pixel_buff(dots, &exec_count);
         exec_count++;
     }
 }

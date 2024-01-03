@@ -5,15 +5,16 @@
 #include <inttypes.h>
 #include <stdio.h>
 
-static uint8_t (
+static clock_cycles_t (
     *decode_unprefixed_instruction(uint8_t instruction[MAX_INSTRUCTION_SIZE]))(
     uint8_t instruction[MAX_INSTRUCTION_SIZE]);
-static uint8_t (
+static clock_cycles_t (
     *decode_prefixed_instruction(uint8_t instruction[MAX_INSTRUCTION_SIZE]))(
     uint8_t instruction[MAX_INSTRUCTION_SIZE]);
 
-uint8_t (*fetch_instruction(void))(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
-    uint8_t (*execute_func)(uint8_t *);
+clock_cycles_t (*fetch_instruction(void))(
+    uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    clock_cycles_t (*execute_func)(uint8_t *);
     if (get_memory_byte(hardware.pc) == 0xCB) {
         // Instruction has 0xCB prefix
         hardware.instruction[0] = get_memory_byte(post_inc(&hardware.pc));
@@ -29,8 +30,8 @@ uint8_t (*fetch_instruction(void))(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     return execute_func;
 }
 
-uint8_t execute_instruction(
-    uint8_t execute_func(uint8_t instruction[MAX_INSTRUCTION_SIZE])) {
+clock_cycles_t execute_instruction(
+    clock_cycles_t execute_func(uint8_t instruction[MAX_INSTRUCTION_SIZE])) {
     hardware.instruction_count++;
     if (execute_func) {
         hardware.is_implemented = false;
@@ -39,7 +40,7 @@ uint8_t execute_instruction(
     return 0;
 }
 
-static uint8_t (*decode_prefixed_instruction(
+static clock_cycles_t (*decode_prefixed_instruction(
     uint8_t instruction[MAX_INSTRUCTION_SIZE]))(uint8_t *instruction) {
     const uint8_t OPCODE = instruction[1];
     switch (OPCODE) {
@@ -61,7 +62,7 @@ static uint8_t (*decode_prefixed_instruction(
             return NULL;
     }
 }
-static uint8_t (
+static clock_cycles_t (
     *decode_unprefixed_instruction(uint8_t instruction[MAX_INSTRUCTION_SIZE]))(
     uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     const uint8_t OPCODE = instruction[0];
@@ -77,15 +78,16 @@ static uint8_t (
             /* clang-format on */
             { return &LD_RR; }
             /* clang-format off */
-        case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xAC: case 0xAD: case 0xAE: case 0xAF:
+        case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xAC: case 0xAD: case 0xAF:
             /*clang-format on */
             {
                 return &XOR_A_R;
             }
+        case 0xAE: { return &XOR_A_DEREF_HL; }
             /* clang-format off */
         case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: case 0x77:
             /* clang-format on */
-            { return &LD_DEREF_HL_R; }
+            { return &LD_ADDR_HL_R; }
             /* clang-format off */
         case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x87:
             /* clang-format on */
@@ -108,7 +110,7 @@ static uint8_t (
                 return &LD_R_IMM;
             }
             /* clang-format off */
-        case 0x04: case 0x14: case 0x24: case 0x34: case 0x0C: case 0x1C: case 0x2C: case 0x3C:
+        case 0x04: case 0x14: case 0x24: case 0x0C: case 0x1C: case 0x2C: case 0x3C:
             /* clang-format on */
             { return &INC_R; }
 
@@ -168,7 +170,7 @@ static uint8_t (
         }
         case 0xE0: {
             instruction[1] = get_memory_byte(post_inc(&hardware.pc));
-            return &LD_DEREF_FF00_PLUS_IMM_A;
+            return &LD_IO_REGISTER_A;
         }
         case 0xE2: {
             return &LD_DEREF_FF00_PLUS_C_A;
