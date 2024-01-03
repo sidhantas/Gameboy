@@ -23,6 +23,9 @@
 #define DISPLAY_SIZE ((256) / 4) * 256
 #define TILE_MAP_SIZE 32 * 32
 
+#define CLOCK_RATE 4190000
+#define DISPLAY_REFRESH_RATE 60
+
 #define MAX_DECODED_INSTRUCTION_SIZE 25
 typedef enum REGISTERS { B, C, D, E, H, L, F, A } reg_t;
 typedef enum LONG_REGS { BC, DE, HL, SP } long_reg_t;

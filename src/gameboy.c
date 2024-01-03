@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 
 Hardware hardware;
 PPU ppu;
@@ -57,6 +58,8 @@ int main(int argc, char **argv) {
 
 void main_loop(void) {
     uint32_t exec_count = 0;
+    struct timeval start, end, diff;
+    gettimeofday(&start, NULL);
     while (1) {
         if (hardware.pc == 0x100) {
             break;
@@ -65,6 +68,14 @@ void main_loop(void) {
         clock_cycles_t clocks = execute_instruction(func);
         uint16_t dots = clocks * 4;
         update_pixel_buff(dots, &exec_count);
+        gettimeofday(&end, NULL);
+        if (end.tv_usec < start.tv_usec) {
+            diff.tv_usec = 1000000 + end.tv_usec - start.tv_usec;
+        } else {
+            diff.tv_usec = end.tv_usec - start.tv_usec;
+        }
+        usleep((1000000 - diff.tv_usec) / CLOCK_RATE);
+        gettimeofday(&start, NULL);
         exec_count++;
     }
 }

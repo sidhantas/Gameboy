@@ -10,6 +10,7 @@
 #include <SDL2/SDL.h>
 #include <ncurses.h>
 #include <signal.h>
+#include <string.h>
 #include <unistd.h>
 
 #define WINDOW_WIDTH 160
@@ -23,11 +24,13 @@ uint32_t *pixel_buff;
 
 void open_window(void) {
     SDL_Init(SDL_INIT_VIDEO);
-    SDL_CreateWindowAndRenderer(WINDOW_WIDTH * RESOLUTION_SCALE,
-                                WINDOW_HEIGHT * RESOLUTION_SCALE, 0, &window,
-                                &renderer);
+    window = SDL_CreateWindow(
+        "Pixel Drawing", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+        WINDOW_WIDTH * RESOLUTION_SCALE, WINDOW_HEIGHT * RESOLUTION_SCALE, 0);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
     texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
-                                SDL_TEXTUREACCESS_STREAMING, WINDOW_WIDTH,
+                                SDL_TEXTUREACCESS_STATIC, WINDOW_WIDTH,
                                 WINDOW_HEIGHT);
     pixel_buff = calloc(WINDOW_WIDTH * WINDOW_WIDTH, sizeof(uint32_t));
     SDL_RenderSetLogicalSize(renderer, WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -35,6 +38,7 @@ void open_window(void) {
 }
 
 void close_window(void) {
+    free(pixel_buff);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
@@ -44,16 +48,15 @@ void update_pixel_buff(uint16_t dots, uint32_t *exec_count) {
     while (dots > 0) {
         dots = draw_pixel_buff(dots);
         uint8_t y = get_memory_byte(LCDY);
-        if (y == 0 && ppu.line_dots == 0 && *exec_count > 100000) {
+        if (y == 0 && ppu.line_dots == 0 && *exec_count > (CLOCK_RATE / 60)) {
             SDL_UpdateTexture(texture, NULL, pixel_buff,
                               WINDOW_WIDTH * sizeof(uint32_t));
             SDL_RenderCopy(renderer, texture, NULL, NULL);
             if (SDL_PollEvent(&event) && event.type == SDL_QUIT) {
                 exit(0);
             }
-            ppu.ready_to_render = false;
             SDL_RenderPresent(renderer);
-            *exec_count = 0;
+            *exec_count -= CLOCK_RATE / 60;
         }
     }
 }
@@ -75,7 +78,7 @@ uint16_t draw_pixel_buff(uint16_t dots) {
         set_memory_byte(LCDY, (y + 1) % SCAN_LINES);
         return 0;
     }
-    for (uint16_t x = ppu.line_dots; x < WINDOW_WIDTH; x++) {
+    for (uint16_t x = ppu.line_dots; x < 456; x++) {
         if (dots <= 0) {
             ppu.line_dots = x;
             return 0;
