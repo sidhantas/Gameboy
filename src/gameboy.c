@@ -59,7 +59,10 @@ int main(int argc, char **argv) {
 void main_loop(void) {
     uint32_t exec_count = 0;
     struct timeval start, end, diff;
+    struct timeval game_start, game_end, game_diff;
+    gettimeofday(&game_start, NULL);
     gettimeofday(&start, NULL);
+    FILE *out = fopen("output.bench", "w");
     while (1) {
         if (hardware.pc == 0x100) {
             break;
@@ -78,4 +81,10 @@ void main_loop(void) {
         gettimeofday(&start, NULL);
         exec_count++;
     }
+    gettimeofday(&game_end, NULL);
+    timersub(&game_end, &game_start, &game_diff);
+    fprintf(out, "THE BOOT TOOK %ld seconds and %d ms\n",
+            game_diff.tv_sec,
+            game_diff.tv_usec);
+    fclose(out);
 }

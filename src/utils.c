@@ -127,3 +127,14 @@ uint8_t add(uint8_t val_1, uint8_t val_2) {
 uint8_t get_crumb(uint8_t byte, uint8_t crumb) {
     return (byte >> ((3 - crumb) * 2)) & 0x03;
 }
+
+struct timeval time_diff(struct timeval start, struct timeval end) {
+    struct timeval diff;
+    diff.tv_sec = end.tv_sec - start.tv_sec;
+    if (end.tv_usec < start.tv_usec) {
+        diff.tv_usec = 1000000 + end.tv_usec - start.tv_usec;
+    } else {
+        diff.tv_usec = end.tv_usec - start.tv_usec;
+    }
+    return diff;
+}

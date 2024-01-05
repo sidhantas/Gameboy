@@ -26,7 +26,7 @@ WINDOW *cpu_win;
 WINDOW *flags_win;
 WINDOW *stack_win;
 WINDOW *mem_win;
-uint16_t mem_win_addr = 0x100;
+uint16_t mem_win_addr = 0xFF00;
 uint16_t display_buf_addr = 0x0;
 void end_debugger(void) { endwin(); }
 void *initialize_debugger(void *arg) {
@@ -45,7 +45,7 @@ void *initialize_debugger(void *arg) {
     registers_win = newwin(15, 21, 0, 0);
     cpu_win = newwin(20, 31, 0, 23);
     flags_win = newwin(8, 21, 17, 0);
-    mem_win = newwin(21, 90, 21, 23);
+    mem_win = newwin(20, 90, 21, 23);
     stack_win = newwin(21, 31, 21, 114);
 
     while (1) {

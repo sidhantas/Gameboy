@@ -14,6 +14,7 @@
 #define TMA 0xFF06
 #define TAC 0xFF07
 #define IF 0xFF0F
+#define SCY 0xFF42
 #define LCDY 0xFF44
 
 #define MAX_INSTRUCTION_SIZE 3

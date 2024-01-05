@@ -25,12 +25,12 @@ uint32_t *pixel_buff;
 void open_window(void) {
     SDL_Init(SDL_INIT_VIDEO);
     window = SDL_CreateWindow(
-        "Pixel Drawing", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+        "Gameboy", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
         WINDOW_WIDTH * RESOLUTION_SCALE, WINDOW_HEIGHT * RESOLUTION_SCALE, 0);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
     texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
-                                SDL_TEXTUREACCESS_STATIC, WINDOW_WIDTH,
+                                SDL_TEXTUREACCESS_STREAMING, WINDOW_WIDTH,
                                 WINDOW_HEIGHT);
     pixel_buff = calloc(WINDOW_WIDTH * WINDOW_WIDTH, sizeof(uint32_t));
     SDL_RenderSetLogicalSize(renderer, WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -74,6 +74,7 @@ uint32_t get_color_from_byte(uint8_t byte, uint16_t x) {
 uint16_t draw_pixel_buff(uint16_t dots) {
     const uint8_t PIXELS_PER_BYTE = 4;
     uint8_t y = get_memory_byte(LCDY);
+    uint8_t scy = get_memory_byte(SCY);
     if (y >= 144) {
         set_memory_byte(LCDY, (y + 1) % SCAN_LINES);
         return 0;
@@ -84,10 +85,13 @@ uint16_t draw_pixel_buff(uint16_t dots) {
             return 0;
         }
         dots--;
+        if (x > 256) {
+            continue;
+        }
         const uint8_t byte =
             hardware
                 .display_buffer[(TILE_MAP_WIDTH / PIXELS_PER_BYTE) * y + x / 4];
-        pixel_buff[y * WINDOW_WIDTH + x] = get_color_from_byte(byte, x);
+        pixel_buff[(y - scy) * WINDOW_WIDTH + x] = get_color_from_byte(byte, x);
     }
     set_memory_byte(LCDY, (y + 1) % SCAN_LINES);
     ppu.line_dots = 0;
