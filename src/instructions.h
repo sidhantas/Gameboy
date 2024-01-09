@@ -57,7 +57,9 @@ clock_cycles_t RET(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
 clock_cycles_t RETI(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
 clock_cycles_t CALL_Z_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
 clock_cycles_t LD_ADDR_IMM_SP(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t JP_NZ_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
 clock_cycles_t NOP(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t UNK(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
 
 /* PREFIXED INSTRUCTIONS */
 clock_cycles_t BIT_B_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]);

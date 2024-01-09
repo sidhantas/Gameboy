@@ -5,10 +5,17 @@
 #include <stdio.h>
 #include <unistd.h>
 
+bool close_ppu;
+
 void initialize_ppu(PPU *ppu) {
+    close_ppu = false;
     ppu->line_dots = 0;
     ppu->mode = 0;
     ppu->ready_to_render = false;
+}
+
+void end_ppu(void) {
+    close_ppu = true;
 }
 
 static uint8_t get_row_byte_low(uint8_t hi, uint8_t low) {
@@ -58,7 +65,11 @@ void draw_background_tilemap(void) {
 void *refresh_loop(void *arg) {
     (void)arg;
     while (1) {
+        if (close_ppu) {
+            break;
+        }
         draw_background_tilemap();
         usleep(5000);
     }
+    return NULL;
 }

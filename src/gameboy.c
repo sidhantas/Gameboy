@@ -1,4 +1,5 @@
 #include "SDL.h"
+#include "SDL_events.h"
 #include "debug.h"
 #include "decoder.h"
 #include "graphics.h"
@@ -49,6 +50,7 @@ int main(int argc, char **argv) {
     open_window();
     main_loop();
     close_window();
+    end_ppu();
     end_debugger();
     pthread_join(debugger_id, NULL);
     pthread_join(ppu_id, NULL);
@@ -60,12 +62,25 @@ void main_loop(void) {
     uint32_t exec_count = 0;
     struct timeval start, end, diff;
     struct timeval game_start, game_end, game_diff;
+    SDL_Event event;
     gettimeofday(&game_start, NULL);
     gettimeofday(&start, NULL);
     FILE *out = fopen("output.bench", "w");
     while (1) {
         if (hardware.pc == 0x100) {
-            break;
+            hardware.step_mode = true;
+        }
+        if (hardware.step_mode == true) {
+            while (true) {
+                SDL_WaitEvent(&event);
+                if (event.type == SDL_KEYDOWN) {
+                    break;
+                }
+                if (event.type == SDL_QUIT) 
+                {
+                    return;
+                }
+            }
         }
         clock_cycles_t (*func)(uint8_t *) = fetch_instruction();
         clock_cycles_t clocks = execute_instruction(func);
@@ -83,8 +98,7 @@ void main_loop(void) {
     }
     gettimeofday(&game_end, NULL);
     timersub(&game_end, &game_start, &game_diff);
-    fprintf(out, "THE BOOT TOOK %ld seconds and %d ms\n",
-            game_diff.tv_sec,
+    fprintf(out, "THE BOOT TOOK %ld seconds and %d ms\n", game_diff.tv_sec,
             game_diff.tv_usec);
     fclose(out);
 }

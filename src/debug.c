@@ -28,15 +28,29 @@ WINDOW *stack_win;
 WINDOW *mem_win;
 uint16_t mem_win_addr = 0xFF00;
 uint16_t display_buf_addr = 0x0;
-void end_debugger(void) { endwin(); }
+
+pthread_mutex_t lock;
+bool close_debugger;
+
+void end_debugger(void) { 
+    close_debugger = true;
+    pthread_mutex_lock(&lock);
+    noraw();
+    nocbreak();
+    echo();
+    curs_set(1);
+    endwin(); 
+    pthread_mutex_unlock(&lock);
+    return;
+}
 void *initialize_debugger(void *arg) {
     (void)arg;
+    pthread_mutex_lock(&lock);
     initscr();
     start_color();
     use_default_colors();
     init_pair(1, COLOR_RED, -1);
-    cbreak();
-    noecho();
+    raw();
     clear();
     nodelay(stdscr, TRUE);
     curs_set(0);
@@ -49,8 +63,10 @@ void *initialize_debugger(void *arg) {
     stack_win = newwin(21, 31, 21, 114);
 
     while (1) {
-        char c;
-        c = getch();
+        if (close_debugger) {
+            break;
+        }
+        char c = getch();
         if (c == 'm') {
             mem_win_addr += 0x100;
         } else if (c == 'M') {
@@ -62,6 +78,8 @@ void *initialize_debugger(void *arg) {
         }
         refresh_debugger();
     }
+    pthread_mutex_unlock(&lock);
+    return NULL;
 }
 
 void refresh_debugger(void) {
@@ -147,7 +165,7 @@ static void print_memory_window(WINDOW *mem_win, uint16_t start_address) {
 static void print_stack_window(WINDOW *stack_win) {
     uint16_t WIDTH = 0;
     uint16_t HEIGHT = 0;
-
+    werase(stack_win);
     getmaxyx(stack_win, HEIGHT, WIDTH);
     box(stack_win, 0, 0);
 

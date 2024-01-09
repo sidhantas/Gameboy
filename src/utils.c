@@ -111,8 +111,8 @@ bool half_carry_on_add(uint8_t val_1, uint8_t val_2) {
     return (((val_1 & 0xf) + (val_2 & 0xf)) & 0x10) == 0x10;
 }
 
-uint8_t add(uint8_t val_1, uint8_t val_2) {
-    uint16_t res = val_1 + val_2;
+uint8_t add(uint8_t val_1, uint8_t val_2, uint8_t carry) {
+    uint16_t res = val_1 + val_2 + carry;
     half_carry_on_add(val_1, val_2) ? set_flag(H_FLAG) : reset_flag(H_FLAG);
     set_flag(N_FLAG);
     if (res > 255) {

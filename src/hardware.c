@@ -18,6 +18,7 @@ void initialize_hardware(Hardware *hardware) {
     hardware->sp = 0;
     hardware->pc = 0;
     hardware->instruction_count = 0;
+    hardware->step_mode = false;
 }
 
 inline uint8_t get_memory_byte(uint16_t address) {

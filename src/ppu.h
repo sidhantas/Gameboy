@@ -11,3 +11,4 @@ extern PPU ppu;
 void initialize_ppu(PPU *ppu);
 void *refresh_loop(void *arg);
 void ppu_update(uint8_t clocks);
+void end_ppu(void);

@@ -58,6 +58,7 @@ typedef struct Hardware {
     uint64_t instruction_count;
     uint8_t instruction[MAX_INSTRUCTION_SIZE];
     char decoded_instruction[MAX_DECODED_INSTRUCTION_SIZE];
+    bool step_mode;
 } Hardware;
 
 extern Hardware hardware;

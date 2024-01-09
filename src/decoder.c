@@ -257,6 +257,11 @@ static clock_cycles_t (
             instruction[2] = get_memory_byte(post_inc(&hardware.pc));
             return &LD_ADDR_IMM_SP;
         }
+        case 0xc3: {
+            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            return &JP_NZ_IMM;
+        }
         case 0x00: {
             return &NOP;
         }
@@ -268,11 +273,11 @@ static clock_cycles_t (
 
                 snprintf(hardware.decoded_instruction,
                          MAX_DECODED_INSTRUCTION_SIZE, "INVALID");
-                return &NOP;
+                return &UNK;
             }
         default:
             snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE,
                      "UNK");
-            return &NOP;
+            return &UNK;
     }
 }
