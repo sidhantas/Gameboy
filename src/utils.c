@@ -12,6 +12,10 @@ void check_alloc(void *allocated_block, const char *msg_on_failure) {
 }
 
 void load_dmg(FILE *rom) {
+    if (!rom) {
+        fprintf(stderr, "No dmg present\n");
+        exit(1);
+    }
     uint16_t bytes_read =
         fread(&(hardware.memory[BOOT_ROM_BEGIN]), DMG_SIZE, 1, rom);
     if (bytes_read != 1) {

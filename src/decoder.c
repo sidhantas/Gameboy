@@ -77,72 +77,129 @@ static clock_cycles_t (
         case 0x78: case 0x79: case 0x7a: case 0x7b: case 0x7c: case 0x7d: case 0x7f:
             /* clang-format on */
             { return &LD_RR; }
-            /* clang-format off */
-        case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xAC: case 0xAD: case 0xAF:
-            /*clang-format on */
-            {
-                return &XOR_A_R;
-            }
-        case 0xAE: { return &XOR_A_DEREF_HL; }
-            /* clang-format off */
-        case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: case 0x77:
-            /* clang-format on */
-            { return &LD_ADDR_HL_R; }
-            /* clang-format off */
-        case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x87:
-            /* clang-format on */
-            { return &ADD_A_R; }
+        case 0xA8:
+        case 0xA9:
+        case 0xAA:
+        case 0xAB:
+        case 0xAC:
+        case 0xAD:
+        case 0xAF: {
+            return &XOR_A_R;
+        }
+        case 0xAE: {
+            return &XOR_A_DEREF_HL;
+        }
+        case 0x70:
+        case 0x71:
+        case 0x72:
+        case 0x73:
+        case 0x74:
+        case 0x75:
+        case 0x77: {
+            return &LD_ADDR_HL_R;
+        }
+        case 0x80:
+        case 0x81:
+        case 0x82:
+        case 0x83:
+        case 0x84:
+        case 0x85:
+        case 0x87: {
+            return &ADD_A_R;
+        }
         case 0x86: {
             return &ADD_A_DEREF_HL;
         }
-            /* clang-format off */
-        case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: case 0xA7:
-            /* clang-format on */
-            { return &AND_A_R; }
+        case 0xA0:
+        case 0xA1:
+        case 0xA2:
+        case 0xA3:
+        case 0xA4:
+        case 0xA5:
+        case 0xA7: {
+            return &AND_A_R;
+        }
         case 0xA6: {
             return &AND_A_DEREF_HL;
         }
-            /* clang-format off */
-        case 0x06: case 0x16: case 0x26: case 0x0E: case 0x1E: case 0x2E: case 0x3E:
-            /* clang-format on */
-            {
-                instruction[1] = get_memory_byte(post_inc(&hardware.pc));
-                return &LD_R_IMM;
-            }
-            /* clang-format off */
-        case 0x04: case 0x14: case 0x24: case 0x0C: case 0x1C: case 0x2C: case 0x3C:
-            /* clang-format on */
-            { return &INC_R; }
+        case 0x06:
+        case 0x16:
+        case 0x26:
+        case 0x0E:
+        case 0x1E:
+        case 0x2E:
+        case 0x3E: {
+            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            return &LD_R_IMM;
+        }
+        case 0x04:
+        case 0x14:
+        case 0x24:
+        case 0x0C:
+        case 0x1C:
+        case 0x2C:
+        case 0x3C: {
+            return &INC_R;
+        }
 
-            /* clang-format off */
-        case 0x05: case 0x15: case 0x25: case 0x0D: case 0x1D: case 0x2D: case 0x3D:
-            /* clang-format on */
-            { return &DEC_R; }
-
-            /* clang-format off */
-        case 0x90: case 0x91: case 0x92: case 0x93: case 0x94: case 0x95: case 0x97:
-            /* clang-format on */
-            { return &SUB_A_R; }
-            /* clang-format off */
-        case 0x46: case 0x56: case 0x66: case 0x4E: case 0x5E: case 0x6E: case 0x7E:
-            /* clang-format on */
-            { return &LD_R_DEREF_HL; }
-            /* clang-format off */
-        case 0x88: case 0x89: case 0x8A: case 0x8B: case 0x8C: case 0x8D: case 0x8F:
-            /* clang-format on */
-            { return &ADC_A_R; }
-            /* clang-format off */
-        case 0x98: case 0x99: case 0x9A: case 0x9B: case 0x9C: case 0x9D: case 0x9F:
-            /* clang-format on */
-            { return &SBC_A_R; }
-            /* clang-format off */
-        case 0xB8: case 0xB9: case 0xBA: case 0xBB: case 0xBC: case 0xBD: case 0xBF:
-            /* clang-format on */
-            { return &CP_A_R; }
-            /* clang-format off */
-        case 0x0a: case 0x1a:
-            /* clang-format on */
-            { return &LD_A_DEREF_LONG_R; }
+        case 0x05:
+        case 0x15:
+        case 0x25:
+        case 0x0D:
+        case 0x1D:
+        case 0x2D:
+        case 0x3D: {
+            return &DEC_R;
+        }
+        case 0x90:
+        case 0x91:
+        case 0x92:
+        case 0x93:
+        case 0x94:
+        case 0x95:
+        case 0x97: {
+            return &SUB_A_R;
+        }
+        case 0x46:
+        case 0x56:
+        case 0x66:
+        case 0x4E:
+        case 0x5E:
+        case 0x6E:
+        case 0x7E: {
+            return &LD_R_DEREF_HL;
+        }
+        case 0x88:
+        case 0x89:
+        case 0x8A:
+        case 0x8B:
+        case 0x8C:
+        case 0x8D:
+        case 0x8F: {
+            return &ADC_A_R;
+        }
+        case 0x98:
+        case 0x99:
+        case 0x9A:
+        case 0x9B:
+        case 0x9C:
+        case 0x9D:
+        case 0x9F: {
+            return &SBC_A_R;
+        }
+        case 0xB8:
+        case 0xB9:
+        case 0xBA:
+        case 0xBB:
+        case 0xBC:
+        case 0xBD:
+        case 0xBF: {
+            return &CP_A_R;
+        }
+        case 0x0a:
+        case 0x1a: {
+            return &LD_A_DEREF_LONG_R;
+        }
         case 0x2a: {
             return &LD_A_DEREF_HL_INC;
         }
@@ -175,31 +232,60 @@ static clock_cycles_t (
         case 0xE2: {
             return &LD_DEREF_FF00_PLUS_C_A;
         }
-            /* clang-format off */
-        case 0x01: case 0x11: case 0x21: case 0x31:
-            /* clang-format on */
-            {
-                instruction[1] = get_memory_byte(post_inc(&hardware.pc));
-                instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+        case 0x07: {
+            return &RLCA;
+        }
+        case 0x0F: {
+            return &RRCA;
+        }
+        case 0x10: {
+            return &STOP;
+        }
+        case 0x09:
+        case 0x19:
+        case 0x29:
+        case 0x39: {
+            return &ADD_HL_LONG_R;
+        }
+        case 0x1F: {
+            return &RRA;
+        }
 
-                return &LD_LONG_R_IMM;
-            }
-            /* clang-format off */
-        case 0x03: case 0x13: case 0x23: case 0x33:
-            /* clang-format on */
-            { return &INC_LONG_R; }
-            /* clang-format off */
-        case 0x0B: case 0x1B: case 0x2B: case 0x3B:
-            /* clang-format on */
-            { return &DEC_LONG_R; }
-            /* clang-format off */
-        case 0xc5: case 0xd5: case 0xe5: case 0xf5:
-            /* clang-format on */
-            { return &PUSH_LONG_R; }
-            /* clang-format off */
-        case 0xc1: case 0xd1: case 0xe1: case 0xf1:
-            /* clang-format on */
-            { return &POP_LONG_R; }
+
+
+        case 0x01:
+        case 0x11:
+        case 0x21:
+        case 0x31: {
+            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+
+            return &LD_LONG_R_IMM;
+        }
+        case 0x03:
+        case 0x13:
+        case 0x23:
+        case 0x33: {
+            return &INC_LONG_R;
+        }
+        case 0x0B:
+        case 0x1B:
+        case 0x2B:
+        case 0x3B: {
+            return &DEC_LONG_R;
+        }
+        case 0xc5:
+        case 0xd5:
+        case 0xe5:
+        case 0xf5: {
+            return &PUSH_LONG_R;
+        }
+        case 0xc1:
+        case 0xd1:
+        case 0xe1:
+        case 0xf1: {
+            return &POP_LONG_R;
+        }
 
         case 0xFE: {
             instruction[1] = get_memory_byte(post_inc(&hardware.pc));
@@ -265,16 +351,21 @@ static clock_cycles_t (
         case 0x00: {
             return &NOP;
         }
-            /* clang-format off */
-        case 0xDB: case 0xDD: case 0xE3: case 0xE4: case 0xEB: case 0xEC: case 0xED:
-        case 0xF4: case 0xFC: case 0xFD:
-            /* clang-format on */
-            {
+        case 0xDB:
+        case 0xDD:
+        case 0xE3:
+        case 0xE4:
+        case 0xEB:
+        case 0xEC:
+        case 0xED:
+        case 0xF4:
+        case 0xFC:
+        case 0xFD: {
 
-                snprintf(hardware.decoded_instruction,
-                         MAX_DECODED_INSTRUCTION_SIZE, "INVALID");
-                return &UNK;
-            }
+            snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE,
+                     "INVALID");
+            return &UNK;
+        }
         default:
             snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE,
                      "UNK");
