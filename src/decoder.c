@@ -251,8 +251,160 @@ static clock_cycles_t (
             return &RRA;
         }
 
+        case 0x27: {
+            return &DAA;
+        }
 
+        case 0x2f: {
+            return &CPL;
+        }
 
+        case 0x34: {
+            return &INC_DEREF_HL;
+        }
+
+        case 0x35: {
+            return &DEC_DEREF_HL;
+        }
+        case 0x36: {
+            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            return &LD_ADDR_HL_IMM;
+        }
+        case 0x37: {
+            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            return &SCF;
+        }
+        case 0x38: {
+            return &JR_C_IMM;
+        }
+        case 0x3f: {
+            return &CCF;
+        }
+        case 0x76: {
+            return &HALT;
+        }
+        case 0x8e: {
+            return &ADC_A_DEREF_HL;
+        }
+        case 0x96: {
+            return &SUB_A_DEREF_HL;
+        }
+        case 0x9e: {
+            return &SBC_A_DEREF_HL;
+        }
+        case 0xb0:
+        case 0xb1:
+        case 0xb2:
+        case 0xb3:
+        case 0xb4:
+        case 0xb5:
+        case 0xb7: {
+            return &OR_A_R;
+        }
+        case 0xb6: {
+            return &OR_A_DEREF_HL;
+        }
+        case 0xc0: {
+            return &RET_NZ;
+        }
+        case 0xc4: {
+            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            return &CALL_NZ_IMM;
+        }
+        case 0xc6: {
+            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            return &ADD_A_IMM;
+        }
+        case 0xC7:
+        case 0xD7:
+        case 0xE7:
+        case 0xF7: {
+            return &RST_x0h;
+        }
+        case 0xc8: {
+            return &RET_Z;
+        }
+        case 0xd8: {
+            return &RET_C;
+        }
+        case 0xCA: {
+            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            return &JP_Z_IMM;
+        }
+        case 0xDA: {
+            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            return &JP_C_IMM;
+        }
+        case 0xCF:
+        case 0xDF:
+        case 0xEF:
+        case 0xFF: {
+            return &RST_x8h;
+        }
+        case 0xD0: {
+            return &RET_NC;
+        }
+        case 0xD4: {
+            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            return &CALL_NZ_IMM;
+        }
+        case 0xD6: {
+            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            return &SUB_A_IMM;
+        }
+        case 0xDC: {
+            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            return &CALL_C_IMM;
+        }
+        case 0xDE: {
+            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            return &SBC_A_IMM;
+        }
+        case 0xE6: {
+            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            return &AND_A_IMM;
+        }
+        case 0xE8: {
+            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            return &ADD_SP_IMM;
+        }
+        case 0xE9: {
+            return &JP_HL;
+        }
+        case 0xEE: {
+            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            return &XOR_A_IMM;
+        }
+        case 0xF2: {
+            return &LD_A_DEREF_FF00_PLUS_C;
+        }
+        case 0xF3: {
+            return &DI;
+        }
+        case 0xF6: {
+            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            return &OR_A_IMM;
+        }
+        case 0xF8: {
+            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            return &LD_HL_SP_PLUS_IMM;
+        }
+        case 0xF9: {
+            return &LD_SP_HL;
+        }
+        case 0xFA: {
+            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            return &LD_A_DEREF_IMM;
+        }
+        case 0xFB: {
+            return &EI;
+        }
         case 0x01:
         case 0x11:
         case 0x21:
@@ -343,16 +495,27 @@ static clock_cycles_t (
             instruction[2] = get_memory_byte(post_inc(&hardware.pc));
             return &LD_ADDR_IMM_SP;
         }
-        case 0xc3: {
+        case 0xc2: {
             instruction[1] = get_memory_byte(post_inc(&hardware.pc));
             instruction[2] = get_memory_byte(post_inc(&hardware.pc));
             return &JP_NZ_IMM;
+        }
+        case 0xc2: {
+            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            return &JP_NC_IMM;
+        }
+        case 0xc3: {
+            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            return &JP_IMM;
         }
         case 0x00: {
             return &NOP;
         }
         case 0xDB:
         case 0xDD:
+        case 0xD3:
         case 0xE3:
         case 0xE4:
         case 0xEB:

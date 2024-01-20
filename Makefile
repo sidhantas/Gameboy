@@ -1,6 +1,6 @@
 CC=clang
 CFLAGS= -g -Wall -Wextra -Wpedantic -Werror -D_THREAD_SAFE -I/opt/homebrew/include -I/opt/homebrew/include/SDL2
-LDFLAGS= -lncurses -pthread  -L/opt/homebrew/lib -lSDL2 -lprofiler
+LDFLAGS= -lncurses -pthread  -L/opt/homebrew/lib -lSDL2
 SRC_DIR := src
 OBJ_DIR := obj
 BIN_DIR := .
