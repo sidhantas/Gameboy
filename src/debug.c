@@ -56,7 +56,7 @@ void *initialize_debugger(void *arg) {
     curs_set(0);
     refresh();
     display_buff_win = newwin(20, 90, 0, 54);
-    registers_win = newwin(15, 21, 0, 0);
+    registers_win = newwin(17, 21, 0, 0);
     cpu_win = newwin(20, 31, 0, 23);
     flags_win = newwin(8, 21, 17, 0);
     mem_win = newwin(20, 90, 21, 23);
@@ -215,6 +215,7 @@ static void print_cpu_window(WINDOW *cpu_win) {
     mvwprintwhcenter(cpu_win, 7, 0, WIDTH, "%s", hardware.decoded_instruction);
     mvwprintwhcenter(cpu_win, 9, 0, WIDTH, "Is Implemented: %-5s",
                      hardware.is_implemented ? "True" : "False");
+    mvwprintwhcenter(cpu_win, 11, 0, WIDTH, "Instruction Count: %"PRIu64, hardware.instruction_count);
     wrefresh(cpu_win);
 }
 
@@ -275,6 +276,10 @@ static void print_register_window(WINDOW *registers_win) {
 
     mvwprintw(registers_win, 13, WIDTH / 4 - 1, "PC");
     mvwprintw(registers_win, 13, WIDTH / 2 + 2, "0x%0.2X", hardware.pc);
+    wrefresh(registers_win);
+
+    mvwprintw(registers_win, 15, WIDTH / 4 - 1, "IME");
+    mvwprintw(registers_win, 15, WIDTH / 2 + 2, "0x%0.2X", hardware.ime_flag);
     wrefresh(registers_win);
 }
 

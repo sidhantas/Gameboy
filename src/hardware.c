@@ -14,11 +14,13 @@ void initialize_hardware(Hardware *hardware) {
         fprintf(stderr, "Unable to allocate memory for display buff\n");
     }
     memset(hardware->registers, 0, REGISTER_COUNT);
+    hardware->is_implemented = true;
     hardware->is_double_speed = false;
     hardware->sp = 0;
     hardware->pc = 0;
     hardware->instruction_count = 0;
     hardware->step_mode = false;
+    hardware->ime_flag = 0;
 }
 
 inline uint8_t get_memory_byte(uint16_t address) {

@@ -51,6 +51,7 @@ typedef struct Hardware {
     uint16_t stack_start;
     uint16_t pc;
     uint8_t opcode;
+    uint8_t ime_flag;
     bool is_implemented;
     bool is_double_speed;
     char vram_mode;

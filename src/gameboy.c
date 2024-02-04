@@ -66,24 +66,31 @@ void main_loop(void) {
     gettimeofday(&game_start, NULL);
     gettimeofday(&start, NULL);
     FILE *out = fopen("output.bench", "w");
+    uint16_t instructions_left = 0;
     while (1) {
         if (hardware.pc == 0x100) {
             hardware.step_mode = true;
         }
-        if (hardware.step_mode == true) {
-            while (true) {
-                SDL_WaitEvent(&event);
-                if (event.type == SDL_KEYDOWN) {
-                    break;
-                }
-                if (event.type == SDL_QUIT) 
-                {
-                    return;
-                }
-            }
-        }
         clock_cycles_t (*func)(uint8_t *) = fetch_instruction();
         clock_cycles_t clocks = execute_instruction(func);
+        if (hardware.step_mode == true) {
+            if (instructions_left <= 0) {
+                while (true) {
+                    SDL_WaitEvent(&event);
+                    if (event.type == SDL_KEYDOWN) {
+                        if (event.key.keysym.scancode == SDL_SCANCODE_K) {
+                            instructions_left = 100;
+                        }
+                        break;
+                    }
+                    if (event.type == SDL_QUIT) {
+                        return;
+                    }
+                }
+            } else {
+                instructions_left--;
+            }
+        }
         uint16_t dots = clocks * 4;
         update_pixel_buff(dots, &exec_count);
         gettimeofday(&end, NULL);

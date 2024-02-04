@@ -26,15 +26,14 @@ clock_cycles_t (*fetch_instruction(void))(
         hardware.instruction[2] = 0;
         execute_func = decode_unprefixed_instruction(hardware.instruction);
     }
-
     return execute_func;
 }
 
 clock_cycles_t execute_instruction(
     clock_cycles_t execute_func(uint8_t instruction[MAX_INSTRUCTION_SIZE])) {
-    hardware.instruction_count++;
     if (execute_func) {
         hardware.is_implemented = false;
+        hardware.instruction_count++;
         return (*execute_func)(hardware.instruction);
     }
     return 0;
@@ -350,7 +349,7 @@ static clock_cycles_t (
         case 0xD4: {
             instruction[1] = get_memory_byte(post_inc(&hardware.pc));
             instruction[2] = get_memory_byte(post_inc(&hardware.pc));
-            return &CALL_NZ_IMM;
+            return &CALL_NC_IMM;
         }
         case 0xD6: {
             instruction[1] = get_memory_byte(post_inc(&hardware.pc));
@@ -500,7 +499,7 @@ static clock_cycles_t (
             instruction[2] = get_memory_byte(post_inc(&hardware.pc));
             return &JP_NZ_IMM;
         }
-        case 0xc2: {
+        case 0xD2: {
             instruction[1] = get_memory_byte(post_inc(&hardware.pc));
             instruction[2] = get_memory_byte(post_inc(&hardware.pc));
             return &JP_NC_IMM;

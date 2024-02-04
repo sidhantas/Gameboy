@@ -24,6 +24,10 @@ clock_cycles_t XOR_A_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     reg_t src = OPCODE & 0x7;
 
     hardware.registers[A] ^= hardware.registers[src];
+    reset_flag(N_FLAG);
+    reset_flag(H_FLAG);
+    reset_flag(C_FLAG);
+    hardware.registers[A] == 0 ? set_flag(Z_FLAG) : reset_flag(Z_FLAG);
     snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE,
              "XOR A, %c", REGISTER_CHAR(src));
     return FOUR_CLOCKS;
@@ -73,9 +77,11 @@ clock_cycles_t ADD_A_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 }
 
 clock_cycles_t AND_A_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
-    hardware.is_implemented = false;
+    hardware.is_implemented = true;
     const uint8_t OPCODE = get_opcode(instruction);
     reg_t src = OPCODE & 0x7;
+
+    hardware.registers[A] &= hardware.registers[src];
     snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE,
              "AND A, %c", REGISTER_CHAR(src));
 
@@ -192,7 +198,11 @@ clock_cycles_t LD_A_DEREF_LONG_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 
 clock_cycles_t LD_A_DEREF_HL_INC(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     (void)instruction;
-    hardware.is_implemented = false;
+    hardware.is_implemented = true;
+    const uint16_t HL_val = get_long_reg(HL);
+    hardware.registers[A] = hardware.memory[HL_val];
+    set_long_reg_u16(HL, HL_val + 1);
+
     snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE,
              "LD A, (HL+)");
 
@@ -209,9 +219,10 @@ clock_cycles_t LD_A_DEREF_HL_DEC(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 }
 
 clock_cycles_t LD_ADDR_LONG_R_A(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
-    hardware.is_implemented = false;
+    hardware.is_implemented = true;
     const uint8_t OPCODE = get_opcode(instruction);
-    uint8_t dst = (OPCODE & 0xF0) >> 4;
+    long_reg_t dst = (OPCODE & 0xF0) >> 4;
+    hardware.memory[get_long_reg(dst)] = hardware.registers[A];
     snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE,
              "LD (%s), A", LONG_REGISTER_STR(dst));
 
@@ -493,6 +504,324 @@ clock_cycles_t JP_NZ_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
         hardware.pc = addr;
     }
     snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "JP NZ 0x%X", addr);
+    return TWELVE_CLOCKS;
+}
+clock_cycles_t RLCA(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    (void)instruction;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "RLCA");
+
+    get_bit(hardware.registers[A], 7) ? set_flag(C_FLAG) : reset_flag(C_FLAG);
+    hardware.registers[A] <<= 1;
+    return FOUR_CLOCKS;
+}
+
+
+clock_cycles_t RRCA(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "RRCA");
+    get_bit(hardware.registers[A], 0) ? set_flag(C_FLAG) : reset_flag(C_FLAG);
+    hardware.registers[A] >>= 1;
+    return FOUR_CLOCKS;
+}
+
+clock_cycles_t STOP(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "STOP"); 
+}
+
+clock_cycles_t ADD_HL_LONG_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    const uint8_t OPCODE = get_opcode(instruction);
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "ADD HL, %c", instruction[1]);
+    long_reg_t dst = HL;
+    long_reg_t src = ((OPCODE & 0xF0) >> 4); 
+
+}
+
+clock_cycles_t RRA(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "RRA");
+}
+
+clock_cycles_t DAA(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "DAA");
+}
+
+clock_cycles_t CPL(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "CPL");
+}
+
+clock_cycles_t INC_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "INC (HL)");
+}
+
+clock_cycles_t DEC_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "DEC (HL)");
+}
+
+clock_cycles_t LD_ADDR_HL_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = true;
+    uint8_t imm = instruction[1];
+    uint16_t addr = get_long_reg(HL);
+
+    hardware.memory[addr] = imm;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "LD (HL), 0x%X", imm);
+    return TWELVE_CLOCKS;
+}
+
+clock_cycles_t SCF(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "SCF");
+}
+
+clock_cycles_t JR_C_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    uint8_t imm = instruction[1];
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "JR C 0x%X", imm);
+}
+
+clock_cycles_t CCF(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "CCF");
+}
+
+clock_cycles_t HALT(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "HALT");
+}
+
+clock_cycles_t ADC_A_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "ADC A, (HL)");
+}
+
+clock_cycles_t SUB_A_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "SUB A, (HL)");
+}
+
+clock_cycles_t SBC_A_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "SBC A, (HL)");
+}
+
+clock_cycles_t OR_A_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    const uint8_t OPCODE = get_opcode(instruction);
+    const reg_t src = OPCODE & 0x7;
+    hardware.is_implemented = false;
+
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "OR A, %c", REGISTER_CHAR(src));;
+}
+
+clock_cycles_t OR_A_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "OR A, (HL)");
+}
+
+clock_cycles_t RET_NZ(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "RET NZ");
+}
+
+clock_cycles_t CALL_NZ_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    uint8_t imm = instruction[1];
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "CALL NZ, 0x%X", imm);
+}
+
+clock_cycles_t ADD_A_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    hardware.is_implemented = false;
+    uint8_t imm = instruction[1];
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "ADD A, 0x%X", imm);
+}
+
+clock_cycles_t RST_x0h(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    const uint8_t OPCODE = get_opcode(instruction);
+    const uint8_t x = (OPCODE & 0x30) >> 4;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "RST %"PRIu8"0h", x);
+}
+
+clock_cycles_t RET_Z(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "RET Z");
+}
+
+clock_cycles_t RET_C(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "RET C");
+}
+
+clock_cycles_t JP_Z_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    hardware.is_implemented = false;
+    const uint8_t imm = two_u8s_to_u16(instruction[1], instruction[2]);
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "JP Z, 0x%X");
+}
+
+clock_cycles_t JP_C_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    hardware.is_implemented = false;
+    const uint8_t imm = two_u8s_to_u16(instruction[1], instruction[2]);
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "JP C, 0x%X", imm);
+}
+
+clock_cycles_t RST_x8h(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    const uint8_t OPCODE = get_opcode(instruction);
+    const uint8_t x = (OPCODE & 0x30) >> 4;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "RST %"PRIu8"8h", x);
+}
+
+clock_cycles_t RET_NC(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "RET NC");
+}
+
+clock_cycles_t CALL_NC_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    const uint8_t imm = two_u8s_to_u16(instruction[1], instruction[2]);
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "CALL NC 0x%X");
+}
+
+clock_cycles_t SUB_A_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    const uint8_t imm = instruction[1];
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "SUB A, 0x%X", imm);
+}
+
+clock_cycles_t CALL_C_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+        const uint8_t imm = two_u8s_to_u16(instruction[1], instruction[2]);
+
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "CALL C, 0x%X", imm);
+}
+
+clock_cycles_t SBC_A_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    const uint8_t imm = instruction[1];
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "SBC A, 0x%X", imm);
+}
+
+clock_cycles_t AND_A_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    const uint8_t imm = instruction[1];
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "AND A, 0x%X", imm);
+}
+
+clock_cycles_t ADD_SP_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    const uint8_t imm = instruction[1];
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "ADD SP, 0x%X", imm);
+}
+
+clock_cycles_t JP_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "JP HL");
+}
+
+clock_cycles_t XOR_A_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    const uint8_t imm = instruction[1];
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "XOR A, 0x%X", imm);
+}
+
+clock_cycles_t LD_A_DEREF_FF00_PLUS_C(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "LD A, (FF00 + C)");
+}
+
+clock_cycles_t DI(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = true;
+    hardware.ime_flag = 0;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "DI");
+    
+    return FOUR_CLOCKS;
+}
+
+clock_cycles_t OR_A_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    uint8_t imm = instruction[1];
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "OR A, 0x%X", imm);
+}
+
+clock_cycles_t LD_HL_SP_PLUS_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    int8_t imm = *(int8_t *)&instruction[1]; // changes meaning to signed
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "LD HL, SP + %#X", imm);
+}
+
+clock_cycles_t LD_SP_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "LD SP, HL");
+}
+
+clock_cycles_t LD_A_DEREF_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    uint16_t imm = two_u8s_to_u16(instruction[1], instruction[2]);
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "LD A, (0x%X)", imm);
+}
+
+clock_cycles_t EI(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "EI");
+}
+
+clock_cycles_t JP_NC_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    (void)instruction;
+    hardware.is_implemented = false;
+    uint16_t imm = two_u8s_to_u16(instruction[1], instruction[2]);
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "JP NC, 0x%X", imm);
+}
+
+clock_cycles_t JP_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]){
+    hardware.is_implemented = true;
+    const uint16_t imm = two_u8s_to_u16(instruction[1], instruction[2]);
+    hardware.pc = imm;
+
+    snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, "JP 0x%X", imm);
     return TWELVE_CLOCKS;
 }
 

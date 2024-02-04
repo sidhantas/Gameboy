@@ -128,8 +128,19 @@ uint8_t add(uint8_t val_1, uint8_t val_2, uint8_t carry) {
     res ? reset_flag(Z_FLAG) : set_flag(Z_FLAG);
     return res;
 }
+
+uint16_t addu16(uint16_t val_1, uint16_t val_2, uint8_t carry) {
+    uint32_t res = val_1 + val_2 + carry;
+    reset_flag(N_FLAG);
+}
+
+
 uint8_t get_crumb(uint8_t byte, uint8_t crumb) {
-    return (byte >> ((3 - crumb) * 2)) & 0x03;
+    return (byte >> (crumb * 2)) & 0x03;
+}
+
+uint8_t get_bit(uint8_t byte, uint8_t bit) {
+    return (byte >> bit) & 0x01;
 }
 
 struct timeval time_diff(struct timeval start, struct timeval end) {

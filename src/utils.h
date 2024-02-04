@@ -28,4 +28,5 @@ bool half_carry_on_subtract(uint8_t val_1, uint8_t val_2);
 uint8_t sub(uint8_t val_1, uint8_t val_2);
 uint8_t add(uint8_t val_1, uint8_t val_2, uint8_t carry);
 uint8_t get_crumb(uint8_t byte, uint8_t crumb);
+uint8_t get_bit(uint8_t byte, uint8_t bit);
 struct timeval time_diff(struct timeval start, struct timeval end);

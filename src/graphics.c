@@ -62,7 +62,7 @@ void update_pixel_buff(uint16_t dots, uint32_t *exec_count) {
 }
 
 uint32_t get_color_from_byte(uint8_t byte, uint16_t x) {
-    switch (get_crumb(byte, x % 4)) {
+    switch (get_crumb(byte, 3 - x % 4)) {
         case 0x00: return 0;
         case 0x01: return 0x55555555;
         case 0x02: return 0xAAAAAAAA;
