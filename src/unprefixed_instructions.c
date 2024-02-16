@@ -3,6 +3,7 @@
 #include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 clock_cycles_t LD_RR(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     hardware.is_implemented = true;

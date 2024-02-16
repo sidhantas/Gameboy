@@ -1,5 +1,4 @@
 #pragma once
-#include <inttypes.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -14,6 +13,7 @@
 #define TMA 0xFF06
 #define TAC 0xFF07
 #define IF 0xFF0F
+#define LCDC 0xFF40
 #define SCY 0xFF42
 #define LCDY 0xFF44
 
@@ -56,6 +56,7 @@ typedef struct Hardware {
     bool is_double_speed;
     char vram_mode;
     char oam_mode;
+    uint8_t mode;
     uint64_t instruction_count;
     uint8_t instruction[MAX_INSTRUCTION_SIZE];
     char decoded_instruction[MAX_DECODED_INSTRUCTION_SIZE];

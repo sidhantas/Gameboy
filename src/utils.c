@@ -129,18 +129,16 @@ uint8_t add(uint8_t val_1, uint8_t val_2, uint8_t carry) {
     return res;
 }
 
-uint16_t addu16(uint16_t val_1, uint16_t val_2, uint8_t carry) {
-    uint32_t res = val_1 + val_2 + carry;
-    reset_flag(N_FLAG);
-}
-
-
-uint8_t get_crumb(uint8_t byte, uint8_t crumb) {
+inline uint8_t get_crumb(uint8_t byte, uint8_t crumb) {
     return (byte >> (crumb * 2)) & 0x03;
 }
 
-uint8_t get_bit(uint8_t byte, uint8_t bit) {
+inline uint8_t get_bit(uint8_t byte, uint8_t bit) {
     return (byte >> bit) & 0x01;
+}
+
+inline void set_bit(uint8_t *byte, uint8_t bit) {
+     *byte |= (0x01 << bit);
 }
 
 struct timeval time_diff(struct timeval start, struct timeval end) {
@@ -152,4 +150,8 @@ struct timeval time_diff(struct timeval start, struct timeval end) {
         diff.tv_usec = end.tv_usec - start.tv_usec;
     }
     return diff;
+}
+
+int8_t uint8_to_int8(uint8_t n) {
+    return *(int8_t *)&n;
 }

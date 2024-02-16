@@ -1,7 +1,6 @@
 #pragma once
 #include "hardware.h"
 #include <ncurses.h>
-#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #define DMG_SIZE 256
@@ -29,4 +28,6 @@ uint8_t sub(uint8_t val_1, uint8_t val_2);
 uint8_t add(uint8_t val_1, uint8_t val_2, uint8_t carry);
 uint8_t get_crumb(uint8_t byte, uint8_t crumb);
 uint8_t get_bit(uint8_t byte, uint8_t bit);
+void set_bit(uint8_t *byte, uint8_t bit);
 struct timeval time_diff(struct timeval start, struct timeval end);
+int8_t uint8_to_int8(uint8_t n);

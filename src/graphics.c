@@ -1,6 +1,5 @@
 #include "graphics.h"
 #include "SDL_pixels.h"
-#include "SDL_rect.h"
 #include "SDL_render.h"
 #include "debug.h"
 #include "decoder.h"
@@ -9,7 +8,6 @@
 #include "utils.h"
 #include <SDL2/SDL.h>
 #include <ncurses.h>
-#include <signal.h>
 #include <string.h>
 #include <unistd.h>
 

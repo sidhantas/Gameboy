@@ -1,4 +1,3 @@
-#include "SDL.h"
 #include "SDL_events.h"
 #include "debug.h"
 #include "decoder.h"
