@@ -1,13 +1,11 @@
 #include "debug.h"
 #include "decoder.h"
-#include "graphics.h"
 #include "hardware.h"
 #include "ppu.h"
 #include "utils.h"
 #include <inttypes.h>
 #include <ncurses.h>
 #include <pthread.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -216,6 +214,10 @@ static void print_cpu_window(WINDOW *cpu_win) {
     mvwprintwhcenter(cpu_win, 9, 0, WIDTH, "Is Implemented: %-5s",
                      hardware.is_implemented ? "True" : "False");
     mvwprintwhcenter(cpu_win, 11, 0, WIDTH, "Instruction Count: %"PRIu64, hardware.instruction_count);
+    mvwprintwhcenter(cpu_win, 13, 0, WIDTH, "%-22s", "");
+    mvwprintwhcenter(cpu_win, 13, 0, WIDTH, "Available Dots: %0.5"PRIu64, dots);
+    mvwprintwhcenter(cpu_win, 14, 0, WIDTH, "Consumed Dots: %0.10"PRIu64, consumed_dots);
+    mvwprintwhcenter(cpu_win, 15, 0, WIDTH, "Mode: %"PRIu8, hardware.mode);
     wrefresh(cpu_win);
 }
 

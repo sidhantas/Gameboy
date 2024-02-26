@@ -1,9 +1,9 @@
 #include "SDL_events.h"
+#include "cpu.h"
 #include "debug.h"
 #include "decoder.h"
 #include "graphics.h"
 #include "hardware.h"
-#include "instructions.h"
 #include "ppu.h"
 #include "utils.h"
 #include <getopt.h>
@@ -11,7 +11,6 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/time.h>
 
 Hardware hardware;
@@ -20,6 +19,7 @@ void main_loop(void);
 
 int main(int argc, char **argv) {
     pthread_t debugger_id;
+    pthread_t cpu_id;
     pthread_t ppu_id;
     initialize_hardware(&hardware);
     initialize_ppu(&ppu);
@@ -45,66 +45,34 @@ int main(int argc, char **argv) {
     }
 
     pthread_create(&debugger_id, NULL, initialize_debugger, NULL);
-    pthread_create(&ppu_id, NULL, refresh_loop, NULL);
     open_window();
+    pthread_create(&cpu_id, NULL, start_cpu, NULL);
+    pthread_create(&ppu_id, NULL, start_ppu, NULL);
     main_loop();
     close_window();
-    end_ppu();
     end_debugger();
+    end_ppu();
+    end_cpu();
     pthread_join(debugger_id, NULL);
+    pthread_join(cpu_id, NULL);
     pthread_join(ppu_id, NULL);
 
     return 0;
 }
 
 void main_loop(void) {
-    uint32_t exec_count = 0;
-    struct timeval start, end, diff;
-    struct timeval game_start, game_end, game_diff;
-    SDL_Event event;
-    gettimeofday(&game_start, NULL);
-    gettimeofday(&start, NULL);
-    FILE *out = fopen("output.bench", "w");
-    uint16_t instructions_left = 0;
-    while (1) {
-        if (hardware.pc == 0x100) {
-            hardware.step_mode = true;
-        }
-        clock_cycles_t (*func)(uint8_t *) = fetch_instruction();
-        clock_cycles_t clocks = execute_instruction(func);
-        if (hardware.step_mode == true) {
-            if (instructions_left <= 0) {
-                while (true) {
-                    SDL_WaitEvent(&event);
-                    if (event.type == SDL_KEYDOWN) {
-                        if (event.key.keysym.scancode == SDL_SCANCODE_K) {
-                            instructions_left = 100;
-                        }
-                        break;
-                    }
-                    if (event.type == SDL_QUIT) {
-                        return;
-                    }
-                }
-            } else {
-                instructions_left--;
+    SDL_Event e;
+    bool end_main_loop = false;
+    while (!end_main_loop) {
+        while (SDL_PollEvent(&e)) {
+            switch (e.type) {
+                case SDL_QUIT:
+                    end_main_loop = true;
+                    break;
             }
         }
-        uint16_t dots = clocks * 4;
-        update_pixel_buff(dots, &exec_count);
-        gettimeofday(&end, NULL);
-        if (end.tv_usec < start.tv_usec) {
-            diff.tv_usec = 1000000 + end.tv_usec - start.tv_usec;
-        } else {
-            diff.tv_usec = end.tv_usec - start.tv_usec;
+        if (ppu.ready_to_render) {
+            update_pixel_buff();
         }
-        usleep((1000000 - diff.tv_usec) / CLOCK_RATE);
-        gettimeofday(&start, NULL);
-        exec_count++;
     }
-    gettimeofday(&game_end, NULL);
-    timersub(&game_end, &game_start, &game_diff);
-    fprintf(out, "THE BOOT TOOK %ld seconds and %d ms\n", game_diff.tv_sec,
-            game_diff.tv_usec);
-    fclose(out);
 }

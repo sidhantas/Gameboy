@@ -1,5 +1,4 @@
 #include "hardware.h"
-#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,7 +8,7 @@ void initialize_hardware(Hardware *hardware) {
     if (!(hardware->memory)) {
         fprintf(stderr, "Unable to allocate memory for memory\n");
     }
-    hardware->display_buffer = calloc(DISPLAY_SIZE, sizeof(uint8_t));
+    hardware->display_buffer = calloc(256 * 256, sizeof(uint32_t));
     if (!(hardware->display_buffer)) {
         fprintf(stderr, "Unable to allocate memory for display buff\n");
     }

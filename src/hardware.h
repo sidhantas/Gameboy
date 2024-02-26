@@ -14,14 +14,20 @@
 #define TAC 0xFF07
 #define IF 0xFF0F
 #define LCDC 0xFF40
+#define SCX 0xFF41
 #define SCY 0xFF42
+#define WX 0xFF4A
+#define WY 0xFF4B
 #define LCDY 0xFF44
 
 #define MAX_INSTRUCTION_SIZE 3
 #define REGISTER_COUNT 8
 #define RESOLUTION_SCALE 3
 #define TILE_MAP_WIDTH 256
-#define DISPLAY_SIZE ((256) / 4) * 256
+#define DISPLAY_WIDTH 160
+#define DISPLAY_HEIGHT 144
+#define SCAN_LINES 154
+#define DISPLAY_SIZE DISPLAY_WIDTH * DISPLAY_HEIGHT
 #define TILE_MAP_SIZE 32 * 32
 
 #define CLOCK_RATE 4190000
@@ -45,7 +51,7 @@ static inline char const *LONG_REGISTER_STR(enum LONG_REGS long_reg) {
 
 typedef struct Hardware {
     uint8_t *memory;
-    uint8_t *display_buffer;
+    uint32_t *display_buffer;
     uint8_t registers[REGISTER_COUNT];
     uint16_t sp;
     uint16_t stack_start;

@@ -1,15 +1,46 @@
 #include "ppu.h"
+#include "SDL_events.h"
+#include "SDL_render.h"
 #include "hardware.h"
 #include "utils.h"
 #include <ncurses.h>
+#include <pthread.h>
 #include <stdbool.h>
-#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #define ADDRESS_MODE_0_BP 0x8000
 #define ADDRESS_MODE_1_BP 0x9000
+#define DOTS_PER_LINE 456
+
+SDL_Event event;
+SDL_Renderer *renderer;
+SDL_Texture *texture;
+SDL_Window *window;
 
 bool close_ppu;
+uint64_t dots = 0;
+uint64_t consumed_dots = 0;
+uint16_t line_dots = 0;
+uint16_t line_x = 0;
+pthread_mutex_t dots_lock;
+pthread_mutex_t display_buffer_lock;
+
+static void render_loop(void);
+static void execute_mode_0(void);
+static void execute_mode_1(void);
+static void execute_mode_2(void);
+static void execute_mode_3(void);
+
+static uint8_t get_bg_pixel(uint8_t x, uint8_t y);
+static uint32_t get_color_from_byte(uint8_t byte);
+
+void *start_ppu(void *arg) {
+    (void)arg;
+    hardware.mode = 2;
+    render_loop();
+    return NULL;
+}
 
 void initialize_ppu(PPU *ppu) {
     close_ppu = false;
@@ -18,44 +49,95 @@ void initialize_ppu(PPU *ppu) {
     ppu->ready_to_render = false;
 }
 
-void end_ppu(void) { close_ppu = true; }
-
-static uint8_t get_row_byte_low(uint8_t hi, uint8_t low) {
-    uint8_t new = 0;
-    for (uint8_t i = 0; i < 4; i++) {
-        new |= ((hi >> i) & 0x1) << (2 * i + 1);
-        new |= ((low >> i) & 0x1) << (2 * i);
-    }
-    return new;
-}
-
-static uint8_t get_row_byte_hi(uint8_t hi, uint8_t low) {
-    uint8_t new = 0;
-    for (uint8_t i = 0; i < 4; i++) {
-        new |= ((hi >> (4 + i)) & 0x1) << (2 * i + 1);
-        new |= ((low >> (4 + i)) & 0x1) << (2 * i);
-    }
-    return new;
-}
-
-void set_display_buffer(uint16_t tile_start, uint8_t row, uint8_t col) {
-    uint16_t start = row * 64 * 8 + col * 2;
-    for (uint16_t i = 0; i < 8; i++) {
-        uint8_t low = get_memory_byte(tile_start + i * 2);
-        uint8_t hi = get_memory_byte(tile_start + i * 2 + 1);
-        hardware.display_buffer[start + i * 64] = get_row_byte_hi(hi, low);
-        hardware.display_buffer[start + i * 64 + 1] = get_row_byte_low(hi, low);
+void render_loop(void) {
+    while (close_ppu == false) {
+        switch (hardware.mode) {
+            case 0: execute_mode_0(); break;
+            case 1: execute_mode_1(); break;
+            case 2: execute_mode_2(); break;
+            case 3: execute_mode_3(); break;
+            default: exit(1); break;
+        }
     }
 }
 
-void set_win_display_buffer(uint16_t tile_start, uint8_t row, uint8_t col) {
-    uint16_t start = row * 64 * 8 + col * 2;
-    for (uint16_t i = 0; i < 8; i++) {
-        uint8_t low = get_memory_byte(tile_start + i * 2);
-        uint8_t hi = get_memory_byte(tile_start + i * 2 + 1);
-        hardware.display_buffer[start + i * 64] |= get_row_byte_hi(hi, low);
-        hardware.display_buffer[start + i * 64 + 1] |= get_row_byte_low(hi, low);
+bool consume_dots(uint64_t dots_to_consume) {
+    if (dots < dots_to_consume) {
+        return false;
+    };
+    pthread_mutex_lock(&dots_lock);
+    dots -= dots_to_consume;
+    pthread_mutex_unlock(&dots_lock);
+    consumed_dots += dots_to_consume;
+    line_dots += dots_to_consume;
+    return true;
+}
+
+static void execute_mode_2(void) {
+    // wait for 2 dots
+    if (!consume_dots(2)) {
+        return;
     }
+    if (line_dots > 80) {
+        line_x = 0;
+        hardware.mode = 3;
+    }
+    return;
+}
+
+void execute_mode_3(void) {
+    uint16_t penalty_dots = 0;
+    if (line_x == 0) {
+        penalty_dots += get_memory_byte(SCX) % 8;
+    }
+    if (line_x == get_memory_byte(WX) - 7) {
+        penalty_dots += 6;
+    }
+    // wait an extra dot for the pixel;
+    if (!consume_dots(penalty_dots + 1)) {
+        return; }
+    // Should overlap with win pixel if it exists
+    const uint8_t pixel = get_bg_pixel(line_x, get_memory_byte(LCDY));
+    pthread_mutex_lock(&display_buffer_lock);
+    hardware.display_buffer[(uint32_t)get_memory_byte(LCDY) * DISPLAY_WIDTH + line_x] = get_color_from_byte(pixel);
+    pthread_mutex_unlock(&display_buffer_lock);
+    if (++line_x > DISPLAY_WIDTH) {
+        hardware.mode = 0;
+    }
+    return;
+}
+
+void execute_mode_0(void) {
+    if (!consume_dots(1)) {
+        return;
+    }
+    if (line_dots >= 456) {
+        uint8_t current_y = get_memory_byte(LCDY) + 1;
+        if (current_y > DISPLAY_HEIGHT) {
+            ppu.ready_to_render = true;
+            hardware.mode = 1;
+        } else {
+            hardware.mode = 2;
+        }
+        set_memory_byte(LCDY, current_y);
+        line_dots %= 456;
+    }
+    return;
+}
+
+void execute_mode_1(void) {
+    if (!consume_dots(1)) {
+        return;
+    }
+    if (line_dots >= 456) {
+        uint8_t current_y = get_memory_byte(LCDY) + 1;
+        line_dots %= 456;
+        if (current_y >= SCAN_LINES) {
+            hardware.mode = 2;
+        }
+        set_memory_byte(LCDY, current_y % SCAN_LINES);
+    }
+    return;
 }
 
 static inline uint16_t get_tile_start(uint16_t relative_tile_address) {
@@ -69,67 +151,41 @@ static inline uint16_t get_tile_start(uint16_t relative_tile_address) {
     return tile_start;
 }
 
-uint16_t draw_background_tilemap(uint16_t dots) {
-    // Tile address at 0x9800 is equivalent to 8 by 8 tile at 0, 0 on display
-    // Tile at 0x9801 is 8 by 8 at 0, 8
-    // Tile at 0x9820 is 8 by 8 at 8, 0
+uint8_t get_pixel(uint8_t hi, uint8_t low, uint8_t n) {
+    return (hi >> (n - 1) | low >> n) | 0xFF;
+}
+
+uint8_t get_bg_pixel(uint8_t x, uint8_t y) {
+    const uint8_t x_off = get_memory_byte(SCX);
+    const uint8_t y_off = get_memory_byte(SCY);
+
+    x = x + x_off;
+    y = y + y_off;
+    const uint8_t tile_x = x / 8;
+    const uint8_t tile_y = y / 8;
+
+    const uint16_t BG_TILE_MAP_AREA =
+        get_bit(get_memory_byte(LCDC), 3) ? 0x9C00 : 0x9800;
+    const uint16_t TILE_MAP_ADDR = BG_TILE_MAP_AREA + tile_y * 32 + tile_x;
+    const uint16_t tile_start = get_tile_start(get_memory_byte(TILE_MAP_ADDR));
+    uint8_t low = get_memory_byte(tile_start + (y % 8) * 2);
+    uint8_t hi = get_memory_byte(tile_start + (y % 8) * 2 + 1);
+
+    // intertwine bytes
     //
-    // TODO: Need to use dots here
-    //
+    const uint8_t hi_bit = get_bit(hi, 7 - x % 8);
+    const uint8_t low_bit = get_bit(low, 7 - x % 8);
+    return hi_bit << 1 | low_bit;
+}
 
-    static uint16_t i = 0;
-    static uint16_t j = 0;
-
-    const uint8_t LCDY_VAL = get_memory_byte(LCDY);
-
-    while (i < 456) {
-        const uint16_t BG_TILE_MAP_AREA = get_bit(get_memory_byte(LCDC), 3) ? 0x9C00 : 0x9800;
-
-        i++;
-        dots--;
-        if (!dots) {
-            return 0;
-        }
-    }
-    for (uint16_t i = 0; i < 32; i++) {
-        for (uint16_t j = 0; j < 32; j++) {
-            // iterate through every tile in the tile map
-            const uint16_t BG_TILE_MAP_AREA = get_bit(get_memory_byte(LCDC), 3) ? 0x9C00 : 0x9800;
-            const uint16_t TILE_MAP_ADDR = BG_TILE_MAP_AREA + i * 32 + j;
-            const uint16_t tile_start = get_tile_start(get_memory_byte(TILE_MAP_ADDR));
-            set_display_buffer(tile_start, i, j);
-        }
+static uint32_t get_color_from_byte(uint8_t byte) {
+    switch (byte) {
+        case 0x00: return 0;
+        case 0x01: return 0x55555555;
+        case 0x02: return 0xAAAAAAAA;
+        case 0x03: return 0xFFFFFFFF;
+        default: return UINT32_MAX;
     }
 }
 
-
-void draw_window_tilemap(uint16_t dots) {
-    for (uint16_t i = 0; i < 32; i++) {
-        for (uint16_t j = 0; j < 32; j++) {
-            const uint16_t WIN_TILE_MAP_AREA = get_bit(get_memory_byte(LCDC), 6) ? 0x9C00 : 0x9800;
-            const uint16_t TILE_MAP_ADDR = WIN_TILE_MAP_AREA + i * 32 + j;
-            const uint16_t tile_start = get_tile_start(get_memory_byte(TILE_MAP_ADDR));
-            set_win_display_buffer(tile_start, i, j);
-        }
-    }
-}
-
-void *refresh_loop(void *arg) {
-    (void)arg;
-    while (true) {
-        if (close_ppu) {
-            break;
-        }
-
-        set_bit(&hardware.memory[LCDC], 6);
-        const uint8_t LCDC_VAL = get_memory_byte(LCDC);
-        if (get_bit(LCDC_VAL, 0)) {
-            draw_background_tilemap();
-            if (get_bit(LCDC_VAL, 5)) {
-                draw_window_tilemap();
-            }
-        }
-        usleep(5000);
-    }
-    return NULL;
-}
+void end_ppu(void) { close_ppu = true; }
