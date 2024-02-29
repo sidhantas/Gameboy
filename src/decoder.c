@@ -2,8 +2,8 @@
 #include "hardware.h"
 #include "instructions.h"
 #include "utils.h"
-#include <inttypes.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 static clock_cycles_t (
     *decode_unprefixed_instruction(uint8_t instruction[MAX_INSTRUCTION_SIZE]))(
@@ -15,16 +15,15 @@ static clock_cycles_t (
 clock_cycles_t (*fetch_instruction(void))(
     uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     clock_cycles_t (*execute_func)(uint8_t *);
-    if (get_memory_byte(hardware.pc) == 0xCB) {
+    clear_instruction();
+    if (get_memory_byte(get_pc()) == 0xCB) {
         // Instruction has 0xCB prefix
-        hardware.instruction[0] = get_memory_byte(post_inc(&hardware.pc));
-        hardware.instruction[1] = get_memory_byte(post_inc(&hardware.pc));
-        execute_func = decode_prefixed_instruction(hardware.instruction);
+        append_instruction(0);
+        append_instruction(1);
+        execute_func = decode_prefixed_instruction(get_instruction());
     } else {
-        hardware.instruction[0] = get_memory_byte(post_inc(&hardware.pc));
-        hardware.instruction[1] = 0;
-        hardware.instruction[2] = 0;
-        execute_func = decode_unprefixed_instruction(hardware.instruction);
+        append_instruction(0);
+        execute_func = decode_unprefixed_instruction(get_instruction());
     }
     return execute_func;
 }
@@ -32,9 +31,13 @@ clock_cycles_t (*fetch_instruction(void))(
 clock_cycles_t execute_instruction(
     clock_cycles_t execute_func(uint8_t instruction[MAX_INSTRUCTION_SIZE])) {
     if (execute_func) {
-        hardware.is_implemented = false;
-        hardware.instruction_count++;
-        return (*execute_func)(hardware.instruction);
+        inc_instruction_count();
+        clock_cycles_t clocks = (*execute_func)(get_instruction());
+        if (clocks >= 0) {
+            return clocks;
+        } else {
+            set_is_implemented(false);
+        }
     }
     return 0;
 }
@@ -56,8 +59,7 @@ static clock_cycles_t (*decode_prefixed_instruction(
             return &BIT_B_R;
         }
         default:
-            snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE,
-                     "UNK");
+            set_decoded_instruction("UNK");
             return NULL;
     }
 }
@@ -128,7 +130,7 @@ static clock_cycles_t (
         case 0x1E:
         case 0x2E:
         case 0x3E: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
             return &LD_R_IMM;
         }
         case 0x04:
@@ -217,16 +219,16 @@ static clock_cycles_t (
             return &LD_ADDR_HL_DEC_A;
         }
         case 0x20: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
             return &JR_NZ_IMM;
         }
         case 0x30: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
             return &JR_NC_IMM;
         }
         case 0xE0: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
-            return &LD_IO_REGISTER_A;
+            append_instruction(1);
+            return &LD_ADDR_FF00_PLUS_IMM_REGISTER_A;
         }
         case 0xE2: {
             return &LD_DEREF_FF00_PLUS_C_A;
@@ -266,11 +268,11 @@ static clock_cycles_t (
             return &DEC_DEREF_HL;
         }
         case 0x36: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
             return &LD_ADDR_HL_IMM;
         }
         case 0x37: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
             return &SCF;
         }
         case 0x38: {
@@ -307,12 +309,12 @@ static clock_cycles_t (
             return &RET_NZ;
         }
         case 0xc4: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
-            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
+            append_instruction(2);
             return &CALL_NZ_IMM;
         }
         case 0xc6: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
             return &ADD_A_IMM;
         }
         case 0xC7:
@@ -328,13 +330,13 @@ static clock_cycles_t (
             return &RET_C;
         }
         case 0xCA: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
-            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
+            append_instruction(2);
             return &JP_Z_IMM;
         }
         case 0xDA: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
-            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
+            append_instruction(2);
             return &JP_C_IMM;
         }
         case 0xCF:
@@ -347,36 +349,36 @@ static clock_cycles_t (
             return &RET_NC;
         }
         case 0xD4: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
-            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
+            append_instruction(2);
             return &CALL_NC_IMM;
         }
         case 0xD6: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
             return &SUB_A_IMM;
         }
         case 0xDC: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
-            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
+            append_instruction(2);
             return &CALL_C_IMM;
         }
         case 0xDE: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
             return &SBC_A_IMM;
         }
         case 0xE6: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
             return &AND_A_IMM;
         }
         case 0xE8: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
             return &ADD_SP_IMM;
         }
         case 0xE9: {
             return &JP_HL;
         }
         case 0xEE: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
             return &XOR_A_IMM;
         }
         case 0xF2: {
@@ -386,19 +388,19 @@ static clock_cycles_t (
             return &DI;
         }
         case 0xF6: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
             return &OR_A_IMM;
         }
         case 0xF8: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
             return &LD_HL_SP_PLUS_IMM;
         }
         case 0xF9: {
             return &LD_SP_HL;
         }
         case 0xFA: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
-            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
+            append_instruction(2);
             return &LD_A_DEREF_IMM;
         }
         case 0xFB: {
@@ -408,8 +410,8 @@ static clock_cycles_t (
         case 0x11:
         case 0x21:
         case 0x31: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
-            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
+            append_instruction(2);
 
             return &LD_LONG_R_IMM;
         }
@@ -439,33 +441,33 @@ static clock_cycles_t (
         }
 
         case 0xFE: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
             return &CP_A_IMM;
         }
 
         case 0xCD: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
-            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
+            append_instruction(2);
 
             return &CALL_IMM;
         }
 
         case 0xEA: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
-            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
+            append_instruction(2);
 
             return &LD_ADDR_IMM_A;
         }
         case 0x18: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
             return &JR_IMM;
         }
         case 0x28: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
             return &JR_Z_IMM;
         }
         case 0xF0: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
             return &LD_A_DEREF_FF00_PLUS_IMM;
         }
         case 0xBE: {
@@ -475,7 +477,7 @@ static clock_cycles_t (
             return &RLA;
         }
         case 0xCE: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
             return &ADC_A_IMM;
         }
         case 0xc9: {
@@ -485,28 +487,28 @@ static clock_cycles_t (
             return &RETI;
         }
         case 0xCC: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
-            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
+            append_instruction(2);
             return &CALL_Z_IMM;
         }
         case 0x08: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
-            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
+            append_instruction(2);
             return &LD_ADDR_IMM_SP;
         }
         case 0xc2: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
-            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
+            append_instruction(2);
             return &JP_NZ_IMM;
         }
         case 0xD2: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
-            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
+            append_instruction(2);
             return &JP_NC_IMM;
         }
         case 0xc3: {
-            instruction[1] = get_memory_byte(post_inc(&hardware.pc));
-            instruction[2] = get_memory_byte(post_inc(&hardware.pc));
+            append_instruction(1);
+            append_instruction(2);
             return &JP_IMM;
         }
         case 0x00: {
@@ -524,13 +526,11 @@ static clock_cycles_t (
         case 0xFC:
         case 0xFD: {
 
-            snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE,
-                     "INVALID");
+            set_decoded_instruction("INVALID");
             return &UNK;
         }
         default:
-            snprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE,
-                     "UNK");
+            set_decoded_instruction("UNK");
             return &UNK;
     }
 }

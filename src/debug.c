@@ -14,8 +14,8 @@ static void print_cpu_window(WINDOW *cpu_win);
 static void print_flags_window(WINDOW *flags_win);
 static void print_stack_window(WINDOW *stack_win);
 static void print_memory_window(WINDOW *mem_win, uint16_t start_address);
-static void print_display_buffer_window(WINDOW *display_buf_win,
-                                        const uint16_t start_address);
+//static void print_display_buffer_window(WINDOW *display_buf_win,
+//                                       const uint16_t start_address);
 
 void refresh_debugger(void);
 WINDOW *display_buff_win;
@@ -85,47 +85,47 @@ void refresh_debugger(void) {
     print_flags_window(flags_win);
     print_cpu_window(cpu_win);
     print_memory_window(mem_win, mem_win_addr);
-    print_display_buffer_window(display_buff_win, display_buf_addr);
+    //print_display_buffer_window(display_buff_win, display_buf_addr);
     print_stack_window(stack_win);
     refresh();
 }
 
-static void print_display_buffer_window(WINDOW *disp_win,
-                                        const uint16_t start_address) {
-
-    uint16_t WIDTH = 0;
-    uint16_t HEIGHT = 0;
-
-    getmaxyx(disp_win, HEIGHT, WIDTH);
-    box(disp_win, 0, 0);
-    mvwprintwhcenter(disp_win, 0, 0, WIDTH, "Display");
-    for (int i = 2; i < WIDTH / 5; i++) {
-        mvwprintw(disp_win, 1, i * 5, "0x%X", i - 2);
-        wmove(disp_win, 1, i * 5 - 2);
-        wvline(disp_win, 0, HEIGHT - 2);
-    }
-    wmove(disp_win, 2, 1);
-    whline(disp_win, 0, WIDTH - 2);
-
-    for (int i = 3; i < HEIGHT - 1; i++) {
-        mvwprintw(disp_win, i, 1, "0x%0.4X", start_address + 0x10 * (i - 3));
-        for (int j = 2; j < WIDTH / 5; j++) {
-            if (hardware
-                    .display_buffer[start_address + 0x10 * (i - 3) + (j - 2)]) {
-                wattron(disp_win, COLOR_PAIR(1));
-                mvwprintw(disp_win, i, j * 5 - 1, "0x%0.2X",
-                          hardware.display_buffer[start_address +
-                                                  0x10 * (i - 3) + (j - 2)]);
-                wattroff(disp_win, COLOR_PAIR(1));
-            } else {
-                mvwprintw(disp_win, i, j * 5 - 1, "0x%0.2X",
-                          hardware.display_buffer[start_address +
-                                                  0x10 * (i - 3) + (j - 2)]);
-            }
-        }
-    }
-    wrefresh(disp_win);
-}
+//static void print_display_buffer_window(WINDOW *disp_win,
+//                                        const uint16_t start_address) {
+//
+//    uint16_t WIDTH = 0;
+//    uint16_t HEIGHT = 0;
+//
+//    getmaxyx(disp_win, HEIGHT, WIDTH);
+//    box(disp_win, 0, 0);
+//    mvwprintwhcenter(disp_win, 0, 0, WIDTH, "Display");
+//    for (int i = 2; i < WIDTH / 5; i++) {
+//        mvwprintw(disp_win, 1, i * 5, "0x%X", i - 2);
+//        wmove(disp_win, 1, i * 5 - 2);
+//        wvline(disp_win, 0, HEIGHT - 2);
+//    }
+//    wmove(disp_win, 2, 1);
+//    whline(disp_win, 0, WIDTH - 2);
+//
+//    for (int i = 3; i < HEIGHT - 1; i++) {
+//        mvwprintw(disp_win, i, 1, "0x%0.4X", start_address + 0x10 * (i - 3));
+//        for (int j = 2; j < WIDTH / 5; j++) {
+//            if (hardware
+//                    .display_buffer[start_address + 0x10 * (i - 3) + (j - 2)]) {
+//                wattron(disp_win, COLOR_PAIR(1));
+//                mvwprintw(disp_win, i, j * 5 - 1, "0x%0.2X",
+//                          hardware.display_buffer[start_address +
+//                                                  0x10 * (i - 3) + (j - 2)]);
+//                wattroff(disp_win, COLOR_PAIR(1));
+//            } else {
+//                mvwprintw(disp_win, i, j * 5 - 1, "0x%0.2X",
+//                          hardware.display_buffer[start_address +
+//                                                  0x10 * (i - 3) + (j - 2)]);
+//            }
+//        }
+//    }
+//    wrefresh(disp_win);
+//}
 
 static void print_memory_window(WINDOW *mem_win, uint16_t start_address) {
     uint16_t WIDTH = 0;
@@ -144,16 +144,16 @@ static void print_memory_window(WINDOW *mem_win, uint16_t start_address) {
     for (int i = 3; i < HEIGHT - 1; i++) {
         mvwprintw(mem_win, i, 1, "0x%0.4X", start_address + 0x10 * (i - 3));
         for (int j = 2; j < WIDTH / 5; j++) {
-            if (hardware.memory[start_address + 0x10 * (i - 3) + (j - 2)]) {
+            if (get_memory_byte(start_address + 0x10 * (i - 3) + (j - 2))) {
                 wattron(mem_win, COLOR_PAIR(1));
                 mvwprintw(
                     mem_win, i, j * 5 - 1, "0x%0.2X",
-                    hardware.memory[start_address + 0x10 * (i - 3) + (j - 2)]);
+                    get_memory_byte(start_address + 0x10 * (i - 3) + (j - 2)));
                 wattroff(mem_win, COLOR_PAIR(1));
             } else {
                 mvwprintw(
                     mem_win, i, j * 5 - 1, "0x%0.2X",
-                    hardware.memory[start_address + 0x10 * (i - 3) + (j - 2)]);
+                    get_memory_byte(start_address + 0x10 * (i - 3) + (j - 2)));
             }
         }
     }
@@ -179,8 +179,8 @@ static void print_stack_window(WINDOW *stack_win) {
     wmove(stack_win, 2, 1);
     whline(stack_win, 0, WIDTH - 2);
 
-    for (uint32_t i = hardware.sp; i <= 0xFFFE; i += 2) {
-        if (i == hardware.sp) {
+    for (uint32_t i = get_sp(); i <= 0xFFFE; i += 2) {
+        if (i == get_sp()) {
             mvwprintwhcenter(stack_win, 4 + 0xFFFE - i / 2, 0, WIDTH / 2,
                              "0x%X", i);
             mvwprintwhcenter(stack_win, 4 + 0xFFFE - i / 2, WIDTH / 2,
@@ -190,8 +190,8 @@ static void print_stack_window(WINDOW *stack_win) {
         mvwprintwhcenter(stack_win, 4 + 0xFFFE - i / 2, 0, WIDTH / 2, "0x%X",
                          i);
         mvwprintwhcenter(stack_win, 4 + 0xFFFE - i / 2, WIDTH / 2, WIDTH / 2,
-                         "0x%0.2X 0x%0.2X", hardware.memory[i],
-                         hardware.memory[i + 1]);
+                         "0x%0.2X 0x%0.2X", get_memory_byte(i),
+                         get_memory_byte(i + 1));
     }
 
     wrefresh(stack_win);
@@ -206,18 +206,21 @@ static void print_cpu_window(WINDOW *cpu_win) {
     mvwprintwhcenter(cpu_win, 3, 0, WIDTH, "Instruction:");
 
     mvwprintwhcenter(cpu_win, 4, 0, WIDTH, "0x%0.2x 0x%0.2x 0x%0.2x",
-                     hardware.instruction[0], hardware.instruction[1],
-                     hardware.instruction[2]);
+                     get_instruction()[0], get_instruction()[1],
+                     get_instruction()[2]);
     mvwprintwhcenter(cpu_win, 6, 0, WIDTH, "Decode:");
     mvwprintwhcenter(cpu_win, 7, 0, WIDTH, "%-22s", "");
-    mvwprintwhcenter(cpu_win, 7, 0, WIDTH, "%s", hardware.decoded_instruction);
+    mvwprintwhcenter(cpu_win, 7, 0, WIDTH, "%s", get_decoded_instruction());
     mvwprintwhcenter(cpu_win, 9, 0, WIDTH, "Is Implemented: %-5s",
-                     hardware.is_implemented ? "True" : "False");
-    mvwprintwhcenter(cpu_win, 11, 0, WIDTH, "Instruction Count: %"PRIu64, hardware.instruction_count);
+                     get_is_implemented() ? "True" : "False");
+    mvwprintwhcenter(cpu_win, 11, 0, WIDTH, "Instruction Count: %"PRIu64, get_instruction_count());
     mvwprintwhcenter(cpu_win, 13, 0, WIDTH, "%-22s", "");
-    mvwprintwhcenter(cpu_win, 13, 0, WIDTH, "Available Dots: %0.5"PRIu64, dots);
-    mvwprintwhcenter(cpu_win, 14, 0, WIDTH, "Consumed Dots: %0.10"PRIu64, consumed_dots);
-    mvwprintwhcenter(cpu_win, 15, 0, WIDTH, "Mode: %"PRIu8, hardware.mode);
+    mvwprintwhcenter(cpu_win, 13, 0, WIDTH, "Available Dots: %0.5"PRIu64, ppu.available_dots);
+    mvwprintwhcenter(cpu_win, 14, 0, WIDTH, "Consumed Dots: %0.10"PRIu64, ppu.consumed_dots);
+    mvwprintwhcenter(cpu_win, 15, 0, WIDTH, "Mode: %"PRIu8, get_mode());
+    mvwprintwhcenter(cpu_win, 16, 0, WIDTH, "Previous Decode:");
+    mvwprintwhcenter(cpu_win, 17, 0, WIDTH, "%-22s", "");
+    mvwprintwhcenter(cpu_win, 17, 0, WIDTH, "%s", get_previous_decoded_instruction());
     wrefresh(cpu_win);
 }
 
@@ -242,46 +245,46 @@ static void print_register_window(WINDOW *registers_win) {
     // Draw Register Labels and Values
     mvwprintw(registers_win, 3, WIDTH / 4 - 1, "B");
     mvwprintw(registers_win, 3, WIDTH / 2 + 2, "0x%0.2X",
-              hardware.registers[B]);
+              get_register(B));
 
     mvwprintw(registers_win, 4, WIDTH / 4 - 1, "C");
     mvwprintw(registers_win, 4, WIDTH / 2 + 2, "0x%0.2X",
-              hardware.registers[C]);
+              get_register(C));
 
     mvwprintw(registers_win, 5, WIDTH / 4 - 1, "D");
     mvwprintw(registers_win, 5, WIDTH / 2 + 2, "0x%0.2X",
-              hardware.registers[D]);
+              get_register(D));
 
     mvwprintw(registers_win, 6, WIDTH / 4 - 1, "E");
     mvwprintw(registers_win, 6, WIDTH / 2 + 2, "0x%0.2X",
-              hardware.registers[E]);
+              get_register(E));
 
     mvwprintw(registers_win, 7, WIDTH / 4 - 1, "H");
     mvwprintw(registers_win, 7, WIDTH / 2 + 2, "0x%0.2X",
-              hardware.registers[H]);
+              get_register(H));
 
     mvwprintw(registers_win, 8, WIDTH / 4 - 1, "L");
     mvwprintw(registers_win, 8, WIDTH / 2 + 2, "0x%0.2X",
-              hardware.registers[L]);
+              get_register(L));
 
     mvwprintw(registers_win, 9, WIDTH / 4 - 1, "F");
     mvwprintw(registers_win, 9, WIDTH / 2 + 2, "0x%0.2X",
-              hardware.registers[F]);
+              get_register(F));
 
     mvwprintw(registers_win, 10, WIDTH / 4 - 1, "A");
     mvwprintw(registers_win, 10, WIDTH / 2 + 2, "0x%0.2X",
-              hardware.registers[A]);
+              get_register(A));
 
     // Draw PC and SP labels
     mvwprintw(registers_win, 12, WIDTH / 4 - 1, "SP");
-    mvwprintw(registers_win, 12, WIDTH / 2 + 2, "0x%0.2X", hardware.sp);
+    mvwprintw(registers_win, 12, WIDTH / 2 + 2, "0x%0.2X", get_sp());
 
     mvwprintw(registers_win, 13, WIDTH / 4 - 1, "PC");
-    mvwprintw(registers_win, 13, WIDTH / 2 + 2, "0x%0.2X", hardware.pc);
+    mvwprintw(registers_win, 13, WIDTH / 2 + 2, "0x%0.2X", get_pc());
     wrefresh(registers_win);
 
     mvwprintw(registers_win, 15, WIDTH / 4 - 1, "IME");
-    mvwprintw(registers_win, 15, WIDTH / 2 + 2, "0x%0.2X", hardware.ime_flag);
+    mvwprintw(registers_win, 15, WIDTH / 2 + 2, "0x%0.2X", get_ime_flag());
     wrefresh(registers_win);
 }
 

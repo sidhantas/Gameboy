@@ -5,6 +5,7 @@ static inline uint8_t get_opcode(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 }
 
 typedef enum {
+    INVALID_CLOCKS = -1,
     ZERO_CLOCKS = 0,
     FOUR_CLOCKS = 4,
     EIGHT_CLOCKS = 8,
@@ -37,7 +38,7 @@ clock_cycles_t LD_ADDR_HL_INC_A(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
 clock_cycles_t LD_ADDR_HL_DEC_A(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
 clock_cycles_t JR_NZ_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
 clock_cycles_t JR_NC_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
-clock_cycles_t LD_IO_REGISTER_A(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t LD_ADDR_FF00_PLUS_IMM_REGISTER_A(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
 clock_cycles_t LD_DEREF_FF00_PLUS_C_A(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
 clock_cycles_t LD_LONG_R_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
 clock_cycles_t INC_LONG_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]);

@@ -13,18 +13,16 @@
 #define ADDRESS_MODE_1_BP 0x9000
 #define DOTS_PER_LINE 456
 
+PPU ppu;
+
 SDL_Event event;
 SDL_Renderer *renderer;
 SDL_Texture *texture;
 SDL_Window *window;
 
 bool close_ppu;
-uint64_t dots = 0;
-uint64_t consumed_dots = 0;
-uint16_t line_dots = 0;
-uint16_t line_x = 0;
-pthread_mutex_t dots_lock;
-pthread_mutex_t display_buffer_lock;
+pthread_mutex_t dots_mutex;
+pthread_mutex_t display_buffer_mutex;
 
 static void render_loop(void);
 static void execute_mode_0(void);
@@ -37,21 +35,24 @@ static uint32_t get_color_from_byte(uint8_t byte);
 
 void *start_ppu(void *arg) {
     (void)arg;
-    hardware.mode = 2;
+    ppu.mode = 2;
     render_loop();
     return NULL;
 }
 
-void initialize_ppu(PPU *ppu) {
+void initialize_ppu(void) {
     close_ppu = false;
-    ppu->line_dots = 0;
-    ppu->mode = 0;
-    ppu->ready_to_render = false;
+    ppu.line_dots = 0;
+    ppu.mode = 0;
+    ppu.ready_to_render = false;
+    ppu.available_dots = 0;
+    ppu.consumed_dots = 0;
+    ppu.line_x = 0;
 }
 
 void render_loop(void) {
     while (close_ppu == false) {
-        switch (hardware.mode) {
+        switch (ppu.mode) {
             case 0: execute_mode_0(); break;
             case 1: execute_mode_1(); break;
             case 2: execute_mode_2(); break;
@@ -62,14 +63,14 @@ void render_loop(void) {
 }
 
 bool consume_dots(uint64_t dots_to_consume) {
-    if (dots < dots_to_consume) {
+    if (ppu.available_dots < dots_to_consume) {
         return false;
     };
-    pthread_mutex_lock(&dots_lock);
-    dots -= dots_to_consume;
-    pthread_mutex_unlock(&dots_lock);
-    consumed_dots += dots_to_consume;
-    line_dots += dots_to_consume;
+    pthread_mutex_lock(&dots_mutex);
+    ppu.available_dots -= dots_to_consume;
+    pthread_mutex_unlock(&dots_mutex);
+    ppu.consumed_dots += dots_to_consume;
+    ppu.line_dots += dots_to_consume;
     return true;
 }
 
@@ -78,31 +79,31 @@ static void execute_mode_2(void) {
     if (!consume_dots(2)) {
         return;
     }
-    if (line_dots > 80) {
-        line_x = 0;
-        hardware.mode = 3;
+    if (ppu.line_dots > 80) {
+        ppu.line_x = 0;
+        ppu.mode = 3;
     }
     return;
 }
 
 void execute_mode_3(void) {
     uint16_t penalty_dots = 0;
-    if (line_x == 0) {
+    if (ppu.line_x == 0) {
         penalty_dots += get_memory_byte(SCX) % 8;
     }
-    if (line_x == get_memory_byte(WX) - 7) {
+    if (ppu.line_x == get_memory_byte(WX) - 7) {
         penalty_dots += 6;
     }
     // wait an extra dot for the pixel;
     if (!consume_dots(penalty_dots + 1)) {
         return; }
     // Should overlap with win pixel if it exists
-    const uint8_t pixel = get_bg_pixel(line_x, get_memory_byte(LCDY));
-    pthread_mutex_lock(&display_buffer_lock);
-    hardware.display_buffer[(uint32_t)get_memory_byte(LCDY) * DISPLAY_WIDTH + line_x] = get_color_from_byte(pixel);
-    pthread_mutex_unlock(&display_buffer_lock);
-    if (++line_x > DISPLAY_WIDTH) {
-        hardware.mode = 0;
+    const uint8_t pixel = get_bg_pixel(ppu.line_x, get_memory_byte(LCDY));
+    set_display_pixel(ppu.line_x, get_memory_byte(LCDY), get_color_from_byte(pixel));
+    pthread_mutex_lock(&display_buffer_mutex);
+    pthread_mutex_unlock(&display_buffer_mutex);
+    if (++ppu.line_x > DISPLAY_WIDTH) {
+        ppu.mode = 0;
     }
     return;
 }
@@ -111,16 +112,16 @@ void execute_mode_0(void) {
     if (!consume_dots(1)) {
         return;
     }
-    if (line_dots >= 456) {
+    if (ppu.line_dots >= 456) {
         uint8_t current_y = get_memory_byte(LCDY) + 1;
         if (current_y > DISPLAY_HEIGHT) {
             ppu.ready_to_render = true;
-            hardware.mode = 1;
+            ppu.mode = 1;
         } else {
-            hardware.mode = 2;
+            ppu.mode = 2;
         }
         set_memory_byte(LCDY, current_y);
-        line_dots %= 456;
+        ppu.line_dots %= 456;
     }
     return;
 }
@@ -129,11 +130,11 @@ void execute_mode_1(void) {
     if (!consume_dots(1)) {
         return;
     }
-    if (line_dots >= 456) {
+    if (ppu.line_dots >= 456) {
         uint8_t current_y = get_memory_byte(LCDY) + 1;
-        line_dots %= 456;
+        ppu.line_dots %= 456;
         if (current_y >= SCAN_LINES) {
-            hardware.mode = 2;
+            ppu.mode = 2;
         }
         set_memory_byte(LCDY, current_y % SCAN_LINES);
     }

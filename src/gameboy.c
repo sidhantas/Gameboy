@@ -13,16 +13,15 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-Hardware hardware;
-PPU ppu;
+uint64_t instructions_left = 0;
 void main_loop(void);
 
 int main(int argc, char **argv) {
     pthread_t debugger_id;
     pthread_t cpu_id;
     pthread_t ppu_id;
-    initialize_hardware(&hardware);
-    initialize_ppu(&ppu);
+    initialize_hardware();
+    initialize_ppu();
 
     FILE *dmg = fopen("dmg.bin", "r");
     FILE *game;
@@ -66,9 +65,15 @@ void main_loop(void) {
     while (!end_main_loop) {
         while (SDL_PollEvent(&e)) {
             switch (e.type) {
-                case SDL_QUIT:
-                    end_main_loop = true;
-                    break;
+                case SDL_QUIT: end_main_loop = true; break;
+                case SDL_KEYDOWN:
+                    if (e.key.keysym.scancode == SDL_SCANCODE_K) {
+                        instructions_left += 100;
+                    } else if (e.key.keysym.scancode == SDL_SCANCODE_N) {
+                        instructions_left += 1;
+                    } else if (e.key.keysym.scancode == SDL_SCANCODE_B) {
+                        instructions_left += 1000;
+                    }
             }
         }
         if (ppu.ready_to_render) {

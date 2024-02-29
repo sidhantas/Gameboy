@@ -1,41 +1,57 @@
 #include "cpu.h"
 #include "decoder.h"
-#include "instructions.h"
+#include "hardware.h"
 #include "ppu.h"
 #include <pthread.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
 #include <unistd.h>
 
 bool close_cpu = false;
 bool step_mode = false;
-
+#define CPU_CATCH_UP 100
 void *start_cpu(void *arg) {
     (void)arg;
     struct timeval start, end, diff;
     uint16_t exec_count = 0;
+    suseconds_t expected_time = CPU_CATCH_UP * 1000000 / CLOCK_RATE;
     gettimeofday(&start, NULL);
+    set_memory_byte(JOYP, 0x3F);
     while (true) {
+        if (get_is_implemented() == false) {
+            step_mode = true;
+        }
         if (close_cpu) {
             break;
         }
-        if (step_mode) {
+        if (step_mode && instructions_left <= 0) {
             continue;
+        } else if (step_mode) {
+            instructions_left -= 1;
         }
         clock_cycles_t (*func)(uint8_t *) = fetch_instruction();
         clock_cycles_t clocks = execute_instruction(func);
-        exec_count++;
-        pthread_mutex_lock(&dots_lock);
-        dots += clocks * 4;
-        pthread_mutex_unlock(&dots_lock);
-        if (exec_count >= 10) {
-            exec_count -= 10;
+        pthread_mutex_lock(&dots_mutex);
+        ppu.available_dots += clocks * 4;
+        pthread_mutex_unlock(&dots_mutex);
+        exec_count += clocks;
+        if (exec_count >= CPU_CATCH_UP) {
+            exec_count -= CPU_CATCH_UP;
             gettimeofday(&end, NULL);
-            timersub(&end, &start, &diff);
-            usleep(10);
+            if (end.tv_usec < start.tv_usec) {
+                diff.tv_usec = 1000000 + end.tv_usec - start.tv_usec;
+            } else {
+                diff.tv_usec = end.tv_usec - start.tv_usec;
+            }
+            //suseconds_t remaining_time = expected_time - diff.tv_usec;
+            usleep(15);
             gettimeofday(&start, NULL);
         }
+        //if (get_pc() == 0x29D) {
+        //    step_mode = true;
+        //}
     }
     return NULL;
 }

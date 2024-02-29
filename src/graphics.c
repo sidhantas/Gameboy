@@ -36,10 +36,10 @@ void close_window(void) {
 
 void update_pixel_buff(void) {
     ppu.ready_to_render = false;
-    pthread_mutex_lock(&display_buffer_lock);
-    SDL_UpdateTexture(texture, NULL, hardware.display_buffer,
+    pthread_mutex_lock(&display_buffer_mutex);
+    SDL_UpdateTexture(texture, NULL, get_display_buffer(),
                       DISPLAY_WIDTH * sizeof(uint32_t));
-    pthread_mutex_unlock(&display_buffer_lock);
+    pthread_mutex_unlock(&display_buffer_mutex);
     SDL_RenderCopy(renderer, texture, NULL, NULL);
     SDL_RenderPresent(renderer);
 }

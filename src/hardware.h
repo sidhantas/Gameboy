@@ -1,6 +1,7 @@
 #pragma once
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #define MEMORY_SIZE 0xFFFF
 #define BOOT_ROM_BEGIN 0x0000
@@ -27,7 +28,7 @@
 #define DISPLAY_WIDTH 160
 #define DISPLAY_HEIGHT 144
 #define SCAN_LINES 154
-#define DISPLAY_SIZE DISPLAY_WIDTH * DISPLAY_HEIGHT
+#define DISPLAY_SIZE DISPLAY_WIDTH *DISPLAY_HEIGHT
 #define TILE_MAP_SIZE 32 * 32
 
 #define CLOCK_RATE 4190000
@@ -48,7 +49,6 @@ static inline char const *LONG_REGISTER_STR(enum LONG_REGS long_reg) {
     return LONG_REGS_STR[long_reg];
 }
 
-
 typedef struct Hardware {
     uint8_t *memory;
     uint32_t *display_buffer;
@@ -66,14 +66,42 @@ typedef struct Hardware {
     uint64_t instruction_count;
     uint8_t instruction[MAX_INSTRUCTION_SIZE];
     char decoded_instruction[MAX_DECODED_INSTRUCTION_SIZE];
+    char previous_instruction[MAX_DECODED_INSTRUCTION_SIZE];
     bool step_mode;
 } Hardware;
 
-extern Hardware hardware;
-
-void initialize_hardware(Hardware *hardware);
+void initialize_hardware(void);
+void load_dmg(FILE *);
+void load_rom(FILE *);
 uint8_t get_memory_byte(uint16_t address);
 void set_memory_byte(uint16_t address, uint8_t byte);
 uint8_t get_flag(flags_t flag);
 void set_flag(flags_t flag);
 void reset_flag(flags_t flag);
+void set_display_pixel(uint_fast8_t x, uint_fast8_t y,
+                       uint_fast32_t pixel_color);
+uint32_t *get_display_buffer(void);
+void set_register(reg_t dst, uint8_t val);
+uint8_t get_register(reg_t src);
+void set_decoded_instruction(const char *str, ...);
+char *get_previous_decoded_instruction(void);
+void set_long_reg(long_reg_t long_reg, uint8_t b1, uint8_t b2);
+void set_long_mem(uint16_t address, uint16_t val);
+void set_long_reg_u16(long_reg_t long_reg, uint16_t val);
+uint16_t get_long_reg(long_reg_t long_reg);
+void set_pc(uint16_t new_pc);
+uint16_t get_pc(void);
+void set_sp(uint16_t new_sp);
+void dec_sp(void);
+uint16_t get_sp(void);
+void set_interrupts(uint8_t val);
+void append_instruction(uint8_t pos);
+uint8_t *get_instruction(void);
+void inc_instruction_count(void);
+void set_is_implemented(bool val);
+bool get_is_implemented(void);
+char *get_decoded_instruction(void);
+uint8_t get_mode(void);
+uint8_t get_ime_flag(void);
+uint64_t get_instruction_count(void);
+void clear_instruction(void);
