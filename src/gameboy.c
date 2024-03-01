@@ -5,7 +5,6 @@
 #include "graphics.h"
 #include "hardware.h"
 #include "ppu.h"
-#include "utils.h"
 #include <getopt.h>
 #include <ncurses.h>
 #include <pthread.h>
@@ -25,7 +24,6 @@ int main(int argc, char **argv) {
 
     FILE *dmg = fopen("dmg.bin", "r");
     FILE *game;
-    load_dmg(dmg);
     int long_index = 0;
     int opt = 0;
     static struct option program_options[] = {
@@ -37,6 +35,7 @@ int main(int argc, char **argv) {
             case 'g':
                 game = fopen(optarg, "r");
                 load_rom(game);
+                map_dmg(dmg);
                 fclose(game);
                 break;
             default: exit(1); break;
@@ -73,11 +72,16 @@ void main_loop(void) {
                         instructions_left += 1;
                     } else if (e.key.keysym.scancode == SDL_SCANCODE_B) {
                         instructions_left += 1000;
+                    } else if (e.key.keysym.scancode == SDL_SCANCODE_D) {
+                        dump_tracer();
+                    } else if (e.key.keysym.scancode == SDL_SCANCODE_S) {
+                        step_mode = false;
                     }
+                    
             }
         }
         if (ppu.ready_to_render) {
-            update_pixel_buff();
+            update_renderer();
         }
     }
 }

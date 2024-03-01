@@ -11,7 +11,8 @@ typedef enum {
     EIGHT_CLOCKS = 8,
     TWELVE_CLOCKS = 12,
     SIXTEEN_CLOCKS = 16,
-    TWENTY_FOUR_CLOCKS = 24
+    TWENTY_FOUR_CLOCKS = 24,
+    THIRTY_TWO_CLOCKS = 32
 } clock_cycles_t;
 /* UNPREFIXED INSTRUCTIONS */
 clock_cycles_t LD_RR(uint8_t instruction[MAX_INSTRUCTION_SIZE]);

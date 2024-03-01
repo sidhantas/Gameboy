@@ -1,4 +1,5 @@
 #pragma once
+#include "instruction_tracer.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -70,8 +71,11 @@ typedef struct Hardware {
     bool step_mode;
 } Hardware;
 
+extern Tracer t;
+
 void initialize_hardware(void);
-void load_dmg(FILE *);
+void map_dmg(FILE *);
+void unmap_dmg(void);
 void load_rom(FILE *);
 uint8_t get_memory_byte(uint16_t address);
 void set_memory_byte(uint16_t address, uint8_t byte);
@@ -94,7 +98,7 @@ uint16_t get_pc(void);
 void set_sp(uint16_t new_sp);
 void dec_sp(void);
 uint16_t get_sp(void);
-void set_interrupts(uint8_t val);
+void set_interrupts(bool val);
 void append_instruction(uint8_t pos);
 uint8_t *get_instruction(void);
 void inc_instruction_count(void);
@@ -105,3 +109,4 @@ uint8_t get_mode(void);
 uint8_t get_ime_flag(void);
 uint64_t get_instruction_count(void);
 void clear_instruction(void);
+void dump_tracer(void);

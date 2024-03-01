@@ -1,7 +1,6 @@
 #include "decoder.h"
 #include "hardware.h"
 #include "instructions.h"
-#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 

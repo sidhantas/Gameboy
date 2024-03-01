@@ -280,7 +280,7 @@ static void print_register_window(WINDOW *registers_win) {
     mvwprintw(registers_win, 12, WIDTH / 2 + 2, "0x%0.2X", get_sp());
 
     mvwprintw(registers_win, 13, WIDTH / 4 - 1, "PC");
-    mvwprintw(registers_win, 13, WIDTH / 2 + 2, "0x%0.2X", get_pc());
+    mvwprintw(registers_win, 13, WIDTH / 2 + 2, "0x%0.4X", get_pc());
     wrefresh(registers_win);
 
     mvwprintw(registers_win, 15, WIDTH / 4 - 1, "IME");

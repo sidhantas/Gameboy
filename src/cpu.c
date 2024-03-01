@@ -9,8 +9,9 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-bool close_cpu = false;
 bool step_mode = false;
+bool close_cpu = false;
+bool boot_completed = false;
 #define CPU_CATCH_UP 100
 void *start_cpu(void *arg) {
     (void)arg;
@@ -18,7 +19,7 @@ void *start_cpu(void *arg) {
     uint16_t exec_count = 0;
     suseconds_t expected_time = CPU_CATCH_UP * 1000000 / CLOCK_RATE;
     gettimeofday(&start, NULL);
-    set_memory_byte(JOYP, 0x3F);
+    set_memory_byte(JOYP, 0x0F);
     while (true) {
         if (get_is_implemented() == false) {
             step_mode = true;
@@ -31,8 +32,11 @@ void *start_cpu(void *arg) {
         } else if (step_mode) {
             instructions_left -= 1;
         }
+
+        uint16_t old_pc = get_pc();
         clock_cycles_t (*func)(uint8_t *) = fetch_instruction();
         clock_cycles_t clocks = execute_instruction(func);
+        tracer_enqueue(&t, old_pc, get_decoded_instruction());
         pthread_mutex_lock(&dots_mutex);
         ppu.available_dots += clocks * 4;
         pthread_mutex_unlock(&dots_mutex);
@@ -48,6 +52,9 @@ void *start_cpu(void *arg) {
             //suseconds_t remaining_time = expected_time - diff.tv_usec;
             usleep(15);
             gettimeofday(&start, NULL);
+        }
+        if (get_pc() == 0x100) {
+            unmap_dmg();
         }
         //if (get_pc() == 0x29D) {
         //    step_mode = true;

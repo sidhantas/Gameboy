@@ -7,6 +7,11 @@
 #include <string.h>
 
 Hardware hardware;
+Tracer t;
+
+#define TRACER_SIZE 50
+
+uint8_t rom_beginning[0x100];
 
 void initialize_hardware(void) {
     hardware.memory = calloc(MEMORY_SIZE, sizeof(uint8_t));
@@ -25,13 +30,16 @@ void initialize_hardware(void) {
     hardware.instruction_count = 0;
     hardware.step_mode = false;
     hardware.ime_flag = 0;
+    hardware.memory[JOYP] = 0xFF;
+    initialize_tracer(&t, 50);
 }
 
-void load_dmg(FILE *rom) {
+void map_dmg(FILE *rom) {
     if (!rom) {
         fprintf(stderr, "No dmg present\n");
         exit(1);
     }
+    memcpy(rom_beginning, hardware.memory, 0x100);
     uint16_t bytes_read =
         fread(&(hardware.memory[BOOT_ROM_BEGIN]), DMG_SIZE, 1, rom);
     if (bytes_read != 1) {
@@ -40,13 +48,16 @@ void load_dmg(FILE *rom) {
     }
 }
 
+void unmap_dmg(void) {
+    memcpy(hardware.memory, rom_beginning, 0x100);
+}
+
 void load_rom(FILE *rom) {
     uint16_t sectors_read = 0;
     int16_t read_size;
-    fseek(rom, ROM_START, SEEK_SET);
     do {
         read_size =
-            fread(&hardware.memory[ROM_START + sectors_read * SECTOR_SIZE],
+            fread(&hardware.memory[sectors_read * SECTOR_SIZE],
                   SECTOR_SIZE, 1, rom);
         sectors_read++;
     } while (read_size > 0);
@@ -55,7 +66,8 @@ void load_rom(FILE *rom) {
 uint8_t get_memory_byte(uint16_t address) { return hardware.memory[address]; }
 
 void set_memory_byte(uint16_t address, uint8_t byte) {
-    if (address <= 0x7FFF || (address >= 0xE000 && address <= 0xFDFF)) {
+    if ((address >= 0x100 && address <= 0x7FFF) || (address >= 0xE000 && address <= 0xFDFF) ||
+        address == 0xFF00) {
         return;
     }
     hardware.memory[address] = byte;
@@ -99,7 +111,6 @@ void set_decoded_instruction(const char *str, ...) {
 
     strncpy(hardware.previous_instruction, hardware.decoded_instruction,
             MAX_DECODED_INSTRUCTION_SIZE);
-
     va_list args;
     va_start(args, str);
     vsnprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, str,
@@ -156,7 +167,7 @@ uint16_t get_long_reg(long_reg_t long_reg) {
     }
 }
 
-void set_interrupts(uint8_t val) { hardware.ime_flag = val; }
+void set_interrupts(bool val) { hardware.ime_flag = val; }
 
 void clear_instruction(void) {
     hardware.instruction[0] = 0;
@@ -182,3 +193,5 @@ bool get_is_implemented(void) { return hardware.is_implemented; }
 uint8_t get_mode(void) { return hardware.mode; }
 
 uint8_t get_ime_flag(void) { return hardware.ime_flag; }
+
+void dump_tracer(void) { tracer_dump(&t); }
