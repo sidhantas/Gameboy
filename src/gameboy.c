@@ -73,7 +73,7 @@ void main_loop(void) {
                     } else if (e.key.keysym.scancode == SDL_SCANCODE_B) {
                         instructions_left += 1000;
                     } else if (e.key.keysym.scancode == SDL_SCANCODE_D) {
-                        dump_tracer();
+                        tracer_dump(&t);
                     } else if (e.key.keysym.scancode == SDL_SCANCODE_S) {
                         step_mode = false;
                     }

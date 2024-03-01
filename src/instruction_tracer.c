@@ -41,4 +41,5 @@ void tracer_dump(Tracer *t) {
             trace = t->size - 1;
         }
     } while (trace != t->tail);
+    fclose(f);
 }

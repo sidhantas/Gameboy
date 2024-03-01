@@ -53,10 +53,11 @@ void *start_cpu(void *arg) {
             usleep(15);
             gettimeofday(&start, NULL);
         }
-        if (get_pc() == 0x100) {
+        if (!boot_completed && get_memory_byte(0xFF50)) {
+            boot_completed = true;
             unmap_dmg();
         }
-        //if (get_pc() == 0x29D) {
+        //if (get_pc() == 0x369) {
         //    step_mode = true;
         //}
     }

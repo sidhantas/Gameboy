@@ -32,3 +32,145 @@ clock_cycles_t RL_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 
     return EIGHT_CLOCKS;
 }
+
+clock_cycles_t RLC_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    const uint8_t OPCODE = get_opcode(instruction);
+
+    return -1;
+
+}
+
+clock_cycles_t RLC_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    const uint8_t OPCODE = get_opcode(instruction);
+
+    return -1;
+
+}
+
+clock_cycles_t RRC_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    const uint8_t OPCODE = get_opcode(instruction);
+
+    return -1;
+
+}
+
+clock_cycles_t RRC_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    const uint8_t OPCODE = get_opcode(instruction);
+
+    return -1;
+
+}
+
+clock_cycles_t RL_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    const uint8_t OPCODE = get_opcode(instruction);
+
+    return -1;
+
+}
+
+clock_cycles_t RR_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    const uint8_t OPCODE = get_opcode(instruction);
+
+    return -1;
+
+}
+
+clock_cycles_t RR_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    const uint8_t OPCODE = get_opcode(instruction);
+
+    return -1;
+
+}
+
+clock_cycles_t SLA_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    const uint8_t OPCODE = get_opcode(instruction);
+
+    return -1;
+
+}
+
+clock_cycles_t SLA_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    const uint8_t OPCODE = get_opcode(instruction);
+
+    return -1;
+
+}
+
+clock_cycles_t SRA_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    const uint8_t OPCODE = get_opcode(instruction);
+
+    return -1;
+
+}
+
+clock_cycles_t SRA_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    const uint8_t OPCODE = get_opcode(instruction);
+
+    return -1;
+
+}
+
+clock_cycles_t SWAP_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    const uint8_t OPCODE = get_opcode(instruction);
+
+    return -1;
+
+}
+
+clock_cycles_t SWAP_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    const uint8_t OPCODE = get_opcode(instruction);
+
+    return -1;
+
+}
+
+clock_cycles_t SRL_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    const uint8_t OPCODE = get_opcode(instruction);
+
+    return -1;
+
+}
+
+clock_cycles_t SRL_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    const uint8_t OPCODE = get_opcode(instruction);
+
+    return -1;
+
+}
+
+clock_cycles_t BIT_B_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    const uint8_t OPCODE = get_opcode(instruction);
+
+    return -1;
+
+}
+
+clock_cycles_t RES_B_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    const uint8_t OPCODE = get_opcode(instruction);
+
+    return -1;
+
+}
+
+clock_cycles_t RES_B_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    const uint8_t OPCODE = get_opcode(instruction);
+
+    return -1;
+
+}
+
+clock_cycles_t SET_B_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    const uint8_t OPCODE = get_opcode(instruction);
+
+    return -1;
+
+}
+
+clock_cycles_t SET_B_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    const uint8_t OPCODE = get_opcode(instruction);
+
+    return -1;
+
+}
+
+

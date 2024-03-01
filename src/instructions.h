@@ -11,6 +11,7 @@ typedef enum {
     EIGHT_CLOCKS = 8,
     TWELVE_CLOCKS = 12,
     SIXTEEN_CLOCKS = 16,
+    TWENTY_CLOCKS = 20,
     TWENTY_FOUR_CLOCKS = 24,
     THIRTY_TWO_CLOCKS = 32
 } clock_cycles_t;
@@ -113,3 +114,23 @@ clock_cycles_t UNK(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
 /* PREFIXED INSTRUCTIONS */
 clock_cycles_t BIT_B_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
 clock_cycles_t RL_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t RLC_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t RLC_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t RRC_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t RRC_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t RL_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t RR_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t RR_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t SLA_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t SLA_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t SRA_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t SRA_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t SWAP_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t SWAP_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t SRL_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t SRL_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t BIT_B_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t RES_B_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t RES_B_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t SET_B_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t SET_B_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]);

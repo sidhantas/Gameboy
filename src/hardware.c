@@ -31,7 +31,7 @@ void initialize_hardware(void) {
     hardware.step_mode = false;
     hardware.ime_flag = 0;
     hardware.memory[JOYP] = 0xFF;
-    initialize_tracer(&t, 50);
+    initialize_tracer(&t, 1000);
 }
 
 void map_dmg(FILE *rom) {

@@ -12,7 +12,6 @@ void check_alloc(void *allocated_block, const char *msg_on_failure) {
     }
 }
 
-
 void mvwprintwhcenter(WINDOW *win, uint8_t row, uint8_t row_start,
                       uint8_t width, const char *str, ...) {
     char formatted_string[UINT8_MAX];
@@ -26,7 +25,7 @@ void mvwprintwhcenter(WINDOW *win, uint8_t row, uint8_t row_start,
 uint16_t post_inc(uint16_t *val) { return (*val)++; }
 
 void u16_to_two_u8s(uint16_t val, uint8_t *b1, uint8_t *b2) {
-    *b2 = (val & 0xFF00) >> 8;
+    *b2 = (val >> 8) & 0xFF;
     *b1 = val & 0xFF;
 }
 
@@ -59,7 +58,23 @@ uint8_t add(uint8_t val_1, uint8_t val_2, uint8_t carry) {
         reset_flag(C_FLAG);
     }
     res ? reset_flag(Z_FLAG) : set_flag(Z_FLAG);
-    return res;
+    return (uint8_t)res;
+}
+
+uint16_t addu16(long_reg_t r1, long_reg_t r2) {
+    uint32_t res = get_long_reg(r1) + get_long_reg(r2);
+    reset_flag(N_FLAG);
+    if (res > UINT16_MAX) {
+        set_flag(C_FLAG);
+        res -= (UINT16_MAX + 1);
+    } else {
+        reset_flag(C_FLAG);
+    }
+    uint8_t half_carry_val_1 = get_long_reg(r1) & 0x3F >> 8;
+    uint8_t half_carry_val_2 = get_long_reg(r2) & 0x3F >> 8;
+    half_carry_on_add(half_carry_val_1, half_carry_val_2) ? set_flag(H_FLAG)
+                                                          : reset_flag(H_FLAG);
+    return (uint16_t)res;
 }
 
 inline uint8_t get_crumb(uint8_t byte, uint8_t crumb) {
@@ -70,9 +85,7 @@ inline uint8_t get_bit(uint8_t byte, uint8_t bit) {
     return (byte >> bit) & 0x01;
 }
 
-inline void set_bit(uint8_t *byte, uint8_t bit) {
-     *byte |= (0x01 << bit);
-}
+inline void set_bit(uint8_t *byte, uint8_t bit) { *byte |= (0x01 << bit); }
 
 struct timeval time_diff(struct timeval start, struct timeval end) {
     struct timeval diff;
@@ -85,6 +98,9 @@ struct timeval time_diff(struct timeval start, struct timeval end) {
     return diff;
 }
 
-int8_t uint8_to_int8(uint8_t n) {
-    return *(int8_t *)&n;
+int8_t uint8_to_int8(uint8_t n) { return *(int8_t *)&n; }
+
+void stack_push(uint16_t val) {
+    set_long_mem(get_sp(), val);
+    set_sp(get_sp() - 2);
 }
