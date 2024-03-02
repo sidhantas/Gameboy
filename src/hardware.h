@@ -20,11 +20,14 @@
 #define SCY 0xFF42
 #define WX 0xFF4A
 #define WY 0xFF4B
+#define DISABLE_BOOT_ROM 0xFF50
 #define LCDY 0xFF44
+#define IF 0xFF0F
+#define IE 0xFFFF
 
 #define MAX_INSTRUCTION_SIZE 3
 #define REGISTER_COUNT 8
-#define RESOLUTION_SCALE 3
+#define RESOLUTION_SCALE 5
 #define TILE_MAP_WIDTH 256
 #define DISPLAY_WIDTH 160
 #define DISPLAY_HEIGHT 144
@@ -37,7 +40,7 @@
 
 #define MAX_DECODED_INSTRUCTION_SIZE 25
 typedef enum REGISTERS { B, C, D, E, H, L, F, A } reg_t;
-typedef enum LONG_REGS { BC, DE, HL, SP } long_reg_t;
+typedef enum LONG_REGS { BC, DE, HL, AF } long_reg_t;
 typedef enum FLAGS { Z_FLAG, N_FLAG, H_FLAG, C_FLAG } flags_t;
 
 static inline char REGISTER_CHAR(enum REGISTERS reg) {
@@ -46,7 +49,7 @@ static inline char REGISTER_CHAR(enum REGISTERS reg) {
 }
 
 static inline char const *LONG_REGISTER_STR(enum LONG_REGS long_reg) {
-    static char const *LONG_REGS_STR[4] = {"BC", "DE", "HL", "SP"};
+    static char const *LONG_REGS_STR[4] = {"BC", "DE", "HL", "AF"};
     return LONG_REGS_STR[long_reg];
 }
 
@@ -55,6 +58,7 @@ typedef struct Hardware {
     uint32_t *display_buffer;
     uint8_t registers[REGISTER_COUNT];
     uint16_t sp;
+    uint16_t base_sp;
     uint16_t stack_start;
     uint16_t pc;
     uint8_t opcode;
@@ -96,6 +100,8 @@ uint16_t get_long_reg(long_reg_t long_reg);
 void set_pc(uint16_t new_pc);
 uint16_t get_pc(void);
 void set_sp(uint16_t new_sp);
+void set_base_sp(uint16_t new_base);
+uint16_t get_base_sp(void);
 void dec_sp(void);
 uint16_t get_sp(void);
 void set_interrupts(bool val);
@@ -110,3 +116,5 @@ uint8_t get_ime_flag(void);
 uint64_t get_instruction_count(void);
 void clear_instruction(void);
 void dump_tracer(void);
+void stack_push_u16(uint16_t val);
+uint16_t stack_pop_u16(void);

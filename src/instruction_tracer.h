@@ -9,6 +9,6 @@ typedef struct Tracer {
 } Tracer;
 void initialize_tracer(Tracer *t, uint16_t queue_size);
 void tracer_dequeue(Tracer *t);
-void tracer_enqueue(Tracer *t, uint16_t pc, char str[25]);
+void tracer_enqueue(Tracer *t, uint16_t pc, char str[100]);
 void initialize_tracer(Tracer *t, uint16_t queue_size);
 void tracer_dump(Tracer *t);

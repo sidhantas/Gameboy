@@ -1,6 +1,7 @@
 #include "ppu.h"
 #include "SDL_events.h"
 #include "SDL_render.h"
+#include "interrupts.h"
 #include "hardware.h"
 #include "utils.h"
 #include <ncurses.h>
@@ -21,8 +22,8 @@ SDL_Texture *texture;
 SDL_Window *window;
 
 bool close_ppu;
-pthread_mutex_t dots_mutex;
-pthread_mutex_t display_buffer_mutex;
+pthread_mutex_t dots_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t display_buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void render_loop(void);
 static void execute_mode_0(void);
@@ -116,6 +117,7 @@ void execute_mode_0(void) {
         uint8_t current_y = get_memory_byte(LCDY) + 1;
         if (current_y > DISPLAY_HEIGHT) {
             ppu.ready_to_render = true;
+            set_interrupts_flag(VBLANK);
             ppu.mode = 1;
         } else {
             ppu.mode = 2;
@@ -142,14 +144,14 @@ void execute_mode_1(void) {
 }
 
 static inline uint16_t get_tile_start(uint16_t relative_tile_address) {
-    uint16_t tile_start;
+    int32_t tile_start;
     if (get_bit(get_memory_byte(LCDC), 4) == 1) {
         tile_start = ADDRESS_MODE_0_BP + relative_tile_address * 0x10;
     } else {
         tile_start =
             ADDRESS_MODE_1_BP + uint8_to_int8(relative_tile_address) * 0x10;
     }
-    return tile_start;
+    return (uint16_t)tile_start;
 }
 
 uint8_t get_pixel(uint8_t hi, uint8_t low, uint8_t n) {

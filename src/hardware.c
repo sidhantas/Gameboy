@@ -30,7 +30,7 @@ void initialize_hardware(void) {
     hardware.instruction_count = 0;
     hardware.step_mode = false;
     hardware.ime_flag = 0;
-    hardware.memory[JOYP] = 0xFF;
+    hardware.memory[JOYP] = 0x2E;
     initialize_tracer(&t, 1000);
 }
 
@@ -66,7 +66,7 @@ void load_rom(FILE *rom) {
 uint8_t get_memory_byte(uint16_t address) { return hardware.memory[address]; }
 
 void set_memory_byte(uint16_t address, uint8_t byte) {
-    if ((address >= 0x100 && address <= 0x7FFF) || (address >= 0xE000 && address <= 0xFDFF) ||
+    if (address <= 0x7FFF || (address >= 0xE000 && address <= 0xFDFF) ||
         address == 0xFF00) {
         return;
     }
@@ -75,7 +75,7 @@ void set_memory_byte(uint16_t address, uint8_t byte) {
 
 uint8_t get_flag(flags_t flag) {
     const uint8_t FLAGS_REGISTER = hardware.registers[F];
-    return (FLAGS_REGISTER >> (7 - flag)) & 1;
+    return (FLAGS_REGISTER >> (7 - flag)) & 0x1;
 }
 
 void set_flag(flags_t flag) {
@@ -93,6 +93,32 @@ void set_pc(uint16_t new_pc) { hardware.pc = new_pc; }
 uint16_t get_pc(void) { return hardware.pc; }
 
 void set_sp(uint16_t new_sp) { hardware.sp = new_sp; }
+void set_base_sp(uint16_t new_base) { hardware.base_sp = new_base; }
+uint16_t get_base_sp(void) {
+    return hardware.base_sp;
+}
+
+void stack_push_u16(uint16_t val) {
+    uint8_t low = val & 0xFF;
+    uint8_t high = val >> 8 & 0xFF;
+    set_sp(get_sp() - 2);
+    set_memory_byte(get_sp(), low);
+    set_memory_byte(get_sp() + 1, high);
+}
+
+void stack_push_u8(uint8_t val) {
+    set_sp(get_sp() - 1);
+    set_memory_byte(get_sp(), val);
+}
+
+uint16_t stack_pop_u16(void) {
+   uint8_t low = get_memory_byte(get_sp());
+   uint8_t high = get_memory_byte(get_sp() + 1);
+
+   set_sp(get_sp() + 2);
+
+   return two_u8s_to_u16(low, high);
+}
 
 uint16_t get_sp(void) { return hardware.sp; }
 
@@ -149,21 +175,29 @@ void set_long_reg(long_reg_t long_reg, uint8_t b1, uint8_t b2) {
             hardware.registers[H] = b2;
             hardware.registers[L] = b1;
             break;
-        case SP: hardware.sp = two_u8s_to_u16(b1, b2); break;
-        default: return;
+        case AF:
+            hardware.registers[A] = b2;
+            hardware.registers[F] = b1;
+            break;
+        default: 
+            exit(1);
+            return;
     }
 }
 
 uint16_t get_long_reg(long_reg_t long_reg) {
     switch (long_reg) {
-        case SP: return hardware.sp;
         case BC:
             return two_u8s_to_u16(hardware.registers[C], hardware.registers[B]);
         case DE:
             return two_u8s_to_u16(hardware.registers[E], hardware.registers[D]);
         case HL:
             return two_u8s_to_u16(hardware.registers[L], hardware.registers[H]);
-        default: return 0;
+        case AF: 
+            return two_u8s_to_u16(hardware.registers[F], hardware.registers[A]);
+        default:
+            exit(1);
+            return 0;
     }
 }
 

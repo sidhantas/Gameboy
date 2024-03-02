@@ -30,30 +30,30 @@ void u16_to_two_u8s(uint16_t val, uint8_t *b1, uint8_t *b2) {
 }
 
 bool half_carry_on_subtract(uint8_t val_1, uint8_t val_2) {
-    return (int)(val_1 & 0x0F) - (int)(val_2 & 0x0F) & 0x10;
+    return (val_1 & 0x0F) < (val_2 & 0x0F);
 }
 
 uint8_t sub(uint8_t val_1, uint8_t val_2) {
     uint8_t res = val_1 - val_2;
+    val_2 > val_1 ? set_flag(C_FLAG) : reset_flag(C_FLAG);
     half_carry_on_subtract(val_1, val_2) ? set_flag(H_FLAG)
                                          : reset_flag(H_FLAG);
     set_flag(N_FLAG);
-    res > 0 ? reset_flag(Z_FLAG) : set_flag(Z_FLAG);
-    val_2 > val_1 ? set_flag(C_FLAG) : reset_flag(C_FLAG);
+    res ? reset_flag(Z_FLAG) : set_flag(Z_FLAG);
     return res;
 }
 
-bool half_carry_on_add(uint8_t val_1, uint8_t val_2) {
-    return (((val_1 & 0xf) + (val_2 & 0xf)) & 0x10) == 0x10;
+bool half_carry_on_add(uint8_t val_1, uint8_t val_2, uint8_t carry) {
+    return (((val_1 & 0xf) + (val_2 & 0xf) + (carry & 0xf)) & 0x10) == 0x10;
 }
 
 uint8_t add(uint8_t val_1, uint8_t val_2, uint8_t carry) {
     uint16_t res = val_1 + val_2 + carry;
-    half_carry_on_add(val_1, val_2) ? set_flag(H_FLAG) : reset_flag(H_FLAG);
-    set_flag(N_FLAG);
-    if (res > 255) {
+    half_carry_on_add(val_1, val_2, carry) ? set_flag(H_FLAG) : reset_flag(H_FLAG);
+    reset_flag(N_FLAG);
+    if (res > UINT8_MAX) {
         set_flag(C_FLAG);
-        res -= 256;
+        res -= (UINT8_MAX + 1);
     } else {
         reset_flag(C_FLAG);
     }
@@ -70,9 +70,7 @@ uint16_t addu16(long_reg_t r1, long_reg_t r2) {
     } else {
         reset_flag(C_FLAG);
     }
-    uint8_t half_carry_val_1 = get_long_reg(r1) & 0x3F >> 8;
-    uint8_t half_carry_val_2 = get_long_reg(r2) & 0x3F >> 8;
-    half_carry_on_add(half_carry_val_1, half_carry_val_2) ? set_flag(H_FLAG)
+    half_carry_on_add(get_long_reg(r1) >> 8, get_long_reg(r2) >> 8, 0) ? set_flag(H_FLAG)
                                                           : reset_flag(H_FLAG);
     return (uint16_t)res;
 }
@@ -99,8 +97,3 @@ struct timeval time_diff(struct timeval start, struct timeval end) {
 }
 
 int8_t uint8_to_int8(uint8_t n) { return *(int8_t *)&n; }
-
-void stack_push(uint16_t val) {
-    set_long_mem(get_sp(), val);
-    set_sp(get_sp() - 2);
-}

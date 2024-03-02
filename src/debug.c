@@ -27,7 +27,7 @@ WINDOW *mem_win;
 uint16_t mem_win_addr = 0xFF00;
 uint16_t display_buf_addr = 0x0;
 
-pthread_mutex_t lock;
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 bool close_debugger;
 
 void end_debugger(void) { 
@@ -179,17 +179,17 @@ static void print_stack_window(WINDOW *stack_win) {
     wmove(stack_win, 2, 1);
     whline(stack_win, 0, WIDTH - 2);
 
-    for (uint32_t i = get_sp(); i <= 0xFFFE; i += 2) {
+    for (uint32_t i = get_sp(); i <= get_base_sp(); i += 2) {
         if (i == get_sp()) {
-            mvwprintwhcenter(stack_win, 4 + 0xFFFE - i / 2, 0, WIDTH / 2,
+            mvwprintwhcenter(stack_win, 4 + get_base_sp() - i / 2, 0, WIDTH / 2,
                              "0x%X", i);
-            mvwprintwhcenter(stack_win, 4 + 0xFFFE - i / 2, WIDTH / 2,
-                             WIDTH / 2, "0x00 0x00");
+            mvwprintwhcenter(stack_win, 4 + get_base_sp() - i / 2, WIDTH / 2,
+                             WIDTH / 2, "0x%0.2X 0x%0.2X", get_memory_byte(i), get_memory_byte(i + 1));
             continue;
         }
-        mvwprintwhcenter(stack_win, 4 + 0xFFFE - i / 2, 0, WIDTH / 2, "0x%X",
+        mvwprintwhcenter(stack_win, 4 + get_base_sp() - i / 2, 0, WIDTH / 2, "0x%X",
                          i);
-        mvwprintwhcenter(stack_win, 4 + 0xFFFE - i / 2, WIDTH / 2, WIDTH / 2,
+        mvwprintwhcenter(stack_win, 4 + get_base_sp() - i / 2, WIDTH / 2, WIDTH / 2,
                          "0x%0.2X 0x%0.2X", get_memory_byte(i),
                          get_memory_byte(i + 1));
     }

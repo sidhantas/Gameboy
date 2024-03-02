@@ -1,5 +1,6 @@
 #include "instruction_tracer.h"
 #include <stdio.h>
+#include <inttypes.h>
 #include <stdlib.h>
 
 void initialize_tracer(Tracer *t, uint16_t queue_size) {
@@ -10,7 +11,7 @@ void initialize_tracer(Tracer *t, uint16_t queue_size) {
     t->queue = calloc(queue_size, sizeof(char *));
     
     for (int i = 0; i < t->capacity; i++) {
-        t->queue[i] = calloc(50, sizeof(char));
+        t->queue[i] = calloc(300, sizeof(char));
     }
 }
 
@@ -19,13 +20,13 @@ void tracer_dequeue(Tracer *t) {
     t->tail %= t->size;
 }
 
-void tracer_enqueue(Tracer *t, uint16_t pc, char str[25]) {
+void tracer_enqueue(Tracer *t, uint16_t pc, char str[100]) {
     if (t->size == t->capacity) {
         tracer_dequeue(t);
     } else {
         t->size++;
     }
-    snprintf(t->queue[t->head], 49, "PC: 0x%X, Instruction: %s", pc, str);
+    snprintf(t->queue[t->head], 300, "PC: 0x%X, %s"PRIu8, pc, str);
     t->head++;
     t->head %= t->size;
     return;

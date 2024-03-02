@@ -511,24 +511,33 @@ static clock_cycles_t (
         }
         case 0x01:
         case 0x11:
-        case 0x21:
-        case 0x31: {
+        case 0x21: {
             append_instruction(1);
             append_instruction(2);
 
             return &LD_LONG_R_IMM;
         }
+        case 0x31: {
+            append_instruction(1);
+            append_instruction(2);
+
+            return &LD_SP_IMM;
+        }
         case 0x03:
         case 0x13:
-        case 0x23:
-        case 0x33: {
+        case 0x23: {
             return &INC_LONG_R;
+        }
+        case 0x33: {
+            return &INC_SP;
         }
         case 0x0B:
         case 0x1B:
-        case 0x2B:
-        case 0x3B: {
+        case 0x2B: {
             return &DEC_LONG_R;
+        }
+        case 0x3B: {
+            return &DEC_SP;
         }
         case 0xc5:
         case 0xd5:

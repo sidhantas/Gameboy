@@ -7,8 +7,8 @@
 #define KRED "\x1B[31m"
 #define RESET "\033[0m"
 void check_alloc(void *allocated_block, const char *msg_on_failure);
-static inline uint16_t two_u8s_to_u16(uint8_t byte_0, uint8_t byte_1) {
-    return byte_1 << 8 | byte_0;
+static inline uint16_t two_u8s_to_u16(uint8_t low, uint8_t high) {
+    return high << 8 | low;
 }
 
 void mvwprintwhcenter(WINDOW *win, uint8_t row, uint8_t row_start,
@@ -17,6 +17,7 @@ void mvwprintwhcenter(WINDOW *win, uint8_t row, uint8_t row_start,
 uint16_t post_inc(uint16_t *val);
 
 bool half_carry_on_subtract(uint8_t val_1, uint8_t val_2);
+bool half_carry_on_add(uint8_t val_1, uint8_t val_2, uint8_t carry);
 uint8_t sub(uint8_t val_1, uint8_t val_2);
 uint8_t add(uint8_t val_1, uint8_t val_2, uint8_t carry);
 uint16_t addu16(long_reg_t r1, long_reg_t r2);

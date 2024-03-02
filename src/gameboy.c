@@ -4,6 +4,7 @@
 #include "decoder.h"
 #include "graphics.h"
 #include "hardware.h"
+#include "interrupts.h"
 #include "ppu.h"
 #include <getopt.h>
 #include <ncurses.h>
@@ -19,6 +20,7 @@ int main(int argc, char **argv) {
     pthread_t debugger_id;
     pthread_t cpu_id;
     pthread_t ppu_id;
+    pthread_t interrupt_handler_id;
     initialize_hardware();
     initialize_ppu();
 
@@ -45,14 +47,17 @@ int main(int argc, char **argv) {
     pthread_create(&debugger_id, NULL, initialize_debugger, NULL);
     open_window();
     pthread_create(&cpu_id, NULL, start_cpu, NULL);
+    pthread_create(&interrupt_handler_id, NULL, initialize_interrupt_handler, NULL);
     pthread_create(&ppu_id, NULL, start_ppu, NULL);
     main_loop();
     close_window();
     end_debugger();
+    close_interrupt_handler();
     end_ppu();
     end_cpu();
     pthread_join(debugger_id, NULL);
     pthread_join(cpu_id, NULL);
+    pthread_join(interrupt_handler_id, NULL);
     pthread_join(ppu_id, NULL);
 
     return 0;
