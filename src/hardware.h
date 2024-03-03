@@ -35,7 +35,7 @@
 #define DISPLAY_SIZE DISPLAY_WIDTH *DISPLAY_HEIGHT
 #define TILE_MAP_SIZE 32 * 32
 
-#define CLOCK_RATE 4190000
+#define CLOCK_RATE 4194304
 #define DISPLAY_REFRESH_RATE 60
 
 #define MAX_DECODED_INSTRUCTION_SIZE 25
@@ -74,6 +74,23 @@ typedef struct Hardware {
     char previous_instruction[MAX_DECODED_INSTRUCTION_SIZE];
     bool step_mode;
 } Hardware;
+
+typedef struct Joypad {
+    // high nibble == action
+    // low nibble == directional
+    uint8_t inputs;
+} Joypad;
+
+typedef enum JoypadButtons {
+    RIGHT,
+    LEFT,
+    UP,
+    DOWN,
+    A_BUTTON,
+    B_BUTTON,
+    SELECT,
+    START
+} joypad_t;
 
 extern Tracer t;
 
@@ -118,3 +135,6 @@ void clear_instruction(void);
 void dump_tracer(void);
 void stack_push_u16(uint16_t val);
 uint16_t stack_pop_u16(void);
+void set_joypad_state(joypad_t button);
+void reset_joypad_state(joypad_t button);
+uint8_t get_joypad_state(void);

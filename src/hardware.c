@@ -7,6 +7,7 @@
 #include <string.h>
 
 Hardware hardware;
+Joypad joy;
 Tracer t;
 
 #define TRACER_SIZE 50
@@ -30,7 +31,8 @@ void initialize_hardware(void) {
     hardware.instruction_count = 0;
     hardware.step_mode = false;
     hardware.ime_flag = 0;
-    hardware.memory[JOYP] = 0x2E;
+    hardware.memory[JOYP] = 0x3F;
+    joy.inputs = 0xFF;
     initialize_tracer(&t, 1000);
 }
 
@@ -48,29 +50,46 @@ void map_dmg(FILE *rom) {
     }
 }
 
-void unmap_dmg(void) {
-    memcpy(hardware.memory, rom_beginning, 0x100);
-}
+void unmap_dmg(void) { memcpy(hardware.memory, rom_beginning, 0x100); }
 
 void load_rom(FILE *rom) {
     uint16_t sectors_read = 0;
     int16_t read_size;
     do {
-        read_size =
-            fread(&hardware.memory[sectors_read * SECTOR_SIZE],
-                  SECTOR_SIZE, 1, rom);
+        read_size = fread(&hardware.memory[sectors_read * SECTOR_SIZE],
+                          SECTOR_SIZE, 1, rom);
         sectors_read++;
     } while (read_size > 0);
 }
 
 uint8_t get_memory_byte(uint16_t address) { return hardware.memory[address]; }
 
-void set_memory_byte(uint16_t address, uint8_t byte) {
-    if (address <= 0x7FFF || (address >= 0xE000 && address <= 0xFDFF) ||
-        address == 0xFF00) {
+void handle_IO_write(uint16_t address, uint8_t byte) {
+    if (address == JOYP) {
+        if (!(byte & 0x20)) {
+            hardware.memory[address] = (byte & 0xF0) | (joy.inputs & 0x0F);
+        }
+        else if (!(byte & 0x10)) {
+            hardware.memory[address] = (byte & 0xF0) | (joy.inputs >> 4);
+        }
         return;
+    } else if (address == 0xFF50 && byte > 0) {
+        unmap_dmg();
+        hardware.memory[address] = byte;
+        return;
+    } else {
+        hardware.memory[address] = byte;
     }
-    hardware.memory[address] = byte;
+}
+
+void set_memory_byte(uint16_t address, uint8_t byte) {
+    if (address <= 0x7FFF || (address >= 0xE000 && address <= 0xFDFF)) {
+        return;
+    } else if (address >= 0xFF00 && address <= 0xFF7F) {
+        handle_IO_write(address, byte);
+    } else {
+        hardware.memory[address] = byte;
+    }
 }
 
 uint8_t get_flag(flags_t flag) {
@@ -94,9 +113,7 @@ uint16_t get_pc(void) { return hardware.pc; }
 
 void set_sp(uint16_t new_sp) { hardware.sp = new_sp; }
 void set_base_sp(uint16_t new_base) { hardware.base_sp = new_base; }
-uint16_t get_base_sp(void) {
-    return hardware.base_sp;
-}
+uint16_t get_base_sp(void) { return hardware.base_sp; }
 
 void stack_push_u16(uint16_t val) {
     uint8_t low = val & 0xFF;
@@ -112,12 +129,12 @@ void stack_push_u8(uint8_t val) {
 }
 
 uint16_t stack_pop_u16(void) {
-   uint8_t low = get_memory_byte(get_sp());
-   uint8_t high = get_memory_byte(get_sp() + 1);
+    uint8_t low = get_memory_byte(get_sp());
+    uint8_t high = get_memory_byte(get_sp() + 1);
 
-   set_sp(get_sp() + 2);
+    set_sp(get_sp() + 2);
 
-   return two_u8s_to_u16(low, high);
+    return two_u8s_to_u16(low, high);
 }
 
 uint16_t get_sp(void) { return hardware.sp; }
@@ -179,9 +196,7 @@ void set_long_reg(long_reg_t long_reg, uint8_t b1, uint8_t b2) {
             hardware.registers[A] = b2;
             hardware.registers[F] = b1;
             break;
-        default: 
-            exit(1);
-            return;
+        default: exit(1); return;
     }
 }
 
@@ -193,11 +208,9 @@ uint16_t get_long_reg(long_reg_t long_reg) {
             return two_u8s_to_u16(hardware.registers[E], hardware.registers[D]);
         case HL:
             return two_u8s_to_u16(hardware.registers[L], hardware.registers[H]);
-        case AF: 
+        case AF:
             return two_u8s_to_u16(hardware.registers[F], hardware.registers[A]);
-        default:
-            exit(1);
-            return 0;
+        default: exit(1); return 0;
     }
 }
 
@@ -229,3 +242,9 @@ uint8_t get_mode(void) { return hardware.mode; }
 uint8_t get_ime_flag(void) { return hardware.ime_flag; }
 
 void dump_tracer(void) { tracer_dump(&t); }
+
+uint8_t get_joypad_state(void) { return joy.inputs; }
+
+void set_joypad_state(joypad_t button) { set_bit(&joy.inputs, button); }
+
+void reset_joypad_state(joypad_t button) { joy.inputs &= ~(1 << button); }

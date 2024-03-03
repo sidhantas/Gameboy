@@ -281,7 +281,9 @@ static void print_register_window(WINDOW *registers_win) {
 
     mvwprintw(registers_win, 13, WIDTH / 4 - 1, "PC");
     mvwprintw(registers_win, 13, WIDTH / 2 + 2, "0x%0.4X", get_pc());
-    wrefresh(registers_win);
+
+    mvwprintw(registers_win, 14, WIDTH / 4 - 1, "JOYP");
+    mvwprintw(registers_win, 14, WIDTH / 2 + 2, "0x%0.2X", get_joypad_state());
 
     mvwprintw(registers_win, 15, WIDTH / 4 - 1, "IME");
     mvwprintw(registers_win, 15, WIDTH / 2 + 2, "0x%0.2X", get_ime_flag());

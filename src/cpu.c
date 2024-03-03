@@ -1,5 +1,6 @@
 #include "cpu.h"
 #include "decoder.h"
+#include "interrupts.h"
 #include "hardware.h"
 #include "ppu.h"
 #include <inttypes.h>
@@ -38,10 +39,9 @@ void *start_cpu(void *arg) {
         }
 
         uint16_t old_pc = get_pc();
-        pthread_mutex_lock(&cpu_mutex);
+        handle_interrupts();
         clock_cycles_t (*func)(uint8_t *) = fetch_instruction();
         clock_cycles_t clocks = execute_instruction(func);
-        pthread_mutex_unlock(&cpu_mutex);
         snprintf(trace_str, 255,
                  "Instruction: 0x%0.2x 0x%0.2x 0x%0.2x %-15s A: 0x%0.2x, B: "
                  "0x%0.2x, C: "
@@ -69,10 +69,10 @@ void *start_cpu(void *arg) {
             usleep(15);
             gettimeofday(&start, NULL);
         }
-        if (!boot_completed && get_memory_byte(0xFF50)) {
-            boot_completed = true;
-            unmap_dmg();
-        }
+       // if (!boot_completed && get_memory_byte(0xFF50)) {
+       //     boot_completed = true;
+       //     unmap_dmg();
+       // }
         //         if (get_pc() == 0x210) {
         //             step_mode = true;
         //         }

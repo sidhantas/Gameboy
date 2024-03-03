@@ -47,17 +47,14 @@ int main(int argc, char **argv) {
     pthread_create(&debugger_id, NULL, initialize_debugger, NULL);
     open_window();
     pthread_create(&cpu_id, NULL, start_cpu, NULL);
-    pthread_create(&interrupt_handler_id, NULL, initialize_interrupt_handler, NULL);
     pthread_create(&ppu_id, NULL, start_ppu, NULL);
     main_loop();
     close_window();
     end_debugger();
-    close_interrupt_handler();
     end_ppu();
     end_cpu();
     pthread_join(debugger_id, NULL);
     pthread_join(cpu_id, NULL);
-    pthread_join(interrupt_handler_id, NULL);
     pthread_join(ppu_id, NULL);
 
     return 0;
@@ -71,18 +68,36 @@ void main_loop(void) {
             switch (e.type) {
                 case SDL_QUIT: end_main_loop = true; break;
                 case SDL_KEYDOWN:
-                    if (e.key.keysym.scancode == SDL_SCANCODE_K) {
-                        instructions_left += 100;
-                    } else if (e.key.keysym.scancode == SDL_SCANCODE_N) {
-                        instructions_left += 1;
-                    } else if (e.key.keysym.scancode == SDL_SCANCODE_B) {
-                        instructions_left += 1000;
-                    } else if (e.key.keysym.scancode == SDL_SCANCODE_D) {
-                        tracer_dump(&t);
-                    } else if (e.key.keysym.scancode == SDL_SCANCODE_S) {
-                        step_mode = false;
+                    switch (e.key.keysym.scancode) {
+                        // case SDL_SCANCODE_K: instructions_left += 100; break;
+                        // case SDL_SCANCODE_N: instructions_left += 1; break;
+                        // case SDL_SCANCODE_B: instructions_left += 1000;
+                        // break;
+                        case SDL_SCANCODE_G: tracer_dump(&t); break;
+                        case SDL_SCANCODE_W: reset_joypad_state(UP); break;
+                        case SDL_SCANCODE_A: reset_joypad_state(LEFT); break;
+                        case SDL_SCANCODE_S: reset_joypad_state(DOWN); break;
+                        case SDL_SCANCODE_D: reset_joypad_state(RIGHT); break;
+                        case SDL_SCANCODE_K:
+                            reset_joypad_state(A_BUTTON);
+                            break;
+                        case SDL_SCANCODE_M:
+                            reset_joypad_state(B_BUTTON);
+                            break;
+                        default: break;
                     }
-                    
+                    break;
+                case SDL_KEYUP:
+                    switch (e.key.keysym.scancode) {
+                        case SDL_SCANCODE_W: set_joypad_state(UP); break;
+                        case SDL_SCANCODE_A: set_joypad_state(LEFT); break;
+                        case SDL_SCANCODE_S: set_joypad_state(DOWN); break;
+                        case SDL_SCANCODE_D: set_joypad_state(RIGHT); break;
+                        case SDL_SCANCODE_K: set_joypad_state(A_BUTTON); break;
+                        case SDL_SCANCODE_M: set_joypad_state(B_BUTTON); break;
+                        default: break;
+                    }
+                    break;
             }
         }
         if (ppu.ready_to_render) {
