@@ -39,7 +39,7 @@ void update_renderer(void) {
     pthread_mutex_lock(&display_buffer_mutex);
     SDL_UpdateTexture(texture, NULL, get_display_buffer(),
                       DISPLAY_WIDTH * sizeof(uint32_t));
-    pthread_mutex_unlock(&display_buffer_mutex);
     SDL_RenderCopy(renderer, texture, NULL, NULL);
+    pthread_mutex_unlock(&display_buffer_mutex);
     SDL_RenderPresent(renderer);
 }

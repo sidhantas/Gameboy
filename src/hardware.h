@@ -7,6 +7,7 @@
 #define MEMORY_SIZE 0xFFFF
 #define BOOT_ROM_BEGIN 0x0000
 #define ROM_START 0x0100
+#define OAM 0xFE00
 #define JOYP 0xFF00
 #define SB 0xFF01
 #define SC 0xFF02

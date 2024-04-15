@@ -78,7 +78,8 @@ clock_cycles_t RR_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     reset_flag(N_FLAG);
     reset_flag(H_FLAG);
 
-    return -1;
+    set_decoded_instruction("RR %c", REGISTER_CHAR(src));
+    return EIGHT_CLOCKS;
 }
 
 clock_cycles_t RR_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
@@ -145,15 +146,16 @@ clock_cycles_t SRL_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     const uint8_t OPCODE = get_opcode(instruction);
     const reg_t src = OPCODE & 0x07;
 
-    uint8_t result = get_register(src) >> 1;
-    get_register(src) & 0x01 ? set_flag(C_FLAG) : reset_flag(C_FLAG);
-    set_register(src, result);
-    result ? reset_flag(Z_FLAG) : set_flag(Z_FLAG);
+    uint8_t reg_val = get_register(src);
+    uint8_t bit0 = reg_val & 0x01;
+    uint8_t result = reg_val >> 1;
+    result ? set_flag(Z_FLAG) : reset_flag(Z_FLAG);
     reset_flag(N_FLAG);
     reset_flag(H_FLAG);
-
+    bit0 ? set_flag(C_FLAG) : reset_flag(C_FLAG);
+    set_register(src, result);
     set_decoded_instruction("SRL %c", REGISTER_CHAR(src));
-    return -1;
+    return EIGHT_CLOCKS;
 }
 
 clock_cycles_t SRL_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {

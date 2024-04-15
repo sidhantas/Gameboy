@@ -1,6 +1,7 @@
 #include "interrupts.h"
 #include "cpu.h"
 #include "hardware.h"
+#include "instructions.h"
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -9,26 +10,22 @@ interrupts_t get_highest_priority_interrupt(void);
 void reset_interrupt_flag(interrupts_t interrupt);
 uint16_t get_interrupt_handler(interrupts_t interrupt);
 
-bool end_interrupt_handler = false;
-
-void close_interrupt_handler(void) { end_interrupt_handler = true; }
-
 void set_interrupts_flag(interrupts_t interrupt) {
     set_memory_byte(IF, get_memory_byte(IF) | (1 << interrupt));
 }
 
-void handle_interrupts(void) {
+clock_cycles_t handle_interrupts(void) {
     if (!get_ime_flag() || !(get_memory_byte(IE) & get_memory_byte(IF))) {
-        return;
+        return 0;
     }
     interrupts_t highest_priority_interrupt = get_highest_priority_interrupt();
-    if (highest_priority_interrupt >= 0 &&
-        highest_priority_interrupt == VBLANK) {
+    if (highest_priority_interrupt >= 0) {
         reset_interrupt_flag(highest_priority_interrupt);
         set_interrupts(false);
         stack_push_u16(get_pc());
         set_pc(get_interrupt_handler(highest_priority_interrupt));
     }
+    return TWENTY_CLOCKS;
 }
 
 interrupts_t get_highest_priority_interrupt(void) {
@@ -55,17 +52,4 @@ uint16_t get_interrupt_handler(interrupts_t interrupt) {
         case JOYPAD: return 0x60;
         default: exit(1);
     }
-}
-
-void hanlde_interrupts(void) {
-    // get Interrupt Enable register
-    // for each possible interrupt
-    //     check each interrupt based on priority
-    //     if IF is true for interrupt
-    //         set ime to false
-    //         execute 2 nops
-    //         push pc to stack
-    //         set pc to address of handler
-    //         continue execution
-    //
 }

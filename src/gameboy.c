@@ -20,7 +20,6 @@ int main(int argc, char **argv) {
     pthread_t debugger_id;
     pthread_t cpu_id;
     pthread_t ppu_id;
-    pthread_t interrupt_handler_id;
     initialize_hardware();
     initialize_ppu();
 

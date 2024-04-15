@@ -1,8 +1,9 @@
 #include "ppu.h"
 #include "SDL_events.h"
 #include "SDL_render.h"
-#include "interrupts.h"
 #include "hardware.h"
+#include "interrupts.h"
+#include "oam_queue.h"
 #include "utils.h"
 #include <ncurses.h>
 #include <pthread.h>
@@ -15,6 +16,7 @@
 #define DOTS_PER_LINE 456
 
 PPU ppu;
+OAMSelector oam_selector;
 
 SDL_Event event;
 SDL_Renderer *renderer;
@@ -77,14 +79,31 @@ bool consume_dots(uint64_t dots_to_consume) {
 
 static void execute_mode_2(void) {
     // wait for 2 dots
+    static uint8_t object_index = 0;
     if (!consume_dots(2)) {
+        oam_add(&oam_selector, object_index);
+        object_index++;
         return;
     }
     if (ppu.line_dots > 80) {
+        initialize_oam_queue(&oam_selector);
+        object_index = 0;
         ppu.line_x = 0;
         ppu.mode = 3;
     }
     return;
+}
+
+uint8_t get_obj_pixel(OAMSelector *oam_selector, uint8_t x_pixel) {
+    for (uint8_t i = 0; i < oam_selector->top; i++) {
+        if (oam_selector->selected_objects[i].x_start < 8) {
+            continue;
+        }
+        if (x_pixel - oam_selector->selected_objects[i].x_start - 8 < 8) {
+            return 0x00;
+        }
+    }
+    return 0x03;
 }
 
 void execute_mode_3(void) {
@@ -97,11 +116,18 @@ void execute_mode_3(void) {
     }
     // wait an extra dot for the pixel;
     if (!consume_dots(penalty_dots + 1)) {
-        return; }
+        return;
+    }
     // Should overlap with win pixel if it exists
-    const uint8_t pixel = get_bg_pixel(ppu.line_x, get_memory_byte(LCDY));
-    set_display_pixel(ppu.line_x, get_memory_byte(LCDY), get_color_from_byte(pixel));
+    uint8_t pixel = get_bg_pixel(ppu.line_x, get_memory_byte(LCDY));
+    const uint8_t object_pixel = get_obj_pixel(&oam_selector, ppu.line_x);
+    if (object_pixel != 0x03) {
+        pixel = object_pixel;
+    }
+
     pthread_mutex_lock(&display_buffer_mutex);
+    set_display_pixel(ppu.line_x, get_memory_byte(LCDY),
+                      get_color_from_byte(pixel));
     pthread_mutex_unlock(&display_buffer_mutex);
     if (++ppu.line_x > DISPLAY_WIDTH) {
         ppu.mode = 0;
@@ -175,18 +201,28 @@ uint8_t get_bg_pixel(uint8_t x, uint8_t y) {
     uint8_t hi = get_memory_byte(tile_start + (y % 8) * 2 + 1);
 
     // intertwine bytes
-    //
     const uint8_t hi_bit = get_bit(hi, 7 - x % 8);
     const uint8_t low_bit = get_bit(low, 7 - x % 8);
     return hi_bit << 1 | low_bit;
 }
 
+uint8_t get_object_pixel(uint16_t tile_row_address, uint8_t pixel_num) {
+
+    uint8_t low = get_memory_byte(tile_row_address);
+    uint8_t hi = get_memory_byte(tile_row_address + 1);
+
+    // const uint8_t hi_bit = get_bit(hi, 7 - pixel_num % 8);
+    // const uint8_t low_bit = get_bit(low, 7 - pixel_num % 8);
+
+    return 0x03;
+}
+
 static uint32_t get_color_from_byte(uint8_t byte) {
     switch (byte) {
-        case 0x00: return 0;
-        case 0x01: return 0x55555555;
-        case 0x02: return 0xAAAAAAAA;
-        case 0x03: return 0xFFFFFFFF;
+        case 0x03: return 0;
+        case 0x02: return 0x55555555;
+        case 0x01: return 0xAAAAAAAA;
+        case 0x00: return 0xFFFFFFFF;
         default: return UINT32_MAX;
     }
 }

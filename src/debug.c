@@ -290,6 +290,28 @@ static void print_register_window(WINDOW *registers_win) {
     wrefresh(registers_win);
 }
 
+static void print_oam_queue(WINDOW *oam_win) {
+    uint16_t WIDTH = 0;
+    uint16_t HEIGHT = 0;
+    werase(oam_win);
+    getmaxyx(oam_win, HEIGHT, WIDTH);
+    box(oam_win, 0, 0);
+
+    mvwprintwhcenter(oam_win, 0, 0, WIDTH, "STACK");
+    wmove(oam_win, 1, WIDTH / 2);
+    wvline(oam_win, 0, HEIGHT - 2);
+
+    // Draw headers
+    mvwprintwhcenter(oam_win, 1, 0, WIDTH / 2, "Address");
+    mvwprintwhcenter(oam_win, 1, WIDTH / 2, WIDTH / 2, "Value");
+
+    // Draw cell header division
+    wmove(oam_win, 2, 1);
+    whline(oam_win, 0, WIDTH - 2);
+
+
+}
+
 static void print_flags_window(WINDOW *flags_win) {
     uint16_t WIDTH = 0;
     uint16_t HEIGHT = 0;
