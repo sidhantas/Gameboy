@@ -49,6 +49,7 @@ clock_cycles_t INC_SP(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
 clock_cycles_t DEC_LONG_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
 clock_cycles_t DEC_SP(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
 clock_cycles_t PUSH_LONG_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
+clock_cycles_t PUSH_AF(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
 clock_cycles_t POP_LONG_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
 clock_cycles_t CP_A_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
 clock_cycles_t CALL_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]);

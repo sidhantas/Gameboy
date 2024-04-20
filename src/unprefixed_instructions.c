@@ -367,12 +367,21 @@ clock_cycles_t DEC_SP(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 }
 
 clock_cycles_t PUSH_LONG_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
-
     const uint8_t OPCODE = get_opcode(instruction);
     long_reg_t long_reg = (OPCODE >> 4) & 0x3;
 
     stack_push_u16(get_long_reg(long_reg));
     set_decoded_instruction("PUSH %s", LONG_REGISTER_STR(long_reg));
+    return SIXTEEN_CLOCKS;
+}
+
+clock_cycles_t PUSH_AF(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    (void)instruction;
+    const uint8_t A_val = get_register(A);
+    const uint8_t F_val = get_register(F) & 0xF0;
+    stack_push_u16(two_u8s_to_u16(F_val, A_val));
+    set_decoded_instruction("PUSH %s", LONG_REGISTER_STR(AF));
+
     return SIXTEEN_CLOCKS;
 }
 
@@ -600,9 +609,9 @@ clock_cycles_t INC_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     result ? reset_flag(Z_FLAG) : set_flag(Z_FLAG);
     reset_flag(N_FLAG);
     half_carry_on_add(get_memory_byte(HL_val), 1, 0) ? set_flag(H_FLAG)
-                                               : reset_flag(H_FLAG);
+                                                     : reset_flag(H_FLAG);
     set_memory_byte(HL_val, result);
-    
+
     set_decoded_instruction("INC (HL)");
 
     return TWELVE_CLOCKS;
@@ -617,7 +626,7 @@ clock_cycles_t DEC_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     result ? reset_flag(Z_FLAG) : set_flag(Z_FLAG);
     set_flag(N_FLAG);
     half_carry_on_subtract(get_memory_byte(HL_val), 1) ? set_flag(H_FLAG)
-                                                 : reset_flag(H_FLAG);
+                                                       : reset_flag(H_FLAG);
 
     set_memory_byte(HL_val, result);
 

@@ -541,10 +541,12 @@ static clock_cycles_t (
         }
         case 0xc5:
         case 0xd5:
-        case 0xe5:
-        case 0xf5: {
+        case 0xe5: {
             return &PUSH_LONG_R;
         }
+        case 0xF5: {
+                       return &PUSH_AF;
+                   }
         case 0xc1:
         case 0xd1:
         case 0xe1:

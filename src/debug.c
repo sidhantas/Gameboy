@@ -267,13 +267,13 @@ static void print_register_window(WINDOW *registers_win) {
     mvwprintw(registers_win, 8, WIDTH / 2 + 2, "0x%0.2X",
               get_register(L));
 
-    mvwprintw(registers_win, 9, WIDTH / 4 - 1, "F");
+    mvwprintw(registers_win, 9, WIDTH / 4 - 1, "A");
     mvwprintw(registers_win, 9, WIDTH / 2 + 2, "0x%0.2X",
-              get_register(F));
-
-    mvwprintw(registers_win, 10, WIDTH / 4 - 1, "A");
-    mvwprintw(registers_win, 10, WIDTH / 2 + 2, "0x%0.2X",
               get_register(A));
+
+    mvwprintw(registers_win, 10, WIDTH / 4 - 1, "F");
+    mvwprintw(registers_win, 10, WIDTH / 2 + 2, "0x%0.2X",
+              get_register(F));
 
     // Draw PC and SP labels
     mvwprintw(registers_win, 12, WIDTH / 4 - 1, "SP");

@@ -1,7 +1,7 @@
 #include "cpu.h"
 #include "decoder.h"
-#include "interrupts.h"
 #include "hardware.h"
+#include "interrupts.h"
 #include "ppu.h"
 #include <inttypes.h>
 #include <pthread.h>
@@ -16,7 +16,6 @@ bool close_cpu = false;
 bool boot_completed = false;
 #define CPU_CATCH_UP 100
 pthread_mutex_t cpu_mutex = PTHREAD_MUTEX_INITIALIZER;
-
 void *start_cpu(void *arg) {
     (void)arg;
     struct timeval start, end, diff;
@@ -24,12 +23,15 @@ void *start_cpu(void *arg) {
     suseconds_t expected_time = CPU_CATCH_UP * 1000000 / CLOCK_RATE;
     char trace_str[256];
     gettimeofday(&start, NULL);
-    
+
     while (true) {
         clock_cycles_t clocks = 0;
         if (get_is_implemented() == false) {
             step_mode = true;
         }
+//        if (get_instruction()[0] == 0x01 && get_instruction()[1] == 0x00 && get_instruction()[2] == 0x12) {
+//            step_mode = true;
+//        }
         if (close_cpu) {
             break;
         }
@@ -67,7 +69,7 @@ void *start_cpu(void *arg) {
                 diff.tv_usec = end.tv_usec - start.tv_usec;
             }
             // suseconds_t remaining_time = expected_time - diff.tv_usec;
-            usleep(15);
+            // usleep(15);
             gettimeofday(&start, NULL);
         }
     }

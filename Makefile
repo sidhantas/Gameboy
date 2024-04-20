@@ -1,24 +1,20 @@
 CC=clang
-CFLAGS= -g -Wall -Wextra -Wpedantic -D_THREAD_SAFE -I/opt/homebrew/include -I/opt/homebrew/include/SDL2
+CFLAGS= -g -Wall -Wextra -Wpedantic -D_THREAD_SAFE -I/opt/homebrew/include -I/opt/homebrew/include/SDL2 -I./include
 LDFLAGS= -lncurses -pthread  -L/opt/homebrew/lib -lSDL2
 SRC_DIR := src
 OBJ_DIR := obj
 BIN_DIR := .
 EXE := $(BIN_DIR)/gameboy
-SRC_C := $(wildcard $(SRC_DIR)/*.c)
-SRC_M := $(wildcard $(SRC_DIR)/*.m)
-OBJ_M := $(SRC_M:$(SRC_DIR)/%.m=$(OBJ_DIR)/%.o)
-OBJ_C := $(SRC_C:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
-.PHONY: all
+.PHONY: all run
 
-all: $(EXE)
+all: $(OBJ_DIR)/%.o
+
+run: 
+	make all && ./$(EXE) -g Tetris.gb
 
 $(EXE): $(OBJ_C) $(OBJ_M) | $(BIN_DIR)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
-
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.m | $(OBJ_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
