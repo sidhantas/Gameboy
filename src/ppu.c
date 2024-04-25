@@ -219,10 +219,10 @@ uint8_t get_object_pixel(uint16_t tile_row_address, uint8_t pixel_num) {
 
 static uint32_t get_color_from_byte(uint8_t byte) {
     switch (byte) {
-        case 0x03: return 0;
-        case 0x02: return 0x55555555;
-        case 0x01: return 0xAAAAAAAA;
-        case 0x00: return 0xFFFFFFFF;
+        case 0x00: return 0;
+        case 0x01: return 0x55555555;
+        case 0x02: return 0xAAAAAAAA;
+        case 0x03: return 0xFFFFFFFF;
         default: return UINT32_MAX;
     }
 }

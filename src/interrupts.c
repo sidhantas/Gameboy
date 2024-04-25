@@ -1,7 +1,6 @@
 #include "interrupts.h"
 #include "cpu.h"
 #include "hardware.h"
-#include "instructions.h"
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -15,13 +14,20 @@ void set_interrupts_flag(interrupts_t interrupt) {
 }
 
 clock_cycles_t handle_interrupts(void) {
+    //enum INTERRUPT_STATE interrupt_state = get_interrupt_state();
+    //if (interrupt_state == ENABLE) {
+    //    set_ime_flag(1);
+    //    return 0;
+    //} else if (interrupt_state == DISABLE) {
+    //    set_ime_flag(0);
+    //}
     if (!get_ime_flag() || !(get_memory_byte(IE) & get_memory_byte(IF))) {
         return 0;
     }
     interrupts_t highest_priority_interrupt = get_highest_priority_interrupt();
     if (highest_priority_interrupt >= 0) {
         reset_interrupt_flag(highest_priority_interrupt);
-        set_interrupts(false);
+        set_ime_flag(0);
         stack_push_u16(get_pc());
         set_pc(get_interrupt_handler(highest_priority_interrupt));
     }

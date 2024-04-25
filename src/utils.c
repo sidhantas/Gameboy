@@ -29,14 +29,14 @@ void u16_to_two_u8s(uint16_t val, uint8_t *b1, uint8_t *b2) {
     *b1 = val & 0xFF;
 }
 
-bool half_carry_on_subtract(uint8_t val_1, uint8_t val_2) {
-    return (val_1 & 0x0F) < (val_2 & 0x0F);
+bool half_carry_on_subtract(uint8_t val_1, uint8_t val_2, uint8_t carry) {
+    return ((val_1 & 0xF) - (val_2 & 0xF) - (carry & 0xF) & 0x10);
 }
 
-uint8_t sub(uint8_t val_1, uint8_t val_2) {
-    uint8_t res = val_1 - val_2;
-    val_2 > val_1 ? set_flag(C_FLAG) : reset_flag(C_FLAG);
-    half_carry_on_subtract(val_1, val_2) ? set_flag(H_FLAG)
+uint8_t sub(uint8_t val_1, uint8_t val_2, uint8_t carry) {
+    uint8_t res = val_1 - val_2 - carry;
+    (val_2 + carry) > val_1 ? set_flag(C_FLAG) : reset_flag(C_FLAG);
+    half_carry_on_subtract(val_1, val_2, carry) ? set_flag(H_FLAG)
                                          : reset_flag(H_FLAG);
     set_flag(N_FLAG);
     res ? reset_flag(Z_FLAG) : set_flag(Z_FLAG);

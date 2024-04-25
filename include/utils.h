@@ -16,9 +16,9 @@ void mvwprintwhcenter(WINDOW *win, uint8_t row, uint8_t row_start,
 
 uint16_t post_inc(uint16_t *val);
 
-bool half_carry_on_subtract(uint8_t val_1, uint8_t val_2);
+bool half_carry_on_subtract(uint8_t val_1, uint8_t val_2, uint8_t carry);
 bool half_carry_on_add(uint8_t val_1, uint8_t val_2, uint8_t carry);
-uint8_t sub(uint8_t val_1, uint8_t val_2);
+uint8_t sub(uint8_t val_1, uint8_t val_2, uint8_t carry);
 uint8_t add(uint8_t val_1, uint8_t val_2, uint8_t carry);
 uint16_t addu16(long_reg_t r1, long_reg_t r2);
 uint8_t get_crumb(uint8_t byte, uint8_t crumb);

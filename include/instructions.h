@@ -4,17 +4,6 @@ static inline uint8_t get_opcode(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     return instruction[0] == 0xCB ? instruction[1] : instruction[0];
 }
 
-typedef enum {
-    INVALID_CLOCKS = -1,
-    ZERO_CLOCKS = 0,
-    FOUR_CLOCKS = 4,
-    EIGHT_CLOCKS = 8,
-    TWELVE_CLOCKS = 12,
-    SIXTEEN_CLOCKS = 16,
-    TWENTY_CLOCKS = 20,
-    TWENTY_FOUR_CLOCKS = 24,
-    THIRTY_TWO_CLOCKS = 32
-} clock_cycles_t;
 /* UNPREFIXED INSTRUCTIONS */
 clock_cycles_t LD_RR(uint8_t instruction[MAX_INSTRUCTION_SIZE]);
 clock_cycles_t XOR_A_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]);

@@ -28,7 +28,7 @@
 
 #define MAX_INSTRUCTION_SIZE 3
 #define REGISTER_COUNT 8
-#define RESOLUTION_SCALE 5
+#define RESOLUTION_SCALE 2
 #define TILE_MAP_WIDTH 256
 #define DISPLAY_WIDTH 160
 #define DISPLAY_HEIGHT 144
@@ -45,52 +45,71 @@ typedef enum LONG_REGS { BC, DE, HL, AF } long_reg_t;
 typedef enum FLAGS { Z_FLAG, N_FLAG, H_FLAG, C_FLAG } flags_t;
 
 static inline char REGISTER_CHAR(enum REGISTERS reg) {
-    static const char REGS[] = {'B', 'C', 'D', 'E', 'H', 'L', 'F', 'A'};
-    return REGS[reg];
+  static const char REGS[] = {'B', 'C', 'D', 'E', 'H', 'L', 'F', 'A'};
+  return REGS[reg];
 }
 
 static inline char const *LONG_REGISTER_STR(enum LONG_REGS long_reg) {
-    static char const *LONG_REGS_STR[4] = {"BC", "DE", "HL", "AF"};
-    return LONG_REGS_STR[long_reg];
+  static char const *LONG_REGS_STR[4] = {"BC", "DE", "HL", "AF"};
+  return LONG_REGS_STR[long_reg];
 }
 
+typedef enum {
+  INVALID_CLOCKS = -1,
+  ZERO_CLOCKS = 0,
+  FOUR_CLOCKS = 4,
+  EIGHT_CLOCKS = 8,
+  TWELVE_CLOCKS = 12,
+  SIXTEEN_CLOCKS = 16,
+  TWENTY_CLOCKS = 20,
+  TWENTY_FOUR_CLOCKS = 24,
+  THIRTY_TWO_CLOCKS = 32
+} clock_cycles_t;
+
+enum INTERRUPT_STATE {
+  NOTHING = 0,
+  DISABLE = 1,
+  ENABLE = 2,
+};
+
 typedef struct Hardware {
-    uint8_t *memory;
-    uint32_t *display_buffer;
-    uint8_t registers[REGISTER_COUNT];
-    uint16_t sp;
-    uint16_t base_sp;
-    uint16_t stack_start;
-    uint16_t pc;
-    uint8_t opcode;
-    uint8_t ime_flag;
-    bool is_implemented;
-    bool is_double_speed;
-    char vram_mode;
-    char oam_mode;
-    uint8_t mode;
-    uint64_t instruction_count;
-    uint8_t instruction[MAX_INSTRUCTION_SIZE];
-    char decoded_instruction[MAX_DECODED_INSTRUCTION_SIZE];
-    char previous_instruction[MAX_DECODED_INSTRUCTION_SIZE];
-    bool step_mode;
+  uint8_t *memory;
+  uint32_t *display_buffer;
+  uint8_t registers[REGISTER_COUNT];
+  uint16_t sp;
+  uint16_t base_sp;
+  uint16_t stack_start;
+  uint16_t pc;
+  uint8_t opcode;
+  enum INTERRUPT_STATE interrupt_state;
+  uint8_t ime_flag;
+  bool is_implemented;
+  bool is_double_speed;
+  char vram_mode;
+  char oam_mode;
+  uint8_t mode;
+  uint64_t instruction_count;
+  uint8_t instruction[MAX_INSTRUCTION_SIZE];
+  char decoded_instruction[MAX_DECODED_INSTRUCTION_SIZE];
+  char previous_instruction[MAX_DECODED_INSTRUCTION_SIZE];
+  bool step_mode;
 } Hardware;
 
 typedef struct Joypad {
-    // high nibble == action
-    // low nibble == directional
-    uint8_t inputs;
+  // high nibble == action
+  // low nibble == directional
+  uint8_t inputs;
 } Joypad;
 
 typedef enum JoypadButtons {
-    RIGHT,
-    LEFT,
-    UP,
-    DOWN,
-    A_BUTTON,
-    B_BUTTON,
-    SELECT,
-    START
+  RIGHT,
+  LEFT,
+  UP,
+  DOWN,
+  A_BUTTON,
+  B_BUTTON,
+  SELECT,
+  START
 } joypad_t;
 
 extern Tracer t;
@@ -122,7 +141,8 @@ void set_base_sp(uint16_t new_base);
 uint16_t get_base_sp(void);
 void dec_sp(void);
 uint16_t get_sp(void);
-void set_interrupts(bool val);
+void set_interrupt_state(enum INTERRUPT_STATE val);
+enum INTERRUPT_STATE get_interrupt_state(void);
 void append_instruction(uint8_t pos);
 uint8_t *get_instruction(void);
 void inc_instruction_count(void);
@@ -131,6 +151,7 @@ bool get_is_implemented(void);
 char *get_decoded_instruction(void);
 uint8_t get_mode(void);
 uint8_t get_ime_flag(void);
+void set_ime_flag(bool val);
 uint64_t get_instruction_count(void);
 void clear_instruction(void);
 void dump_tracer(void);
@@ -139,3 +160,6 @@ uint16_t stack_pop_u16(void);
 void set_joypad_state(joypad_t button);
 void reset_joypad_state(joypad_t button);
 uint8_t get_joypad_state(void);
+
+// TIMER
+void update_timer(clock_cycles_t clocks);

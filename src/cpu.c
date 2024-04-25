@@ -20,8 +20,8 @@ void *start_cpu(void *arg) {
     (void)arg;
     struct timeval start, end, diff;
     uint16_t exec_count = 0;
-    suseconds_t expected_time = CPU_CATCH_UP * 1000000 / CLOCK_RATE;
-    char trace_str[256];
+//    suseconds_t expected_time = CPU_CATCH_UP * 1000000 / CLOCK_RATE;
+//    char trace_str[256];
     gettimeofday(&start, NULL);
 
     while (true) {
@@ -29,9 +29,6 @@ void *start_cpu(void *arg) {
         if (get_is_implemented() == false) {
             step_mode = true;
         }
-//        if (get_instruction()[0] == 0x01 && get_instruction()[1] == 0x00 && get_instruction()[2] == 0x12) {
-//            step_mode = true;
-//        }
         if (close_cpu) {
             break;
         }
@@ -45,17 +42,19 @@ void *start_cpu(void *arg) {
         clocks += handle_interrupts();
         clock_cycles_t (*func)(uint8_t *) = fetch_instruction();
         clocks += execute_instruction(func);
-        snprintf(trace_str, 255,
-                 "Instruction: 0x%0.2x 0x%0.2x 0x%0.2x %-15s A: 0x%0.2x, B: "
-                 "0x%0.2x, C: "
-                 "0x%0.2x, D: 0x%0.2x, E: "
-                 "0x%0.2x, H: 0x%0.2x, L: 0x%0.2x, C Flag: %" PRIu8 "",
-                 get_instruction()[0], get_instruction()[1],
-                 get_instruction()[2], get_decoded_instruction(),
-                 get_register(A), get_register(B), get_register(C),
-                 get_register(D), get_register(E), get_register(H),
-                 get_register(L), get_flag(C_FLAG));
-        tracer_enqueue(&t, old_pc, trace_str);
+        update_timer(clocks);
+
+//        snprintf(trace_str, 255,
+//                 "Instruction: 0x%0.2x 0x%0.2x 0x%0.2x %-15s A: 0x%0.2x, B: "
+//                 "0x%0.2x, C: "
+//                 "0x%0.2x, D: 0x%0.2x, E: "
+//                 "0x%0.2x, H: 0x%0.2x, L: 0x%0.2x, C Flag: %" PRIu8 "",
+//                 get_instruction()[0], get_instruction()[1],
+//                 get_instruction()[2], get_decoded_instruction(),
+//                 get_register(A), get_register(B), get_register(C),
+//                 get_register(D), get_register(E), get_register(H),
+//                 get_register(L), get_flag(C_FLAG));
+//        tracer_enqueue(&t, old_pc, trace_str);
         pthread_mutex_lock(&dots_mutex);
         ppu.available_dots += clocks * 4;
         pthread_mutex_unlock(&dots_mutex);
@@ -69,7 +68,7 @@ void *start_cpu(void *arg) {
                 diff.tv_usec = end.tv_usec - start.tv_usec;
             }
             // suseconds_t remaining_time = expected_time - diff.tv_usec;
-            // usleep(15);
+            usleep(5);
             gettimeofday(&start, NULL);
         }
     }
@@ -77,3 +76,6 @@ void *start_cpu(void *arg) {
 }
 
 void end_cpu(void) { close_cpu = true; }
+void toggle_step_mode(void) {
+    step_mode = !step_mode;
+}

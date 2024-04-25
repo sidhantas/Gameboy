@@ -5,15 +5,17 @@ SRC_DIR := src
 OBJ_DIR := obj
 BIN_DIR := .
 EXE := $(BIN_DIR)/gameboy
+SRC_FILES := $(wildcard $(SRC_DIR)/*.c)
+OBJ_FILES := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o, $(SRC_FILES))
 
 .PHONY: all run
 
-all: $(OBJ_DIR)/%.o
+all: $(EXE)
 
 run: 
 	make all && ./$(EXE) -g Tetris.gb
 
-$(EXE): $(OBJ_C) $(OBJ_M) | $(BIN_DIR)
+$(EXE): $(OBJ_FILES) | $(BIN_DIR)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
