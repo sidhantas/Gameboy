@@ -8,7 +8,6 @@
 #include <string.h>
 
 Hardware hardware;
-Joypad joy;
 Tracer t;
 
 #define TRACER_SIZE 50
@@ -33,7 +32,6 @@ void initialize_hardware(void) {
     hardware.interrupt_state = NOTHING;
     hardware.ime_flag = 0;
     hardware.memory[JOYP] = 0x3F;
-    joy.inputs = 0xFF;
     initialize_tracer(&t, 1000);
 }
 
@@ -62,15 +60,16 @@ void load_rom(FILE *rom) {
         sectors_read++;
     } while (read_size > 0);
 }
+uint8_t privileged_get_memory_byte(uint16_t address) { return hardware.memory[address]; }
 
 uint8_t get_memory_byte(uint16_t address) { return hardware.memory[address]; }
 
-void handle_IO_write(uint16_t address, uint8_t byte) {
+static void handle_IO_write(uint16_t address, uint8_t byte) {
     if (address == JOYP) {
         if (!(byte & 0x20)) {
-            hardware.memory[address] = (byte & 0xF0) | (joy.inputs & 0x0F);
+            hardware.memory[address] = (byte & 0xF0) | (get_joypad_state() & 0x0F);
         } else if (!(byte & 0x10)) {
-            hardware.memory[address] = (byte & 0xF0) | (joy.inputs >> 4);
+            hardware.memory[address] = (byte & 0xF0) | (get_joypad_state() >> 4);
         }
         return;
     } else if (address == 0xFF50 && byte > 0) {
@@ -83,6 +82,10 @@ void handle_IO_write(uint16_t address, uint8_t byte) {
     } else {
         hardware.memory[address] = byte;
     }
+}
+
+void privileged_set_memory_byte(uint16_t address, uint8_t byte) {
+    hardware.memory[address] = byte;
 }
 
 void set_memory_byte(uint16_t address, uint8_t byte) {
@@ -252,61 +255,3 @@ uint8_t get_ime_flag(void) { return hardware.ime_flag; }
 void set_ime_flag(bool val) { hardware.ime_flag = val; }
 
 void dump_tracer(void) { tracer_dump(&t); }
-
-uint8_t get_joypad_state(void) { return joy.inputs; }
-
-void set_joypad_state(joypad_t button) { set_bit(&joy.inputs, button); }
-
-void reset_joypad_state(joypad_t button) { joy.inputs &= ~(1 << button); }
-
-// TIMER
-//
-void update_DIV_register(clock_cycles_t clocks);
-void update_TIMA_register(clock_cycles_t clocks);
-
-void update_timer(clock_cycles_t clocks) {
-    update_DIV_register(clocks);
-    update_TIMA_register(clocks);
-}
-
-void update_TIMA_register(clock_cycles_t clocks) {
-    static uint16_t TIMA_progress = 0;
-    uint8_t TAC_register = hardware.memory[TAC];
-    uint8_t TAC_enabled = get_bit(TAC_register, 2);
-
-    if (!TAC_enabled) {
-        return;
-    }
-
-    TIMA_progress += clocks;
-
-    uint16_t TIMA_clock_rate = 256;
-    uint8_t clock_select = TAC_register & 0x03;
-
-    switch (clock_select) {
-        case 0x00: TIMA_clock_rate = 256; break;
-        case 0x01: TIMA_clock_rate = 4; break;
-        case 0x02: TIMA_clock_rate = 16; break;
-        case 0x03: TIMA_clock_rate = 64; break;
-        default: break;
-    }
-
-    uint8_t tick_update = TIMA_progress / TIMA_clock_rate;
-    if (tick_update > 0) {
-        uint16_t TMA_modulo = hardware.memory[TMA];
-        TIMA_progress = TMA_modulo + TIMA_progress % TIMA_clock_rate;
-        if (hardware.memory[TIMA] == 0xFF) {
-            set_interrupts_flag(TIMA);
-        }
-        hardware.memory[TIMA] += tick_update;
-    }
-
-}
-void update_DIV_register(clock_cycles_t clocks) {
-    static uint16_t DIV_progress = 0;
-    DIV_progress += clocks;
-    if (DIV_progress >= 256) {
-        hardware.memory[DIV] += 1;
-        DIV_progress %= 256;
-    }
-}

@@ -115,10 +115,13 @@ typedef enum JoypadButtons {
 extern Tracer t;
 
 void initialize_hardware(void);
+void initialize_io(void);
 void map_dmg(FILE *);
 void unmap_dmg(void);
 void load_rom(FILE *);
+uint8_t privileged_get_memory_byte(uint16_t address);
 uint8_t get_memory_byte(uint16_t address);
+void privileged_set_memory_byte(uint16_t address, uint8_t byte);
 void set_memory_byte(uint16_t address, uint8_t byte);
 uint8_t get_flag(flags_t flag);
 void set_flag(flags_t flag);

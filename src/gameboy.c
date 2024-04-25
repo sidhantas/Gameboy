@@ -23,6 +23,7 @@ int main(int argc, char **argv) {
     pthread_t ppu_id;
     initialize_hardware();
     initialize_ppu();
+    initialize_io();
 
     FILE *dmg = fopen("dmg.bin", "r");
     FILE *game;
