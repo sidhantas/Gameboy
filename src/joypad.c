@@ -12,10 +12,12 @@ uint8_t get_joypad_state(void) { return joy.inputs; }
 
 void set_joypad_state(joypad_t button) { 
     set_bit(&joy.inputs, button);
+}
+
+void reset_joypad_state(joypad_t button) {
+    joy.inputs &= ~(1 << button); 
     uint8_t joypad_mem = privileged_get_memory_byte(JOYP);
     if (joypad_mem & 0x30) {
         set_interrupts_flag(JOYP);
     }
 }
-
-void reset_joypad_state(joypad_t button) { joy.inputs &= ~(1 << button); }

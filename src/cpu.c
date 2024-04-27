@@ -20,9 +20,8 @@ void *start_cpu(void *arg) {
     (void)arg;
     struct timeval start, end, diff;
     uint16_t exec_count = 0;
-//    suseconds_t expected_time = CPU_CATCH_UP * 1000000 / CLOCK_RATE;
-//    char trace_str[256];
     gettimeofday(&start, NULL);
+    FILE *f = fopen("inst_dump.txt", "w");
 
     while (true) {
         clock_cycles_t clocks = 0;
@@ -32,11 +31,25 @@ void *start_cpu(void *arg) {
         if (close_cpu) {
             break;
         }
+//        if (get_instruction()[0] == 0xCB && get_instruction()[0] == 0xCB) {
+//            step_mode = true;
+//        }
         if (step_mode && instructions_left <= 0) {
             continue;
         } else if (step_mode) {
             instructions_left -= 1;
         }
+
+//        fprintf(f,
+//                "A:%0.2X F:%0.2X B:%0.2X C:%0.2X D:%0.2X E:%0.2X H:%0.2X "
+//                "L:%0.2X SP:%0.4X PC:%0.4X PCMEM:%0.2X,%0.2X,%0.2X,%0.2X\n",
+//                get_register(A), get_register(F), get_register(B),
+//                get_register(C), get_register(D), get_register(E),
+//                get_register(H), get_register(L), get_sp(), get_pc(),
+//                privileged_get_memory_byte(get_pc()),
+//                privileged_get_memory_byte(get_pc() + 1),
+//                privileged_get_memory_byte(get_pc() + 2),
+//                privileged_get_memory_byte(get_pc() + 3));
 
         uint16_t old_pc = get_pc();
         clocks += handle_interrupts();
@@ -44,17 +57,17 @@ void *start_cpu(void *arg) {
         clocks += execute_instruction(func);
         update_timer(clocks);
 
-//        snprintf(trace_str, 255,
-//                 "Instruction: 0x%0.2x 0x%0.2x 0x%0.2x %-15s A: 0x%0.2x, B: "
-//                 "0x%0.2x, C: "
-//                 "0x%0.2x, D: 0x%0.2x, E: "
-//                 "0x%0.2x, H: 0x%0.2x, L: 0x%0.2x, C Flag: %" PRIu8 "",
-//                 get_instruction()[0], get_instruction()[1],
-//                 get_instruction()[2], get_decoded_instruction(),
-//                 get_register(A), get_register(B), get_register(C),
-//                 get_register(D), get_register(E), get_register(H),
-//                 get_register(L), get_flag(C_FLAG));
-//        tracer_enqueue(&t, old_pc, trace_str);
+
+        //        snprintf(trace_str, 255,
+        //                 "Instruction: 0x%0.2x 0x%0.2x 0x%0.2x %-15s A:
+        //                 0x%0.2x, B: " "0x%0.2x, C: " "0x%0.2x, D: 0x%0.2x, E:
+        //                 " "0x%0.2x, H: 0x%0.2x, L: 0x%0.2x, C Flag: %" PRIu8
+        //                 "", get_instruction()[0], get_instruction()[1],
+        //                 get_instruction()[2], get_decoded_instruction(),
+        //                 get_register(A), get_register(B), get_register(C),
+        //                 get_register(D), get_register(E), get_register(H),
+        //                 get_register(L), get_flag(C_FLAG));
+        //        tracer_enqueue(&t, old_pc, trace_str);
         pthread_mutex_lock(&dots_mutex);
         ppu.available_dots += clocks * 4;
         pthread_mutex_unlock(&dots_mutex);
@@ -76,6 +89,4 @@ void *start_cpu(void *arg) {
 }
 
 void end_cpu(void) { close_cpu = true; }
-void toggle_step_mode(void) {
-    step_mode = !step_mode;
-}
+void toggle_step_mode(void) { step_mode = !step_mode; }

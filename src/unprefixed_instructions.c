@@ -59,7 +59,7 @@ clock_cycles_t ADD_A_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     const uint8_t OPCODE = get_opcode(instruction);
     reg_t src = OPCODE & 0x7;
 
-    uint8_t result = add(get_register(A), get_register(A), 0);
+    uint8_t result = add(get_register(A), get_register(src), 0);
     set_register(A, result);
     set_decoded_instruction("ADD A, %c", REGISTER_CHAR(src));
     return FOUR_CLOCKS;
@@ -95,10 +95,17 @@ clock_cycles_t AND_A_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 
 clock_cycles_t AND_A_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     (void)instruction;
+    uint8_t result = get_register(A) & get_memory_byte(get_long_reg(HL));
+    result ? reset_flag(Z_FLAG) : set_flag(Z_FLAG);
+    reset_flag(N_FLAG);
+    set_flag(H_FLAG);
+    reset_flag(C_FLAG);
 
-    set_decoded_instruction("AND A, %s", LONG_REGISTER_STR(HL));
+    set_register(A, result);
 
-    return -1;
+    set_decoded_instruction("AND A, (%s)", LONG_REGISTER_STR(HL));
+
+    return EIGHT_CLOCKS;
 }
 
 clock_cycles_t LD_R_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
@@ -398,6 +405,17 @@ clock_cycles_t POP_LONG_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     return TWELVE_CLOCKS;
 }
 
+clock_cycles_t POP_LONG_AF(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    (void)instruction;
+
+    uint8_t F_val = stack_pop_u8() & 0xF0;
+    set_register(F, F_val);
+    uint8_t A_val = stack_pop_u8();
+    set_register(A, A_val);
+    set_decoded_instruction("POP %s", LONG_REGISTER_STR(AF));
+    return TWELVE_CLOCKS;
+}
+
 clock_cycles_t CP_A_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     (void)instruction;
 
@@ -449,7 +467,7 @@ clock_cycles_t JR_Z_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 
 clock_cycles_t
 LD_A_DEREF_FF00_PLUS_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
-    set_register(A, get_memory_byte(JOYP + instruction[1]));
+    set_register(A, get_memory_byte(0xFF00 + (uint16_t)instruction[1]));
     set_decoded_instruction("LD A, (0x%x + 0x%0.2X)", JOYP, instruction[1]);
 
     return TWELVE_CLOCKS;
@@ -509,7 +527,13 @@ clock_cycles_t CALL_Z_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 
     set_decoded_instruction("CALL Z, 0x%X",
                             two_u8s_to_u16(instruction[1], instruction[2]));
-    return -1;
+    if (get_flag(Z_FLAG)) {
+        stack_push_u16(get_pc());
+        set_pc(two_u8s_to_u16(instruction[1], instruction[2]));
+        return TWENTY_FOUR_CLOCKS;
+    }
+
+    return TWENTY_FOUR_CLOCKS;
 }
 
 clock_cycles_t LD_ADDR_IMM_SP(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
@@ -576,7 +600,18 @@ clock_cycles_t ADD_HL_LONG_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 
     set_decoded_instruction("ADD HL, %s", LONG_REGISTER_STR(src));
 
-    set_long_reg_u16(HL, addu16(dst, src));
+    set_long_reg_u16(HL, addu16(get_long_reg(dst), get_long_reg(src)));
+
+    return EIGHT_CLOCKS;
+}
+
+clock_cycles_t ADD_HL_SP(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
+    const uint8_t OPCODE = get_opcode(instruction);
+    long_reg_t src = ((OPCODE & 0xF0) >> 4);
+
+    set_decoded_instruction("ADD HL, %s", LONG_REGISTER_STR(src));
+
+    set_long_reg_u16(HL, addu16(get_long_reg(HL), get_sp()));
 
     return EIGHT_CLOCKS;
 }
@@ -596,10 +631,30 @@ clock_cycles_t RRA(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 
 clock_cycles_t DAA(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     (void)instruction;
+    uint8_t a_val = get_register(A);
+    uint8_t offset = 0;
+    if ((!get_flag(N_FLAG) && (a_val & 0xF) > 0x9) || get_flag(H_FLAG)) {
+        offset |= 0x06;
+    }
+    if ((!get_flag(N_FLAG) && a_val > 0x99) || get_flag(C_FLAG)) {
+        offset |= 0x60;
+        set_flag(C_FLAG);
+    } else {
+        reset_flag(C_FLAG);
+    }
 
+    if (get_flag(N_FLAG)) {
+        a_val -= offset;
+    } else {
+        a_val += offset;
+    }
+
+    a_val ? reset_flag(Z_FLAG) : set_flag(Z_FLAG);
+    reset_flag(H_FLAG);
+    set_register(A, a_val);
     set_decoded_instruction("DAA");
 
-    return -1;
+    return FOUR_CLOCKS;
 }
 
 clock_cycles_t CPL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
@@ -702,26 +757,32 @@ clock_cycles_t HALT(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 
 clock_cycles_t ADC_A_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     (void)instruction;
+    uint8_t HL_val = get_memory_byte(get_long_reg(HL));
+    set_register(A, add(get_register(A), HL_val, get_flag(C_FLAG)));
 
     set_decoded_instruction("ADC A, (HL)");
 
-    return -1;
+    return EIGHT_CLOCKS;
 }
 
 clock_cycles_t SUB_A_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     (void)instruction;
 
+    set_register(A, sub(get_register(A), get_memory_byte(get_long_reg(HL)), 0));
     set_decoded_instruction("SUB A, (HL)");
 
-    return -1;
+    return EIGHT_CLOCKS;
 }
 
 clock_cycles_t SBC_A_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     (void)instruction;
 
     set_decoded_instruction("SBC A, (HL)");
+    uint8_t result = sub(get_register(A), get_memory_byte(get_long_reg(HL)),
+                         get_flag(C_FLAG));
+    set_register(A, result);
 
-    return -1;
+    return EIGHT_CLOCKS;
 }
 
 clock_cycles_t OR_A_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
@@ -793,11 +854,12 @@ clock_cycles_t ADD_A_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 clock_cycles_t RST_x0h(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     (void)instruction;
     const uint8_t OPCODE = get_opcode(instruction);
-    const uint8_t x = (OPCODE & 0x30) >> 4;
+    const uint8_t x = (OPCODE & 0x30);
 
+    stack_push_u16(get_pc());
+    set_pc(x);
     set_decoded_instruction("RST %" PRIu8 "0h", x);
-
-    return -1;
+    return SIXTEEN_CLOCKS;
 }
 
 clock_cycles_t RET_Z(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
@@ -841,15 +903,18 @@ clock_cycles_t JP_C_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 
     const uint16_t imm = two_u8s_to_u16(instruction[1], instruction[2]);
     set_decoded_instruction("JP C, 0x%X", imm);
-
-    return -1;
+    if (get_flag(C_FLAG)) {
+        set_pc(imm);
+        return SIXTEEN_CLOCKS;
+    }
+    return TWELVE_CLOCKS;
 }
 
 clock_cycles_t RST_x8h(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     (void)instruction;
 
     const uint8_t OPCODE = get_opcode(instruction);
-    uint16_t x = (OPCODE & 0x30) | 0x008;
+    uint16_t x = (OPCODE & 0x30) | 0x08;
 
     stack_push_u16(get_pc());
     set_pc(x);
@@ -873,7 +938,7 @@ clock_cycles_t RET_NC(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 clock_cycles_t CALL_NC_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     (void)instruction;
 
-    const uint8_t jump_addr = two_u8s_to_u16(instruction[1], instruction[2]);
+    const uint16_t jump_addr = two_u8s_to_u16(instruction[1], instruction[2]);
     set_decoded_instruction("CALL NC 0x%X", jump_addr);
 
     if (!get_flag(C_FLAG)) {
@@ -898,9 +963,17 @@ clock_cycles_t SUB_A_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 clock_cycles_t CALL_C_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     (void)instruction;
 
-    const uint8_t imm = two_u8s_to_u16(instruction[1], instruction[2]);
+    const uint16_t jump_addr = two_u8s_to_u16(instruction[1], instruction[2]);
 
-    set_decoded_instruction("CALL C, 0x%X", imm);
+    if (get_flag(C_FLAG)) {
+        stack_push_u16(get_pc());
+        set_pc(jump_addr);
+        return TWENTY_FOUR_CLOCKS;
+    }
+
+    return TWELVE_CLOCKS;
+
+    set_decoded_instruction("CALL C, 0x%X", jump_addr);
 
     return -1;
 }
@@ -938,7 +1011,6 @@ clock_cycles_t ADD_SP_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     const int8_t signed_imm = uint8_to_int8(instruction[1]);
 
     const uint16_t result = get_sp() + signed_imm;
-    set_sp(result);
 
     const uint8_t imm = instruction[1];
 
@@ -950,6 +1022,7 @@ clock_cycles_t ADD_SP_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 
     reset_flag(Z_FLAG);
     reset_flag(N_FLAG);
+    set_sp(result);
     set_decoded_instruction("ADD SP, 0x%X", signed_imm);
     return SIXTEEN_CLOCKS;
 }
@@ -982,10 +1055,10 @@ clock_cycles_t XOR_A_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 clock_cycles_t
 LD_A_DEREF_FF00_PLUS_C(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     (void)instruction;
-
+    set_register(A, get_memory_byte(0xFF00 + get_register(C)));
     set_decoded_instruction("LD A, (FF00 + C)");
 
-    return -1;
+    return EIGHT_CLOCKS;
 }
 
 clock_cycles_t DI(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
@@ -1067,8 +1140,11 @@ clock_cycles_t JP_NC_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 
     uint16_t imm = two_u8s_to_u16(instruction[1], instruction[2]);
     set_decoded_instruction("JP NC, 0x%X", imm);
-
-    return -1;
+    if (!get_flag(C_FLAG)) {
+        set_pc(imm);
+        return SIXTEEN_CLOCKS;
+    }
+    return TWELVE_CLOCKS;
 }
 
 clock_cycles_t JP_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {

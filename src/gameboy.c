@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
             case 'g':
                 game = fopen(optarg, "r");
                 load_rom(game);
-                map_dmg(dmg);
+                //map_dmg(dmg);
                 fclose(game);
                 break;
             default: exit(1); break;
@@ -84,6 +84,12 @@ void main_loop(void) {
                         case SDL_SCANCODE_M:
                             reset_joypad_state(B_BUTTON);
                             break;
+                        case SDL_SCANCODE_C:
+                            reset_joypad_state(SELECT);
+                            break;
+                        case SDL_SCANCODE_V:
+                            reset_joypad_state(START);
+                            break;
                         default: break;
                     }
                     break;
@@ -95,6 +101,12 @@ void main_loop(void) {
                         case SDL_SCANCODE_D: set_joypad_state(RIGHT); break;
                         case SDL_SCANCODE_K: set_joypad_state(A_BUTTON); break;
                         case SDL_SCANCODE_M: set_joypad_state(B_BUTTON); break;
+                        case SDL_SCANCODE_C:
+                            set_joypad_state(SELECT);
+                            break;
+                        case SDL_SCANCODE_V:
+                            set_joypad_state(START);
+                            break;
                         default: break;
                     }
                     break;

@@ -37,7 +37,7 @@ uint8_t sub(uint8_t val_1, uint8_t val_2, uint8_t carry) {
     uint8_t res = val_1 - val_2 - carry;
     (val_2 + carry) > val_1 ? set_flag(C_FLAG) : reset_flag(C_FLAG);
     half_carry_on_subtract(val_1, val_2, carry) ? set_flag(H_FLAG)
-                                         : reset_flag(H_FLAG);
+                                                : reset_flag(H_FLAG);
     set_flag(N_FLAG);
     res ? reset_flag(Z_FLAG) : set_flag(Z_FLAG);
     return res;
@@ -47,9 +47,14 @@ bool half_carry_on_add(uint8_t val_1, uint8_t val_2, uint8_t carry) {
     return (((val_1 & 0xf) + (val_2 & 0xf) + (carry & 0xf)) & 0x10) == 0x10;
 }
 
+bool half_carry_on_add16(uint16_t val_1, uint16_t val_2) {
+    return (((val_1 & 0xfff) + (val_2 & 0xfff)) & 0x1000) == 0x1000;
+}
+
 uint8_t add(uint8_t val_1, uint8_t val_2, uint8_t carry) {
     uint16_t res = val_1 + val_2 + carry;
-    half_carry_on_add(val_1, val_2, carry) ? set_flag(H_FLAG) : reset_flag(H_FLAG);
+    half_carry_on_add(val_1, val_2, carry) ? set_flag(H_FLAG)
+                                           : reset_flag(H_FLAG);
     reset_flag(N_FLAG);
     if (res > UINT8_MAX) {
         set_flag(C_FLAG);
@@ -61,8 +66,8 @@ uint8_t add(uint8_t val_1, uint8_t val_2, uint8_t carry) {
     return (uint8_t)res;
 }
 
-uint16_t addu16(long_reg_t r1, long_reg_t r2) {
-    uint32_t res = get_long_reg(r1) + get_long_reg(r2);
+uint16_t addu16(uint16_t val_1, uint16_t val_2) {
+    uint32_t res = val_2 + val_1;
     reset_flag(N_FLAG);
     if (res > UINT16_MAX) {
         set_flag(C_FLAG);
@@ -70,8 +75,7 @@ uint16_t addu16(long_reg_t r1, long_reg_t r2) {
     } else {
         reset_flag(C_FLAG);
     }
-    half_carry_on_add(get_long_reg(r1) >> 8, get_long_reg(r2) >> 8, 0) ? set_flag(H_FLAG)
-                                                          : reset_flag(H_FLAG);
+    half_carry_on_add16(val_2, val_1) ? set_flag(H_FLAG) : reset_flag(H_FLAG);
     return (uint16_t)res;
 }
 
@@ -84,6 +88,7 @@ inline uint8_t get_bit(uint8_t byte, uint8_t bit) {
 }
 
 inline void set_bit(uint8_t *byte, uint8_t bit) { *byte |= (0x01 << bit); }
+inline void reset_bit(uint8_t *byte, uint8_t bit) { *byte &= ~(0x01 << bit); }
 
 struct timeval time_diff(struct timeval start, struct timeval end) {
     struct timeval diff;

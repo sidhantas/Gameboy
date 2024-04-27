@@ -347,9 +347,11 @@ static clock_cycles_t (
         }
         case 0x09:
         case 0x19:
-        case 0x29:
-        case 0x39: {
+        case 0x29: {
             return &ADD_HL_LONG_R;
+        }
+        case 0x39: {
+            return &ADD_HL_SP;
         }
         case 0x1F: {
             return &RRA;
@@ -375,10 +377,10 @@ static clock_cycles_t (
             return &LD_ADDR_HL_IMM;
         }
         case 0x37: {
-            append_instruction(1);
             return &SCF;
         }
         case 0x38: {
+            append_instruction(1);
             return &JR_C_IMM;
         }
         case 0x3f: {
@@ -545,13 +547,15 @@ static clock_cycles_t (
             return &PUSH_LONG_R;
         }
         case 0xF5: {
-                       return &PUSH_AF;
-                   }
+            return &PUSH_AF;
+        }
         case 0xc1:
         case 0xd1:
-        case 0xe1:
-        case 0xf1: {
+        case 0xe1: {
             return &POP_LONG_R;
+        }
+        case 0xf1: {
+            return &POP_LONG_AF;
         }
 
         case 0xFE: {

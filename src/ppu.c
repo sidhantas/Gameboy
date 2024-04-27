@@ -120,10 +120,10 @@ void execute_mode_3(void) {
     }
     // Should overlap with win pixel if it exists
     uint8_t pixel = get_bg_pixel(ppu.line_x, get_memory_byte(LCDY));
-    const uint8_t object_pixel = get_obj_pixel(&oam_selector, ppu.line_x);
-    if (object_pixel != 0x03) {
-        pixel = object_pixel;
-    }
+    //const uint8_t object_pixel = get_obj_pixel(&oam_selector, ppu.line_x);
+    //if (object_pixel != 0x03) {
+    //    pixel = object_pixel;
+    //}
 
     pthread_mutex_lock(&display_buffer_mutex);
     set_display_pixel(ppu.line_x, get_memory_byte(LCDY),
@@ -165,6 +165,7 @@ void execute_mode_1(void) {
             ppu.mode = 2;
         }
         set_memory_byte(LCDY, current_y % SCAN_LINES);
+       // set_memory_byte(LCDY, 0x90);
     }
     return;
 }

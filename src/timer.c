@@ -1,8 +1,8 @@
 #include "hardware.h"
 #include "utils.h"
 
-void update_DIV_register(clock_cycles_t clocks);
-void update_TIMA_register(clock_cycles_t clocks);
+static void update_DIV_register(clock_cycles_t clocks);
+static void update_TIMA_register(clock_cycles_t clocks);
 
 void update_timer(clock_cycles_t clocks) {
     update_DIV_register(clocks);
@@ -37,7 +37,7 @@ void update_TIMA_register(clock_cycles_t clocks) {
         TIMA_progress = TMA_modulo + TIMA_progress % TIMA_clock_rate;
         uint8_t TIMA_value =  privileged_get_memory_byte(TIMA);
         if (TIMA_value == 0xFF) {
-            //set_interrupt_state(TIMA);
+            set_interrupt_state(TIMA);
         }
         privileged_set_memory_byte(TIMA, TIMA_value + tick_update);
     }

@@ -32,7 +32,16 @@ void initialize_hardware(void) {
     hardware.interrupt_state = NOTHING;
     hardware.ime_flag = 0;
     hardware.memory[JOYP] = 0x3F;
-    initialize_tracer(&t, 1000);
+    hardware.registers[A] = 0x01;
+    hardware.registers[F] = 0xB0;
+    hardware.registers[B] = 0x00;
+    hardware.registers[C] = 0x13;
+    hardware.registers[D] = 0x00;
+    hardware.registers[E] = 0xD8;
+    hardware.registers[H] = 0x01;
+    hardware.registers[L] = 0x4D;
+    hardware.sp = 0xFFFE;
+    hardware.pc = 0x0100;
 }
 
 void map_dmg(FILE *rom) {
@@ -66,9 +75,9 @@ uint8_t get_memory_byte(uint16_t address) { return hardware.memory[address]; }
 
 static void handle_IO_write(uint16_t address, uint8_t byte) {
     if (address == JOYP) {
-        if (!(byte & 0x20)) {
+        if (get_bit(~byte, 4)) {
             hardware.memory[address] = (byte & 0xF0) | (get_joypad_state() & 0x0F);
-        } else if (!(byte & 0x10)) {
+        } else if (get_bit(~byte, 5)) {
             hardware.memory[address] = (byte & 0xF0) | (get_joypad_state() >> 4);
         }
         return;
@@ -141,6 +150,12 @@ uint16_t stack_pop_u16(void) {
     set_sp(get_sp() + 2);
 
     return two_u8s_to_u16(low, high);
+}
+
+uint8_t stack_pop_u8(void) {
+    uint8_t val = get_memory_byte(get_sp());
+    set_sp(get_sp() + 1);
+    return val;
 }
 
 uint16_t get_sp(void) { return hardware.sp; }
