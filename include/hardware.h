@@ -5,9 +5,10 @@
 #include <stdio.h>
 
 #define MEMORY_SIZE 0xFFFF
+#define OAM_START 0xFE00
+#define OAM_SIZE 0x100
 #define BOOT_ROM_BEGIN 0x0000
 #define ROM_START 0x0100
-#define OAM 0xFE00
 #define JOYP 0xFF00
 #define SB 0xFF01
 #define SC 0xFF02
@@ -19,6 +20,7 @@
 #define LCDC 0xFF40
 #define SCX 0xFF41
 #define SCY 0xFF42
+#define DMA 0xFF46
 #define WX 0xFF4A
 #define WY 0xFF4B
 #define DISABLE_BOOT_ROM 0xFF50
@@ -28,7 +30,7 @@
 
 #define MAX_INSTRUCTION_SIZE 3
 #define REGISTER_COUNT 8
-#define RESOLUTION_SCALE 2
+#define RESOLUTION_SCALE 4
 #define TILE_MAP_WIDTH 256
 #define DISPLAY_WIDTH 160
 #define DISPLAY_HEIGHT 144
@@ -85,14 +87,13 @@ typedef struct Hardware {
   uint8_t ime_flag;
   bool is_implemented;
   bool is_double_speed;
-  char vram_mode;
-  char oam_mode;
   uint8_t mode;
   uint64_t instruction_count;
   uint8_t instruction[MAX_INSTRUCTION_SIZE];
   char decoded_instruction[MAX_DECODED_INSTRUCTION_SIZE];
   char previous_instruction[MAX_DECODED_INSTRUCTION_SIZE];
   bool step_mode;
+  bool oam_dma_started;
 } Hardware;
 
 typedef struct Joypad {
@@ -160,9 +161,12 @@ void clear_instruction(void);
 void dump_tracer(void);
 void stack_push_u16(uint16_t val);
 uint16_t stack_pop_u16(void);
+uint8_t stack_pop_u8(void);
 void set_joypad_state(joypad_t button);
 void reset_joypad_state(joypad_t button);
 uint8_t get_joypad_state(void);
+bool get_oam_dma_transfer(void);
+void set_oam_dma_transfer(bool oam_dma_transfer_is_enabled);
 
 // TIMER
 void update_timer(clock_cycles_t clocks);

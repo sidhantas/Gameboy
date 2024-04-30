@@ -1,6 +1,7 @@
 #include "cpu.h"
 #include "decoder.h"
 #include "hardware.h"
+#include "oam_queue.h"
 #include "interrupts.h"
 #include "ppu.h"
 #include <inttypes.h>
@@ -55,9 +56,8 @@ void *start_cpu(void *arg) {
         clocks += handle_interrupts();
         clock_cycles_t (*func)(uint8_t *) = fetch_instruction();
         clocks += execute_instruction(func);
+        clocks += oam_dma_transfer();
         update_timer(clocks);
-
-
         //        snprintf(trace_str, 255,
         //                 "Instruction: 0x%0.2x 0x%0.2x 0x%0.2x %-15s A:
         //                 0x%0.2x, B: " "0x%0.2x, C: " "0x%0.2x, D: 0x%0.2x, E:

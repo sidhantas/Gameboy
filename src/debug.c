@@ -1,5 +1,6 @@
 #include "debug.h"
 #include "decoder.h"
+#include "oam_queue.h"
 #include "hardware.h"
 #include "ppu.h"
 #include "utils.h"
@@ -14,6 +15,7 @@ static void print_cpu_window(WINDOW *cpu_win);
 static void print_flags_window(WINDOW *flags_win);
 static void print_stack_window(WINDOW *stack_win);
 static void print_memory_window(WINDOW *mem_win, uint16_t start_address);
+static void print_oam_window(WINDOW *oam_win);
 //static void print_display_buffer_window(WINDOW *display_buf_win,
 //                                       const uint16_t start_address);
 
@@ -24,26 +26,27 @@ WINDOW *cpu_win;
 WINDOW *flags_win;
 WINDOW *stack_win;
 WINDOW *mem_win;
+WINDOW *oam_win;
 uint16_t mem_win_addr = 0xFF00;
 uint16_t display_buf_addr = 0x0;
 
-pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t debugger_lock = PTHREAD_MUTEX_INITIALIZER;
 bool close_debugger;
 
 void end_debugger(void) { 
     close_debugger = true;
-    pthread_mutex_lock(&lock);
+    pthread_mutex_lock(&debugger_lock);
     noraw();
     nocbreak();
     echo();
     curs_set(1);
     endwin(); 
-    pthread_mutex_unlock(&lock);
+    pthread_mutex_unlock(&debugger_lock);
     return;
 }
 void *initialize_debugger(void *arg) {
     (void)arg;
-    pthread_mutex_lock(&lock);
+    pthread_mutex_lock(&debugger_lock);
     initscr();
     start_color();
     use_default_colors();
@@ -59,6 +62,7 @@ void *initialize_debugger(void *arg) {
     flags_win = newwin(8, 21, 17, 0);
     mem_win = newwin(20, 90, 21, 23);
     stack_win = newwin(21, 31, 21, 114);
+    oam_win = newwin(20, 31, 0, 114);
 
     while (1) {
         if (close_debugger) {
@@ -76,7 +80,7 @@ void *initialize_debugger(void *arg) {
         }
         refresh_debugger();
     }
-    pthread_mutex_unlock(&lock);
+    pthread_mutex_unlock(&debugger_lock);
     return NULL;
 }
 
@@ -87,7 +91,25 @@ void refresh_debugger(void) {
     print_memory_window(mem_win, mem_win_addr);
     //print_display_buffer_window(display_buff_win, display_buf_addr);
     print_stack_window(stack_win);
+    print_oam_window(oam_win);
     refresh();
+}
+
+static void print_oam_window(WINDOW *oam_win) {
+    uint16_t WIDTH = 0;
+    uint16_t HEIGHT = 0;
+    werase(oam_win);
+    getmaxyx(oam_win, HEIGHT, WIDTH);
+    box(oam_win, 0, 0);
+    mvwprintwhcenter(oam_win, 0, 0, WIDTH, "OAM");
+    SpriteStore *sprite_store = get_sprite_store(); 
+    mvwprintwhcenter(oam_win, 1, 0, WIDTH / 2, "LY");
+    mvwprintwhcenter(oam_win, 1, WIDTH / 2, WIDTH / 2, "0x%x", privileged_get_memory_byte(LCDY));
+    for (uint16_t i = 3; i < sprite_store->length + 3; i++) {
+        mvwprintwhcenter(oam_win, i, WIDTH / 2, WIDTH / 2, "0x%x", sprite_store->selected_objects[i].tile_row_index);
+        mvwprintwhcenter(oam_win, i, 0, WIDTH / 2, "0x%x", sprite_store->selected_objects[i].x_start);
+    }
+    wrefresh(oam_win);
 }
 
 //static void print_display_buffer_window(WINDOW *disp_win,

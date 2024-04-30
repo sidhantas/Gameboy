@@ -16,7 +16,6 @@
 #define DOTS_PER_LINE 456
 
 PPU ppu;
-OAMSelector oam_selector;
 
 SDL_Event event;
 SDL_Renderer *renderer;
@@ -81,12 +80,11 @@ static void execute_mode_2(void) {
     // wait for 2 dots
     static uint8_t object_index = 0;
     if (!consume_dots(2)) {
-        oam_add(&oam_selector, object_index);
-        object_index++;
         return;
     }
+    add_sprite(object_index);
+    object_index++;
     if (ppu.line_dots > 80) {
-        initialize_oam_queue(&oam_selector);
         object_index = 0;
         ppu.line_x = 0;
         ppu.mode = 3;
@@ -94,16 +92,17 @@ static void execute_mode_2(void) {
     return;
 }
 
-uint8_t get_obj_pixel(OAMSelector *oam_selector, uint8_t x_pixel) {
-    for (uint8_t i = 0; i < oam_selector->top; i++) {
-        if (oam_selector->selected_objects[i].x_start < 8) {
+uint8_t get_obj_pixel(uint8_t x_pixel) {
+    for (uint8_t i = 0; i < get_sprite_store()->length; i++) {
+        const uint8_t x_start = get_sprite_store()->selected_objects[i].x_start;
+        if (x_start < 8) {
             continue;
         }
-        if (x_pixel - oam_selector->selected_objects[i].x_start - 8 < 8) {
-            return 0x00;
+        if (x_pixel - x_start - 8 < 8) {
+            return 0x03;
         }
     }
-    return 0x03;
+    return 0x00;
 }
 
 void execute_mode_3(void) {
@@ -120,10 +119,10 @@ void execute_mode_3(void) {
     }
     // Should overlap with win pixel if it exists
     uint8_t pixel = get_bg_pixel(ppu.line_x, get_memory_byte(LCDY));
-    //const uint8_t object_pixel = get_obj_pixel(&oam_selector, ppu.line_x);
-    //if (object_pixel != 0x03) {
-    //    pixel = object_pixel;
-    //}
+    const uint8_t object_pixel = get_obj_pixel(ppu.line_x);
+    if (object_pixel == 0x03) {
+        pixel = object_pixel;
+    }
 
     pthread_mutex_lock(&display_buffer_mutex);
     set_display_pixel(ppu.line_x, get_memory_byte(LCDY),
@@ -148,6 +147,7 @@ void execute_mode_0(void) {
         } else {
             ppu.mode = 2;
         }
+        initialize_sprite_store();
         set_memory_byte(LCDY, current_y);
         ppu.line_dots %= 456;
     }
@@ -165,7 +165,7 @@ void execute_mode_1(void) {
             ppu.mode = 2;
         }
         set_memory_byte(LCDY, current_y % SCAN_LINES);
-       // set_memory_byte(LCDY, 0x90);
+        // set_memory_byte(LCDY, 0x90);
     }
     return;
 }

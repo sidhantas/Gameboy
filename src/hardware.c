@@ -1,6 +1,6 @@
 #include "hardware.h"
-#include "utils.h"
 #include "interrupts.h"
+#include "utils.h"
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -32,6 +32,9 @@ void initialize_hardware(void) {
     hardware.interrupt_state = NOTHING;
     hardware.ime_flag = 0;
     hardware.memory[JOYP] = 0x3F;
+    hardware.oam_dma_started = false;
+
+    // initial state
     hardware.registers[A] = 0x01;
     hardware.registers[F] = 0xB0;
     hardware.registers[B] = 0x00;
@@ -69,27 +72,35 @@ void load_rom(FILE *rom) {
         sectors_read++;
     } while (read_size > 0);
 }
-uint8_t privileged_get_memory_byte(uint16_t address) { return hardware.memory[address]; }
+uint8_t privileged_get_memory_byte(uint16_t address) {
+    return hardware.memory[address];
+}
 
 uint8_t get_memory_byte(uint16_t address) { return hardware.memory[address]; }
 
 static void handle_IO_write(uint16_t address, uint8_t byte) {
-    if (address == JOYP) {
-        if (get_bit(~byte, 4)) {
-            hardware.memory[address] = (byte & 0xF0) | (get_joypad_state() & 0x0F);
-        } else if (get_bit(~byte, 5)) {
-            hardware.memory[address] = (byte & 0xF0) | (get_joypad_state() >> 4);
-        }
-        return;
-    } else if (address == 0xFF50 && byte > 0) {
-        unmap_dmg();
-        hardware.memory[address] = byte;
-        return;
-    } else if (address == DIV) {
-        hardware.memory[address] = 0;
-        return;
-    } else {
-        hardware.memory[address] = byte;
+    switch (address) {
+        case JOYP:
+            if (get_bit(~byte, 4)) {
+                hardware.memory[address] =
+                    (byte & 0xF0) | (get_joypad_state() & 0x0F);
+            } else if (get_bit(~byte, 5)) {
+                hardware.memory[address] =
+                    (byte & 0xF0) | (get_joypad_state() >> 4);
+            }
+            return;
+        case DISABLE_BOOT_ROM:
+            if (byte > 0) {
+                unmap_dmg();
+                hardware.memory[address] = byte;
+                return;
+            }
+        case DIV: hardware.memory[address] = 0; return;
+        case DMA:
+            hardware.memory[address] = byte;
+            set_oam_dma_transfer(true);
+            return;
+        default: hardware.memory[address] = byte; return;
     }
 }
 
@@ -268,5 +279,13 @@ uint8_t get_mode(void) { return hardware.mode; }
 
 uint8_t get_ime_flag(void) { return hardware.ime_flag; }
 void set_ime_flag(bool val) { hardware.ime_flag = val; }
+
+bool get_oam_dma_transfer(void) {
+    return hardware.oam_dma_started;
+}
+
+void set_oam_dma_transfer(bool oam_dma_transfer_is_enabled) { hardware.oam_dma_started = oam_dma_transfer_is_enabled; }
+
+void disable_oam_dma_transfer(void) { hardware.oam_dma_started = false; }
 
 void dump_tracer(void) { tracer_dump(&t); }
