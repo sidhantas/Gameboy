@@ -1,3 +1,4 @@
+#include "hardware.h"
 #include "oam_queue.h"
 #include "utils.h"
 #include <string.h>
@@ -47,10 +48,9 @@ object_t get_object(uint16_t object_index) {
     return obj;
 }
 
-uint16_t get_tile_row_address(object_t obj, uint8_t row) {
-    uint16_t tile_address = 0x8000 + obj.tile_index & 0xFE;
-    uint16_t row_address = tile_address + row * 2;
-    return row_address;
+uint16_t get_tile_row_address(object_t *obj) {
+    uint16_t tile_address = 0x8000 + (uint16_t)obj->tile_index;
+    return tile_address;
 }
 
 void add_sprite(uint16_t object_no) {
@@ -59,12 +59,14 @@ void add_sprite(uint16_t object_no) {
     }
     object_t obj = get_object(object_no);
     uint8_t obj_h = get_bit(get_memory_byte(LCDC), 2) ? 16 : 8;
-    if (!(obj.y_pos <= get_memory_byte(LCDY) + 16 < obj.y_pos + obj_h)) {
+    uint16_t current_draw_height = get_memory_byte(LCDY) + 16;
+    if (obj.y_pos != current_draw_height - current_draw_height % 8) {
         return;
     }
     sprite_store.selected_objects[sprite_store.length].x_start = obj.x_pos;
     sprite_store.selected_objects[sprite_store.length].tile_row_index =
-        get_tile_row_address(obj, obj_h);
+        get_tile_row_address(&obj);
+    sprite_store.selected_objects[sprite_store.length].y = get_memory_byte(LCDY) - obj.y_pos;
     sprite_store.length++;
     return;
 }

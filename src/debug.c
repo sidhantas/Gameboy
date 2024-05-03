@@ -106,8 +106,8 @@ static void print_oam_window(WINDOW *oam_win) {
     mvwprintwhcenter(oam_win, 1, 0, WIDTH / 2, "LY");
     mvwprintwhcenter(oam_win, 1, WIDTH / 2, WIDTH / 2, "0x%x", privileged_get_memory_byte(LCDY));
     for (uint16_t i = 3; i < sprite_store->length + 3; i++) {
-        mvwprintwhcenter(oam_win, i, WIDTH / 2, WIDTH / 2, "0x%x", sprite_store->selected_objects[i].tile_row_index);
         mvwprintwhcenter(oam_win, i, 0, WIDTH / 2, "0x%x", sprite_store->selected_objects[i].x_start);
+        mvwprintwhcenter(oam_win, i, WIDTH / 2, WIDTH / 2, "0x%x", sprite_store->selected_objects[i].tile_row_index);
     }
     wrefresh(oam_win);
 }

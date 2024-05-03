@@ -98,8 +98,17 @@ uint8_t get_obj_pixel(uint8_t x_pixel) {
         if (x_start < 8) {
             continue;
         }
-        if (x_pixel - x_start - 8 < 8) {
-            return 0x03;
+        if (x_start - 8 == x_pixel - x_pixel % 8) {
+            uint8_t tile_start =
+                get_sprite_store()->selected_objects[i].tile_row_index;
+            uint8_t y = get_sprite_store()->selected_objects[i].y;
+            uint8_t low = get_memory_byte(tile_start + (y % 4));
+            uint8_t hi = get_memory_byte(tile_start + (y % 4) + 1);
+            const uint8_t hi_bit = get_bit(hi, 7 - x_pixel % 8);
+            const uint8_t low_bit =
+                get_bit(low, 7 - x_pixel % 8);
+
+            return hi_bit << 1 | low_bit;
         }
     }
     return 0x00;
@@ -120,7 +129,7 @@ void execute_mode_3(void) {
     // Should overlap with win pixel if it exists
     uint8_t pixel = get_bg_pixel(ppu.line_x, get_memory_byte(LCDY));
     const uint8_t object_pixel = get_obj_pixel(ppu.line_x);
-    if (object_pixel == 0x03) {
+    if (object_pixel != 0x00) {
         pixel = object_pixel;
     }
 
@@ -165,7 +174,6 @@ void execute_mode_1(void) {
             ppu.mode = 2;
         }
         set_memory_byte(LCDY, current_y % SCAN_LINES);
-        // set_memory_byte(LCDY, 0x90);
     }
     return;
 }
@@ -179,10 +187,6 @@ static inline uint16_t get_tile_start(uint16_t relative_tile_address) {
             ADDRESS_MODE_1_BP + uint8_to_int8(relative_tile_address) * 0x10;
     }
     return (uint16_t)tile_start;
-}
-
-uint8_t get_pixel(uint8_t hi, uint8_t low, uint8_t n) {
-    return (hi >> (n - 1) | low >> n) | 0xFF;
 }
 
 uint8_t get_bg_pixel(uint8_t x, uint8_t y) {
@@ -205,17 +209,6 @@ uint8_t get_bg_pixel(uint8_t x, uint8_t y) {
     const uint8_t hi_bit = get_bit(hi, 7 - x % 8);
     const uint8_t low_bit = get_bit(low, 7 - x % 8);
     return hi_bit << 1 | low_bit;
-}
-
-uint8_t get_object_pixel(uint16_t tile_row_address, uint8_t pixel_num) {
-
-    uint8_t low = get_memory_byte(tile_row_address);
-    uint8_t hi = get_memory_byte(tile_row_address + 1);
-
-    // const uint8_t hi_bit = get_bit(hi, 7 - pixel_num % 8);
-    // const uint8_t low_bit = get_bit(low, 7 - pixel_num % 8);
-
-    return 0x03;
 }
 
 static uint32_t get_color_from_byte(uint8_t byte) {

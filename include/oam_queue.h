@@ -4,6 +4,7 @@
 
 struct OAMRow {
     uint8_t x_start; // starting x position on the display
+    uint8_t y;
     uint16_t tile_row_index; // objects tile index in memory
 };
 
