@@ -1,6 +1,4 @@
 #include "ppu.h"
-#include "SDL_events.h"
-#include "SDL_render.h"
 #include "hardware.h"
 #include "interrupts.h"
 #include "oam_queue.h"
@@ -17,12 +15,7 @@
 
 PPU ppu;
 
-SDL_Event event;
-SDL_Renderer *renderer;
-SDL_Texture *texture;
-SDL_Window *window;
-
-bool close_ppu;
+static bool close_ppu;
 pthread_mutex_t dots_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t display_buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -31,6 +24,7 @@ static void execute_mode_0(void);
 static void execute_mode_1(void);
 static void execute_mode_2(void);
 static void execute_mode_3(void);
+static bool consume_dots(uint64_t dots_to_consume);
 
 static uint8_t get_bg_pixel(uint8_t x, uint8_t y);
 static uint32_t get_color_from_byte(uint8_t byte);
@@ -59,7 +53,7 @@ void render_loop(void) {
             case 1: execute_mode_1(); break;
             case 2: execute_mode_2(); break;
             case 3: execute_mode_3(); break;
-            default: exit(1); break;
+            default: exit(1);
         }
     }
 }
@@ -67,7 +61,7 @@ void render_loop(void) {
 bool consume_dots(uint64_t dots_to_consume) {
     if (ppu.available_dots < dots_to_consume) {
         return false;
-    };
+    }
     pthread_mutex_lock(&dots_mutex);
     ppu.available_dots -= dots_to_consume;
     pthread_mutex_unlock(&dots_mutex);
@@ -99,16 +93,16 @@ uint8_t get_obj_pixel(uint8_t x_pixel) {
             continue;
         }
         if (x_start - 8 == x_pixel - x_pixel % 8) {
-            uint8_t tile_start =
-                get_sprite_store()->selected_objects[i].tile_row_index;
+            uint16_t tile_start = get_sprite_store()->selected_objects[i].tile_row_index;
+
             uint8_t y = get_sprite_store()->selected_objects[i].y;
-            uint8_t low = get_memory_byte(tile_start + (y % 4));
-            uint8_t hi = get_memory_byte(tile_start + (y % 4) + 1);
+            uint8_t low = get_memory_byte(tile_start + (y % 8) * 2);
+            uint8_t hi = get_memory_byte(tile_start + (y % 8) * 2 + 1);
             const uint8_t hi_bit = get_bit(hi, 7 - x_pixel % 8);
             const uint8_t low_bit =
                 get_bit(low, 7 - x_pixel % 8);
 
-            return hi_bit << 1 | low_bit;
+            return (uint8_t)(hi_bit << 1 | low_bit);
         }
     }
     return 0x00;
@@ -178,7 +172,7 @@ void execute_mode_1(void) {
     return;
 }
 
-static inline uint16_t get_tile_start(uint16_t relative_tile_address) {
+static inline uint16_t get_tile_start(uint8_t relative_tile_address) {
     int32_t tile_start;
     if (get_bit(get_memory_byte(LCDC), 4) == 1) {
         tile_start = ADDRESS_MODE_0_BP + relative_tile_address * 0x10;
@@ -208,7 +202,7 @@ uint8_t get_bg_pixel(uint8_t x, uint8_t y) {
     // intertwine bytes
     const uint8_t hi_bit = get_bit(hi, 7 - x % 8);
     const uint8_t low_bit = get_bit(low, 7 - x % 8);
-    return hi_bit << 1 | low_bit;
+    return (uint8_t)(hi_bit << 1 | low_bit);
 }
 
 static uint32_t get_color_from_byte(uint8_t byte) {

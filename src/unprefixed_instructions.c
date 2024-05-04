@@ -291,7 +291,7 @@ clock_cycles_t JR_NC_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     set_decoded_instruction("JR NC, %c0x%X", "+-"[jump < 0],
                             (unsigned)abs(jump));
     if (!get_flag(C_FLAG)) {
-        set_pc(get_pc() + jump);
+        set_pc((uint16_t)(get_pc() + jump));
         return TWELVE_CLOCKS;
     }
     return EIGHT_CLOCKS;

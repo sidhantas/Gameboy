@@ -6,7 +6,7 @@ typedef struct PPU {
     uint16_t available_dots;
     uint64_t consumed_dots;
     uint16_t line_dots;
-    uint16_t line_x;
+    uint8_t line_x;
     uint8_t mode;
     bool ready_to_render;
 } PPU;

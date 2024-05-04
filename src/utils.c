@@ -18,7 +18,7 @@ void mvwprintwhcenter(WINDOW *win, uint8_t row, uint8_t row_start,
     va_list args;
     va_start(args, str);
     vsnprintf(formatted_string, UINT8_MAX, str, args);
-    uint16_t len = strnlen(formatted_string, UINT8_MAX);
+    int len = (int)strnlen(formatted_string, UINT8_MAX);
     mvwprintw(win, row, row_start + (width / 2) - (len / 2), formatted_string);
 }
 

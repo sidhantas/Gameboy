@@ -1,5 +1,4 @@
 #pragma once
-#include "hardware.h"
 #include <ncurses.h>
 #include <stdint.h>
 #define DMG_SIZE 256
@@ -8,7 +7,7 @@
 #define RESET "\033[0m"
 void check_alloc(void *allocated_block, const char *msg_on_failure);
 static inline uint16_t two_u8s_to_u16(uint8_t low, uint8_t high) {
-    return high << 8 | low;
+    return (uint16_t)(high << 8 | low);
 }
 
 void mvwprintwhcenter(WINDOW *win, uint8_t row, uint8_t row_start,

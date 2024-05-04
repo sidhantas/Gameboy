@@ -1,5 +1,5 @@
 CC=clang
-CFLAGS= -g -Wall -Wextra -Wpedantic -D_THREAD_SAFE -I/opt/homebrew/include -I/opt/homebrew/include/SDL2 -I./include
+CFLAGS=-Wall -Wextra -Wpedantic -Wconversion -std=c1x  -D_THREAD_SAFE -I/opt/homebrew/include -I/opt/homebrew/include/SDL2 -I./include
 LDFLAGS= -lncurses -pthread  -L/opt/homebrew/lib -lSDL2
 SRC_DIR := src
 OBJ_DIR := obj

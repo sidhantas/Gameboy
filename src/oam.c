@@ -48,8 +48,8 @@ object_t get_object(uint16_t object_index) {
     return obj;
 }
 
-uint16_t get_tile_row_address(object_t *obj) {
-    uint16_t tile_address = 0x8000 + (uint16_t)obj->tile_index;
+uint16_t get_tile_row_address(object_t obj) {
+    uint16_t tile_address = 0x8000 + (uint16_t)(obj.tile_index << 4);
     return tile_address;
 }
 
@@ -65,8 +65,8 @@ void add_sprite(uint16_t object_no) {
     }
     sprite_store.selected_objects[sprite_store.length].x_start = obj.x_pos;
     sprite_store.selected_objects[sprite_store.length].tile_row_index =
-        get_tile_row_address(&obj);
-    sprite_store.selected_objects[sprite_store.length].y = get_memory_byte(LCDY) - obj.y_pos;
+        get_tile_row_address(obj);
+    sprite_store.selected_objects[sprite_store.length].y = get_memory_byte(LCDY);
     sprite_store.length++;
     return;
 }
