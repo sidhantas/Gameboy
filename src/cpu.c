@@ -32,9 +32,6 @@ void *start_cpu(void *arg) {
         if (close_cpu) {
             break;
         }
-//        if ((get_joypad_state() & (1 << START)) == 0)  {
-//            step_mode = true;
-//        }
         if (step_mode && instructions_left <= 0) {
             continue;
         } else if (step_mode) {
@@ -58,7 +55,8 @@ void *start_cpu(void *arg) {
         if (is_halted()) {
             if (get_memory_byte(IE) & get_memory_byte(IF)) {
                 set_halted(false);
-            }         }
+            }
+        }
         clocks += handle_interrupts();
         if (!is_halted()) {
             clock_cycles_t (*func)(uint8_t *) = fetch_instruction();

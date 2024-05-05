@@ -75,7 +75,6 @@ enum INTERRUPT_STATE {
 };
 
 typedef struct Hardware {
-  uint8_t *memory;
   uint32_t *display_buffer;
   uint8_t registers[REGISTER_COUNT];
   uint16_t sp;

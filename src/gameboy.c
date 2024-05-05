@@ -6,6 +6,7 @@
 #include "graphics.h"
 #include "hardware.h"
 #include "interrupts.h"
+#include "memory.h"
 #include "ppu.h"
 #include <getopt.h>
 #include <ncurses.h>
@@ -24,6 +25,7 @@ int main(int argc, char **argv) {
     initialize_hardware();
     initialize_ppu();
     initialize_io();
+    initialize_memory(0x00);
 
     FILE *dmg = fopen("dmg.bin", "r");
     FILE *game;
