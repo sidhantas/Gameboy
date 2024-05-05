@@ -1,8 +1,8 @@
 #include "cpu.h"
 #include "decoder.h"
 #include "hardware.h"
-#include "oam_queue.h"
 #include "interrupts.h"
+#include "oam_queue.h"
 #include "ppu.h"
 #include <inttypes.h>
 #include <pthread.h>
@@ -22,7 +22,7 @@ void *start_cpu(void *arg) {
     struct timeval start, end, diff;
     uint16_t exec_count = 0;
     gettimeofday(&start, NULL);
-    FILE *f = fopen("inst_dump.txt", "w");
+    // FILE *f = fopen("inst_dump.txt", "w");
 
     while (true) {
         clock_cycles_t clocks = 0;
@@ -32,7 +32,7 @@ void *start_cpu(void *arg) {
         if (close_cpu) {
             break;
         }
-//        if (get_instruction()[0] == 0xCB && get_instruction()[0] == 0xCB) {
+//        if ((get_joypad_state() & (1 << START)) == 0)  {
 //            step_mode = true;
 //        }
         if (step_mode && instructions_left <= 0) {
@@ -41,22 +41,32 @@ void *start_cpu(void *arg) {
             instructions_left -= 1;
         }
 
-//        fprintf(f,
-//                "A:%0.2X F:%0.2X B:%0.2X C:%0.2X D:%0.2X E:%0.2X H:%0.2X "
-//                "L:%0.2X SP:%0.4X PC:%0.4X PCMEM:%0.2X,%0.2X,%0.2X,%0.2X\n",
-//                get_register(A), get_register(F), get_register(B),
-//                get_register(C), get_register(D), get_register(E),
-//                get_register(H), get_register(L), get_sp(), get_pc(),
-//                privileged_get_memory_byte(get_pc()),
-//                privileged_get_memory_byte(get_pc() + 1),
-//                privileged_get_memory_byte(get_pc() + 2),
-//                privileged_get_memory_byte(get_pc() + 3));
+        //        fprintf(f,
+        //                "A:%0.2X F:%0.2X B:%0.2X C:%0.2X D:%0.2X E:%0.2X
+        //                H:%0.2X " "L:%0.2X SP:%0.4X PC:%0.4X
+        //                PCMEM:%0.2X,%0.2X,%0.2X,%0.2X\n", get_register(A),
+        //                get_register(F), get_register(B), get_register(C),
+        //                get_register(D), get_register(E), get_register(H),
+        //                get_register(L), get_sp(), get_pc(),
+        //                privileged_get_memory_byte(get_pc()),
+        //                privileged_get_memory_byte(get_pc() + 1),
+        //                privileged_get_memory_byte(get_pc() + 2),
+        //                privileged_get_memory_byte(get_pc() + 3));
 
-        uint16_t old_pc = get_pc();
+        // uint16_t old_pc = get_pc();
+
+        if (is_halted()) {
+            if (get_memory_byte(IE) & get_memory_byte(IF)) {
+                set_halted(false);
+            }         }
         clocks += handle_interrupts();
-        clock_cycles_t (*func)(uint8_t *) = fetch_instruction();
-        clocks += execute_instruction(func);
-        clocks += oam_dma_transfer();
+        if (!is_halted()) {
+            clock_cycles_t (*func)(uint8_t *) = fetch_instruction();
+            clocks += execute_instruction(func);
+            clocks += oam_dma_transfer();
+        } else {
+            clocks += 4;
+        }
         update_timer(clocks);
         //        snprintf(trace_str, 255,
         //                 "Instruction: 0x%0.2x 0x%0.2x 0x%0.2x %-15s A:
@@ -81,7 +91,7 @@ void *start_cpu(void *arg) {
                 diff.tv_usec = end.tv_usec - start.tv_usec;
             }
             // suseconds_t remaining_time = expected_time - diff.tv_usec;
-            usleep(5);
+            usleep(10);
             gettimeofday(&start, NULL);
         }
     }

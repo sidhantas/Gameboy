@@ -1,4 +1,5 @@
 #include "hardware.h"
+#include "interrupts.h"
 #include "utils.h"
 
 static void update_DIV_register(clock_cycles_t clocks);
@@ -31,24 +32,21 @@ void update_TIMA_register(clock_cycles_t clocks) {
         default: break;
     }
 
-    uint8_t tick_update = TIMA_progress / TIMA_clock_rate;
-    if (tick_update > 0) {
-        uint16_t TMA_modulo = privileged_get_memory_byte(TMA);
-        TIMA_progress = TMA_modulo + TIMA_progress % TIMA_clock_rate;
-        uint8_t TIMA_value =  privileged_get_memory_byte(TIMA);
-        if (TIMA_value == 0xFF) {
-            set_interrupt_state(TIMA);
+    while (TIMA_progress > TIMA_clock_rate) {
+        TIMA_progress -= TIMA_clock_rate;
+        TIMA_progress = TIMA_progress % TIMA_clock_rate;
+        uint16_t TIMA_value = privileged_get_memory_byte(TIMA) + 1;
+        if (TIMA_value >= UINT8_MAX) {
+            uint8_t TMA_val = privileged_get_memory_byte(TMA);
+            TIMA_value = TMA_val;
+            set_interrupts_flag(TIMER);
         }
-        privileged_set_memory_byte(TIMA, TIMA_value + tick_update);
+        privileged_set_memory_byte(TIMA, (uint8_t)TIMA_value);
     }
 
 }
 void update_DIV_register(clock_cycles_t clocks) {
     static uint16_t DIV_progress = 0;
     DIV_progress += clocks;
-    if (DIV_progress >= 256) {
-        uint8_t DIV_val = privileged_get_memory_byte(DIV);
-        set_memory_byte(DIV, DIV_val + 1);
-        DIV_progress %= 256;
-    }
+    privileged_set_memory_byte(DIV, DIV_progress >> 8);
 }

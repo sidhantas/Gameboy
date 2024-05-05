@@ -618,7 +618,7 @@ clock_cycles_t ADD_HL_SP(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 
 clock_cycles_t RRA(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     (void)instruction;
-    uint8_t result = get_register(A) >> 1 | get_flag(C_FLAG) << 7;
+    uint8_t result = (uint8_t)(get_register(A) >> 1 | get_flag(C_FLAG) << 7);
     get_register(A) & 0x01 ? set_flag(C_FLAG) : reset_flag(C_FLAG);
     reset_flag(Z_FLAG);
     reset_flag(N_FLAG);
@@ -749,10 +749,10 @@ clock_cycles_t CCF(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 
 clock_cycles_t HALT(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     (void)instruction;
-
+    set_halted(true);
     set_decoded_instruction("HALT");
 
-    return -1;
+    return 0;
 }
 
 clock_cycles_t ADC_A_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {

@@ -1,4 +1,6 @@
 #include "hardware.h"
+#include "SDL_video.h"
+#include "graphics.h"
 #include "interrupts.h"
 #include "utils.h"
 #include <stdarg.h>
@@ -34,7 +36,7 @@ void initialize_hardware(void) {
     hardware.memory[JOYP] = 0x3F;
     hardware.oam_dma_started = false;
 
-    // initial state
+    // initial state after boot
     hardware.registers[A] = 0x01;
     hardware.registers[F] = 0xB0;
     hardware.registers[B] = 0x00;
@@ -53,10 +55,10 @@ void map_dmg(FILE *rom) {
         exit(1);
     }
     memcpy(rom_beginning, hardware.memory, 0x100);
-    uint16_t bytes_read =
+    unsigned long bytes_read =
         fread(&(hardware.memory[BOOT_ROM_BEGIN]), DMG_SIZE, 1, rom);
     if (bytes_read != 1) {
-        fprintf(stderr, "Unable To Read DMG, %d\n", bytes_read);
+        fprintf(stderr, "Unable To Read DMG, %d\n", (int)bytes_read);
         exit(1);
     }
 }
@@ -65,12 +67,14 @@ void unmap_dmg(void) { memcpy(hardware.memory, rom_beginning, 0x100); }
 
 void load_rom(FILE *rom) {
     uint16_t sectors_read = 0;
-    int16_t read_size;
+    unsigned long read_size;
     do {
         read_size = fread(&hardware.memory[sectors_read * SECTOR_SIZE],
                           SECTOR_SIZE, 1, rom);
         sectors_read++;
     } while (read_size > 0);
+    update_window_title((char *)&hardware.memory[0x134]);
+
 }
 uint8_t privileged_get_memory_byte(uint16_t address) {
     return hardware.memory[address];
@@ -286,6 +290,12 @@ bool get_oam_dma_transfer(void) {
 
 void set_oam_dma_transfer(bool oam_dma_transfer_is_enabled) { hardware.oam_dma_started = oam_dma_transfer_is_enabled; }
 
-void disable_oam_dma_transfer(void) { hardware.oam_dma_started = false; }
-
 void dump_tracer(void) { tracer_dump(&t); }
+
+void set_halted(bool halt_state) {
+    hardware.is_halted = halt_state;
+}
+
+bool is_halted(void) {
+    return hardware.is_halted;
+}

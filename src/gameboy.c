@@ -32,6 +32,7 @@ int main(int argc, char **argv) {
     static struct option program_options[] = {
         {"game", required_argument, 0, 'g'}, {0, 0, 0, 0}};
 
+    open_window();
     while ((opt = getopt_long(argc, argv, "g:", program_options,
                               &long_index)) != -1) {
         switch (opt) {
@@ -46,7 +47,6 @@ int main(int argc, char **argv) {
     }
 
     pthread_create(&debugger_id, NULL, initialize_debugger, NULL);
-    open_window();
     pthread_create(&cpu_id, NULL, start_cpu, NULL);
     pthread_create(&ppu_id, NULL, start_ppu, NULL);
     main_loop();

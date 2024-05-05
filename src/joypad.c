@@ -11,7 +11,7 @@ void initialize_io(void) {
 uint8_t get_joypad_state(void) { return joy.inputs; }
 
 void set_joypad_state(joypad_t button) { 
-    set_bit(&joy.inputs, button);
+    set_bit(&joy.inputs, (uint8_t)button);
 }
 
 void reset_joypad_state(joypad_t button) {

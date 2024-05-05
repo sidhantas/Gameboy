@@ -94,6 +94,7 @@ typedef struct Hardware {
   char previous_instruction[MAX_DECODED_INSTRUCTION_SIZE];
   bool step_mode;
   bool oam_dma_started;
+  bool is_halted;
 } Hardware;
 
 typedef struct Joypad {
@@ -170,3 +171,7 @@ void set_oam_dma_transfer(bool oam_dma_transfer_is_enabled);
 
 // TIMER
 void update_timer(clock_cycles_t clocks);
+
+// HALT instruction
+void set_halted(bool halt_state);
+bool is_halted(void);

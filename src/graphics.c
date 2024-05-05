@@ -1,6 +1,7 @@
 #include "graphics.h"
 #include "SDL_pixels.h"
 #include "SDL_render.h"
+#include "SDL_video.h"
 #include "debug.h"
 #include "decoder.h"
 #include "hardware.h"
@@ -9,10 +10,13 @@
 #include <ncurses.h>
 #include <unistd.h>
 
+#define MAX_TITLE_SIZE 16
+
 SDL_Event event;
 SDL_Renderer *renderer;
 SDL_Texture *texture;
 SDL_Window *window;
+
 
 void open_window(void) {
     SDL_Init(SDL_INIT_VIDEO);
@@ -32,6 +36,14 @@ void close_window(void) {
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
+}
+
+void update_window_title(char * title) {
+    char title_buffer[MAX_TITLE_SIZE + 1];
+    strncpy(title_buffer, title, MAX_TITLE_SIZE);
+    title_buffer[MAX_TITLE_SIZE] = '\0';
+    SDL_SetWindowTitle(window, title_buffer);
+    return;
 }
 
 void update_renderer(void) {

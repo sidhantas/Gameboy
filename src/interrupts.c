@@ -10,7 +10,7 @@ void reset_interrupt_flag(interrupts_t interrupt);
 uint16_t get_interrupt_handler(interrupts_t interrupt);
 
 void set_interrupts_flag(interrupts_t interrupt) {
-    set_memory_byte(IF, get_memory_byte(IF) | (1 << interrupt));
+    set_memory_byte(IF, get_memory_byte(IF) | (uint8_t)(1 << interrupt));
 }
 
 clock_cycles_t handle_interrupts(void) {
