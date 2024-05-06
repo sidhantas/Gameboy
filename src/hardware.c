@@ -28,16 +28,16 @@ void initialize_hardware(void) {
     hardware.oam_dma_started = false;
 
     // initial state after boot
-    hardware.registers[A] = 0x01;
-    hardware.registers[F] = 0xB0;
-    hardware.registers[B] = 0x00;
-    hardware.registers[C] = 0x13;
-    hardware.registers[D] = 0x00;
-    hardware.registers[E] = 0xD8;
-    hardware.registers[H] = 0x01;
-    hardware.registers[L] = 0x4D;
-    hardware.sp = 0xFFFE;
-    hardware.pc = 0x0100;
+    //hardware.registers[A] = 0x01;
+    //hardware.registers[F] = 0xB0;
+    //hardware.registers[B] = 0x00;
+    //hardware.registers[C] = 0x13;
+    //hardware.registers[D] = 0x00;
+    //hardware.registers[E] = 0xD8;
+    //hardware.registers[H] = 0x01;
+    //hardware.registers[L] = 0x4D;
+    //hardware.sp = 0xFFFE;
+    //hardware.pc = 0x0100;
 }
 
 

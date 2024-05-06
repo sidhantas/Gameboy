@@ -2,10 +2,10 @@
 
 typedef struct Tracer {
     char **queue;
-    int16_t head;
-    int16_t tail;
-    int16_t size;
-    int16_t capacity;
+    uint16_t head;
+    uint16_t tail;
+    uint16_t size;
+    uint16_t capacity;
 } Tracer;
 void initialize_tracer(Tracer *t, uint16_t queue_size);
 void tracer_dequeue(Tracer *t);
