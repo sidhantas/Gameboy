@@ -4,9 +4,7 @@
 
 typedef struct {
     void (*set_memory_byte)(uint16_t address, uint8_t byte);
-    void (*privileged_set_memory_byte)(uint16_t address, uint8_t byte);
     uint8_t (*get_memory_byte)(uint16_t address);
-    uint8_t (*privileged_get_memory_byte)(uint16_t address);
     void (*load_rom)(FILE *rom);
 } MBC;
 
@@ -36,9 +34,5 @@ typedef struct {
 
 
 void delete_mbc(MBC **mbc);
-void map_dmg(void);
-void unmap_dmg(void);
-
-
 MBC initialize_mbc0(void);
 MBC initialize_mbc1(CartridgeHeader ch);

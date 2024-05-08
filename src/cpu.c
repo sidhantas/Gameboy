@@ -22,7 +22,7 @@ void *start_cpu(void *arg) {
     struct timeval start, end, diff;
     uint16_t exec_count = 0;
     gettimeofday(&start, NULL);
-    // FILE *f = fopen("inst_dump.txt", "w");
+    FILE *f = fopen("inst_dump.txt", "w");
 
     while (true) {
         clock_cycles_t clocks = 0;
@@ -38,19 +38,16 @@ void *start_cpu(void *arg) {
             instructions_left -= 1;
         }
 
-        //        fprintf(f,
-        //                "A:%0.2X F:%0.2X B:%0.2X C:%0.2X D:%0.2X E:%0.2X
-        //                H:%0.2X " "L:%0.2X SP:%0.4X PC:%0.4X
-        //                PCMEM:%0.2X,%0.2X,%0.2X,%0.2X\n", get_register(A),
-        //                get_register(F), get_register(B), get_register(C),
-        //                get_register(D), get_register(E), get_register(H),
-        //                get_register(L), get_sp(), get_pc(),
-        //                privileged_get_memory_byte(get_pc()),
-        //                privileged_get_memory_byte(get_pc() + 1),
-        //                privileged_get_memory_byte(get_pc() + 2),
-        //                privileged_get_memory_byte(get_pc() + 3));
+        fprintf(f,
+                "A:%0.2X F:%0.2X B:%0.2X C:%0.2X D:%0.2X E:%0.2X H:%0.2X "
+                "L:%0.2X SP:%0.4X PC:%0.4X PCMEM:%0.2X,%0.2X,%0.2X,%0.2X\n",
+                get_register(A), get_register(F), get_register(B),
+                get_register(C), get_register(D), get_register(E),
+                get_register(H), get_register(L), get_sp(), get_pc(),
+                get_memory_byte(get_pc()), get_memory_byte(get_pc() + 1),
+                get_memory_byte(get_pc() + 2), get_memory_byte(get_pc() + 3));
 
-        // uint16_t old_pc = get_pc();
+        uint16_t old_pc = get_pc();
 
         if (is_halted()) {
             if (get_memory_byte(IE) & get_memory_byte(IF)) {

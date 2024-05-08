@@ -13,12 +13,12 @@ MBC initialize_mbc0(void) {
     mbc0.set_memory_byte = &mbc0_set_memory_byte;
     mbc0.get_memory_byte = &mbc0_get_memory_byte;
     mbc0.load_rom = &mbc0_load_rom;
-    rom = calloc(ROM_BANK_SIZE * 2, sizeof(uint8_t));
+    rom = calloc(VRAM_BASE - ROM_BANK_00_BASE, sizeof(uint8_t));
     if (!rom) {
         fprintf(stderr, "Unable to allocate memory for ROM");
         exit(1);
     }
-    ex_ram = calloc(EX_RAM_SIZE, sizeof(uint8_t));
+    ex_ram = calloc(WRAM_BASE - EX_RAM_BASE, sizeof(uint8_t));
     if (!ex_ram) {
         fprintf(stderr, "Unable to allocate memory for EXRAM");
         exit(1);
@@ -28,7 +28,7 @@ MBC initialize_mbc0(void) {
 }
 
 static void mbc0_load_rom(FILE *cartridge) {
-    fread(rom, ROM_BANK_SIZE * 2, 1, cartridge);
+    fread(rom, 1, ROM_BANK_SIZE * 2, cartridge);
 }
 
 static uint8_t mbc0_get_memory_byte(uint16_t address) {
@@ -46,6 +46,7 @@ static void mbc0_set_memory_byte(uint16_t address, uint8_t byte) {
         return;
     } else if (address >= EX_RAM_BASE && address < WRAM_BASE) {
         ex_ram[address - EX_RAM_BASE] = byte;
+        return;
     }
     fprintf(stderr, "Invalid memory write in MBC0");
     exit(1);

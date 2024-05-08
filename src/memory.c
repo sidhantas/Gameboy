@@ -8,7 +8,6 @@
 static MBC mbc;
 static bool dmg_mapped = false;
 static uint8_t *dmg;
-static uint8_t rom_beginning[0x100];
 static uint8_t *vram;
 static uint8_t *wram;
 static uint8_t *oam;
@@ -43,7 +42,8 @@ void initialize_memory(CartridgeHeader ch) {
     switch (ch.cartridge_type) {
         case 0x00: mbc = initialize_mbc0(); return;
         case 0x01: mbc = initialize_mbc1(ch); return;
-        default: fprintf(stderr, "Cartridge type not implemented\n"); exit(1);
+        case 0x03: mbc = initialize_mbc1(ch); return;
+        default: fprintf(stderr, "Cartridge type not implemented: %d\n", ch.cartridge_type); exit(1);
     }
 }
 
@@ -99,9 +99,9 @@ void map_dmg(void) {
     return;
 }
 
-void unmap_dmg(void) { 
-    free(dmg);
+void unmap_dmg(void) {
     dmg_mapped = false;
+    free(dmg);
 }
 
 void load_rom(FILE *rom) {

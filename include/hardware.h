@@ -18,8 +18,8 @@
 #define TAC 0xFF07
 #define IF 0xFF0F
 #define LCDC 0xFF40
-#define SCX 0xFF41
 #define SCY 0xFF42
+#define SCX 0xFF43
 #define DMA 0xFF46
 #define WX 0xFF4A
 #define WY 0xFF4B

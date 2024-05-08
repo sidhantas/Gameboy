@@ -187,7 +187,7 @@ uint8_t get_bg_pixel(uint8_t x, uint8_t y) {
     const uint8_t x_off = get_memory_byte(SCX);
     const uint8_t y_off = get_memory_byte(SCY);
 
-    x = x + x_off;
+    x = x;
     y = y + y_off;
     const uint8_t tile_x = x / 8;
     const uint8_t tile_y = y / 8;
