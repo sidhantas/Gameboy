@@ -6,7 +6,6 @@
 #include "graphics.h"
 #include "hardware.h"
 #include "interrupts.h"
-#include "memory.h"
 #include "ppu.h"
 #include <getopt.h>
 #include <ncurses.h>
@@ -39,7 +38,6 @@ int main(int argc, char **argv) {
             case 'g':
                 game = fopen(optarg, "r");
                 load_rom(game);
-                // map_dmg(dmg);
                 fclose(game);
                 break;
             default: exit(1); break;

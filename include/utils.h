@@ -1,7 +1,7 @@
 #pragma once
 #include <ncurses.h>
 #include <stdint.h>
-#define DMG_SIZE 256
+#define DMG_SIZE 0x100
 #define SECTOR_SIZE 4096
 #define KRED "\x1B[31m"
 #define RESET "\033[0m"
