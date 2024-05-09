@@ -1,4 +1,5 @@
 #include "hardware.h"
+#include "memory.h"
 #include "interrupts.h"
 #include "utils.h"
 
@@ -18,6 +19,6 @@ void reset_joypad_state(joypad_t button) {
     joy.inputs &= ~(1 << button); 
     uint8_t joypad_mem = privileged_get_memory_byte(JOYP);
     if (joypad_mem & 0x30) {
-        set_interrupts_flag(JOYP);
+        set_interrupts_flag(JOYPAD);
     }
 }

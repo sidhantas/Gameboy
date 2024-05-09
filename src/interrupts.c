@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include "memory.h"
 
 interrupts_t get_highest_priority_interrupt(void);
 void reset_interrupt_flag(interrupts_t interrupt);

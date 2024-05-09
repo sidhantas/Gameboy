@@ -9,24 +9,6 @@
 #define OAM_SIZE 0xA0
 #define BOOT_ROM_BEGIN 0x0000
 #define ROM_START 0x0100
-#define JOYP 0xFF00
-#define SB 0xFF01
-#define SC 0xFF02
-#define DIV 0xFF04
-#define TIMA 0xFF05
-#define TMA 0xFF06
-#define TAC 0xFF07
-#define IF 0xFF0F
-#define LCDC 0xFF40
-#define SCY 0xFF42
-#define SCX 0xFF43
-#define DMA 0xFF46
-#define WX 0xFF4A
-#define WY 0xFF4B
-#define DISABLE_BOOT_ROM 0xFF50
-#define LCDY 0xFF44
-#define IF 0xFF0F
-#define IE 0xFFFF
 
 #define MAX_INSTRUCTION_SIZE 3
 #define REGISTER_COUNT 8

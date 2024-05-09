@@ -1,4 +1,5 @@
 #include "hardware.h"
+#include "memory.h"
 #include "interrupts.h"
 #include "utils.h"
 

@@ -1,4 +1,5 @@
 #include "debug.h"
+#include "memory.h"
 #include "decoder.h"
 #include "oam_queue.h"
 #include "hardware.h"
@@ -171,16 +172,16 @@ static void print_memory_window(WINDOW *mem_win, uint16_t start_address) {
     for (int i = 3; i < HEIGHT - 1; i++) {
         mvwprintw(mem_win, i, 1, "0x%0.4X", start_address + 0x10 * (i - 3));
         for (int j = 2; j < WIDTH / 5; j++) {
-            if (get_memory_byte(start_address + 0x10 * (i - 3) + (j - 2))) {
+            if (privileged_get_memory_byte(start_address + 0x10 * (i - 3) + (j - 2))) {
                 wattron(mem_win, COLOR_PAIR(1));
                 mvwprintw(
                     mem_win, i, j * 5 - 1, "0x%0.2X",
-                    get_memory_byte(start_address + 0x10 * (i - 3) + (j - 2)));
+                    privileged_get_memory_byte(start_address + 0x10 * (i - 3) + (j - 2)));
                 wattroff(mem_win, COLOR_PAIR(1));
             } else {
                 mvwprintw(
                     mem_win, i, j * 5 - 1, "0x%0.2X",
-                    get_memory_byte(start_address + 0x10 * (i - 3) + (j - 2)));
+                    privileged_get_memory_byte(start_address + 0x10 * (i - 3) + (j - 2)));
             }
         }
     }

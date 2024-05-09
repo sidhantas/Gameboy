@@ -43,7 +43,10 @@ void initialize_memory(CartridgeHeader ch) {
         case 0x00: mbc = initialize_mbc0(); return;
         case 0x01: mbc = initialize_mbc1(ch); return;
         case 0x03: mbc = initialize_mbc1(ch); return;
-        default: fprintf(stderr, "Cartridge type not implemented: %d\n", ch.cartridge_type); exit(1);
+        default:
+            fprintf(stderr, "Cartridge type not implemented: %d\n",
+                    ch.cartridge_type);
+            exit(1);
     }
 }
 
@@ -128,8 +131,7 @@ uint8_t privileged_get_memory_byte(uint16_t address) {
     } else if (address >= IO_RAM_BASE && address <= IE) {
         return io_ram[address - IO_RAM_BASE];
     } else {
-        fprintf(stderr, "Invalid privileged memory access\n");
-        exit(1);
+        return get_memory_byte(address);
     }
 }
 
@@ -138,6 +140,19 @@ void set_long_mem(uint16_t address, uint16_t val) {
     u16_to_two_u8s(val, &b1, &b2);
     set_memory_byte(address, b1);
     set_memory_byte(address + 1, b2);
+}
+
+static uint8_t handle_io_read(uint16_t address) {
+    if (address == JOYP || address == SB || address == SC || address == DIV ||
+        address == TIMA || address == TMA || address == TAC || address == IF ||
+        (0xFF10 <= address && address <= 0xFF26) ||
+        (0xFF30 <= address && address <= 0xFF3F) ||
+        (0xFF40 <= address && address <= 0xFF4B) || address == 0xFF4F ||
+        address == 0xFF50 || (0xFF51 <= address && address <= 0xFF55) ||
+        (0xFF68 <= address && address <= 0xFF6B) || address == 0xFF70) {
+        return io_ram[address - IO_RAM_BASE];
+    }
+    return 0xFF;
 }
 
 uint8_t get_memory_byte(uint16_t address) {
@@ -164,7 +179,9 @@ uint8_t get_memory_byte(uint16_t address) {
             return 0xFF;
         }
         return 0x00;
-    } else if (address >= IO_RAM_BASE) {
+    } else if (address >= IO_RAM_BASE && address < HRAM_BASE) {
+        return handle_io_read(address);
+    } else if (address >= HRAM_BASE) {
         return io_ram[address - IO_RAM_BASE];
     }
 

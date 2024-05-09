@@ -1,4 +1,5 @@
 #include "ppu.h"
+#include "memory.h"
 #include "hardware.h"
 #include "interrupts.h"
 #include "oam_queue.h"

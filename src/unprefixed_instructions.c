@@ -1,4 +1,5 @@
 #include "hardware.h"
+#include "memory.h"
 #include "instructions.h"
 #include "utils.h"
 #include <inttypes.h>

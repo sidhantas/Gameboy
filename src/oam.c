@@ -1,5 +1,6 @@
 #include "hardware.h"
 #include "oam_queue.h"
+#include "memory.h"
 #include "utils.h"
 #include <string.h>
 
