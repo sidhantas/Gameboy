@@ -12,9 +12,7 @@ typedef struct PPU {
 } PPU;
 
 extern PPU ppu;
-extern pthread_mutex_t dots_mutex;
 extern pthread_mutex_t display_buffer_mutex;
 
 void initialize_ppu(void);
-void *start_ppu(void *arg);
-void end_ppu(void);
+void run_ppu(uint16_t dots);

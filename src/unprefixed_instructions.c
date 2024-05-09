@@ -485,7 +485,7 @@ clock_cycles_t RLA(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     (void)instruction;
 
     uint8_t bit7 = get_bit(get_register(A), 7);
-    uint8_t result = get_register(A) << 1 | get_flag(C_FLAG);
+    uint8_t result = (uint8_t)(get_register(A) << 1 | get_flag(C_FLAG));
     bit7 ? set_flag(C_FLAG) : reset_flag(C_FLAG);
     reset_flag(N_FLAG);
     reset_flag(H_FLAG);

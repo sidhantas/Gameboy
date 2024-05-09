@@ -59,11 +59,12 @@ void *start_cpu(void *arg) {
         if (!is_halted()) {
             clock_cycles_t (*func)(uint8_t *) = fetch_instruction();
             clocks += execute_instruction(func);
-            clocks += oam_dma_transfer();
+            clocks += try_oam_dma_transfer();
         } else {
             clocks += 4;
         }
         update_timer(clocks);
+        run_ppu((uint16_t)clocks * 4);
         //        snprintf(trace_str, 255,
         //                 "Instruction: 0x%0.2x 0x%0.2x 0x%0.2x %-15s A:
         //                 0x%0.2x, B: " "0x%0.2x, C: " "0x%0.2x, D: 0x%0.2x, E:
@@ -74,9 +75,6 @@ void *start_cpu(void *arg) {
         //                 get_register(D), get_register(E), get_register(H),
         //                 get_register(L), get_flag(C_FLAG));
         //        tracer_enqueue(&t, old_pc, trace_str);
-        pthread_mutex_lock(&dots_mutex);
-        ppu.available_dots += clocks * 4;
-        pthread_mutex_unlock(&dots_mutex);
         exec_count += clocks;
         if (exec_count >= CPU_CATCH_UP) {
             exec_count -= CPU_CATCH_UP;

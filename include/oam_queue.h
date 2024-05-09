@@ -13,7 +13,7 @@ typedef struct SpriteStore {
     uint8_t length;
 } SpriteStore;
 
-clock_cycles_t oam_dma_transfer(void);
+clock_cycles_t try_oam_dma_transfer(void);
 void initialize_sprite_store(void);
 SpriteStore *get_sprite_store(void);
 void add_sprite(uint16_t object_no);

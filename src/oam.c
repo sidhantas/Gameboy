@@ -18,7 +18,7 @@ SpriteStore *get_sprite_store(void) {
     return &sprite_store;
 }
 
-clock_cycles_t oam_dma_transfer(void) {
+clock_cycles_t try_oam_dma_transfer(void) {
     if (!get_oam_dma_transfer()) {
         return 0;
     }
@@ -49,8 +49,8 @@ object_t get_object(uint16_t object_index) {
     return obj;
 }
 
-uint16_t get_tile_row_address(object_t obj) {
-    uint16_t tile_address = 0x8000 + (uint16_t)(obj.tile_index << 4);
+uint16_t get_tile_row_address(uint8_t tile_index) {
+    uint16_t tile_address = 0x8000 + (uint16_t)(tile_index << 4);
     return tile_address;
 }
 
@@ -61,12 +61,12 @@ void add_sprite(uint16_t object_no) {
     object_t obj = get_object(object_no);
     uint8_t obj_h = get_bit(get_memory_byte(LCDC), 2) ? 16 : 8;
     uint16_t current_draw_height = get_memory_byte(LCDY) + 16;
-    if (obj.y_pos != current_draw_height - current_draw_height % 8) {
+    if (obj.y_pos != current_draw_height - current_draw_height % obj_h) {
         return;
     }
     sprite_store.selected_objects[sprite_store.length].x_start = obj.x_pos;
     sprite_store.selected_objects[sprite_store.length].tile_row_index =
-        get_tile_row_address(obj);
+        get_tile_row_address(obj.tile_index);
     sprite_store.selected_objects[sprite_store.length].y = get_memory_byte(LCDY);
     sprite_store.length++;
     return;
