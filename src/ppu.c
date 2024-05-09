@@ -17,7 +17,6 @@
 PPU ppu;
 
 static bool close_ppu;
-static uint8_t line_y = 0;
 pthread_mutex_t dots_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t display_buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -33,12 +32,14 @@ static uint32_t get_color_from_byte(uint8_t byte);
 void initialize_ppu(void) {
     close_ppu = false;
     ppu.line_dots = 0;
-    ppu.mode = 0;
+    ppu.mode = 2;
     ppu.ready_to_render = false;
     ppu.available_dots = 0;
     ppu.consumed_dots = 0;
+    ppu.current_scan_line = 0;
     ppu.line_x = 0;
 }
+
 void *start_ppu(void *arg) {
     (void)arg;
     ppu.mode = 2;
@@ -99,6 +100,7 @@ static bool execute_mode_2(void) {
         object_index = 0;
         ppu.line_x = 0;
         ppu.mode = 3;
+        ppu.current_scan_line = get_memory_byte(LCDY);
     }
     return true;
 }
@@ -138,14 +140,14 @@ static bool execute_mode_3(void) {
         return false;
     }
     // Should overlap with win pixel if it exists
-    uint8_t pixel = get_bg_pixel(ppu.line_x, get_memory_byte(LCDY));
+    uint8_t pixel = get_bg_pixel(ppu.line_x, ppu.current_scan_line);
     const uint8_t object_pixel = get_obj_pixel(ppu.line_x);
     if (object_pixel != 0x00) {
         pixel = object_pixel;
     }
 
     pthread_mutex_lock(&display_buffer_mutex);
-    set_display_pixel(ppu.line_x, get_memory_byte(LCDY),
+    set_display_pixel(ppu.line_x, ppu.current_scan_line,
                       get_color_from_byte(pixel));
     pthread_mutex_unlock(&display_buffer_mutex);
 
@@ -160,7 +162,7 @@ static bool execute_mode_0(void) {
         return false;
     }
     if (ppu.line_dots >= 456) {
-        uint8_t current_y = get_memory_byte(LCDY) + 1;
+        uint8_t current_y = ppu.current_scan_line  + 1;
         if (current_y >= DISPLAY_HEIGHT) {
             ppu.ready_to_render = true;
             set_interrupts_flag(VBLANK);
@@ -170,6 +172,7 @@ static bool execute_mode_0(void) {
             initialize_sprite_store();
         }
         set_memory_byte(LCDY, current_y);
+        ppu.current_scan_line = current_y;
         ppu.line_dots %= 456;
     }
     return true;
@@ -186,6 +189,7 @@ static bool execute_mode_1(void) {
             ppu.mode = 2;
         }
         set_memory_byte(LCDY, current_y % SCAN_LINES);
+        ppu.current_scan_line = current_y;
     }
     return true;
 }
