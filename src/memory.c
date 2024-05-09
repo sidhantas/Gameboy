@@ -208,6 +208,8 @@ static void handle_IO_write(uint16_t address, uint8_t byte) {
                 return;
             }
         case DIV: io_ram[address_offset] = 0; return;
+        case STAT: io_ram[address_offset] = byte; return;
+        case TIMA: io_ram[address_offset] += 1; return;
         case DMA:
             io_ram[address_offset] = byte;
             set_oam_dma_transfer(true);

@@ -13,7 +13,7 @@ Tracer t;
 #define TRACER_SIZE 50
 
 void initialize_hardware(void) {
-    hardware.display_buffer = calloc(256 * 256, sizeof(uint32_t));
+    hardware.display_buffer = calloc(DISPLAY_WIDTH * DISPLAY_HEIGHT, sizeof(uint32_t));
     if (!(hardware.display_buffer)) {
         fprintf(stderr, "Unable to allocate memory for display buff\n");
     }
@@ -96,8 +96,8 @@ uint8_t stack_pop_u8(void) {
 
 uint16_t get_sp(void) { return hardware.sp; }
 
-void set_display_pixel(uint_fast8_t x, uint_fast8_t y,
-                       uint_fast32_t pixel_color) {
+void set_display_pixel(uint8_t x, uint8_t y,
+                       uint32_t pixel_color) {
     hardware.display_buffer[y * DISPLAY_WIDTH + x] = pixel_color;
 }
 

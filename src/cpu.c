@@ -39,16 +39,14 @@ void *start_cpu(void *arg) {
             instructions_left -= 1;
         }
 
-        fprintf(f,
-                "A:%0.2X F:%0.2X B:%0.2X C:%0.2X D:%0.2X E:%0.2X H:%0.2X "
-                "L:%0.2X SP:%0.4X PC:%0.4X PCMEM:%0.2X,%0.2X,%0.2X,%0.2X\n",
-                get_register(A), get_register(F), get_register(B),
-                get_register(C), get_register(D), get_register(E),
-                get_register(H), get_register(L), get_sp(), get_pc(),
-                get_memory_byte(get_pc()), get_memory_byte(get_pc() + 1),
-                get_memory_byte(get_pc() + 2), get_memory_byte(get_pc() + 3));
-
-        uint16_t old_pc = get_pc();
+        //fprintf(f,
+        //        "A:%0.2X F:%0.2X B:%0.2X C:%0.2X D:%0.2X E:%0.2X H:%0.2X "
+        //        "L:%0.2X SP:%0.4X PC:%0.4X PCMEM:%0.2X,%0.2X,%0.2X,%0.2X\n",
+        //        get_register(A), get_register(F), get_register(B),
+        //        get_register(C), get_register(D), get_register(E),
+        //        get_register(H), get_register(L), get_sp(), get_pc(),
+        //        get_memory_byte(get_pc()), get_memory_byte(get_pc() + 1),
+        //        get_memory_byte(get_pc() + 2), get_memory_byte(get_pc() + 3));
 
         if (is_halted()) {
             if (get_memory_byte(IE) & get_memory_byte(IF)) {
@@ -56,6 +54,7 @@ void *start_cpu(void *arg) {
             }
         }
         clocks += handle_interrupts();
+        pthread_mutex_lock(&dots_mutex);
         if (!is_halted()) {
             clock_cycles_t (*func)(uint8_t *) = fetch_instruction();
             clocks += execute_instruction(func);
@@ -63,8 +62,10 @@ void *start_cpu(void *arg) {
         } else {
             clocks += 4;
         }
+        ppu.available_dots += clocks;
+        pthread_mutex_unlock(&dots_mutex);
         update_timer(clocks);
-        run_ppu((uint16_t)clocks * 4);
+        //run_ppu((uint16_t)clocks);
         //        snprintf(trace_str, 255,
         //                 "Instruction: 0x%0.2x 0x%0.2x 0x%0.2x %-15s A:
         //                 0x%0.2x, B: " "0x%0.2x, C: " "0x%0.2x, D: 0x%0.2x, E:
@@ -85,8 +86,8 @@ void *start_cpu(void *arg) {
                 diff.tv_usec = end.tv_usec - start.tv_usec;
             }
             // suseconds_t remaining_time = expected_time - diff.tv_usec;
-            usleep(10);
             gettimeofday(&start, NULL);
+            usleep(5);
         }
     }
     return NULL;

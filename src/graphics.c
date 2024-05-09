@@ -25,7 +25,7 @@ void open_window(void) {
         DISPLAY_WIDTH * RESOLUTION_SCALE, DISPLAY_HEIGHT * RESOLUTION_SCALE, 0);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
-    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
+    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
                                 SDL_TEXTUREACCESS_STREAMING, DISPLAY_WIDTH,
                                 DISPLAY_HEIGHT);
     SDL_RenderSetLogicalSize(renderer, DISPLAY_WIDTH, DISPLAY_HEIGHT);

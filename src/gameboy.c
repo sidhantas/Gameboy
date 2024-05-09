@@ -48,6 +48,7 @@ int main(int argc, char **argv) {
     pthread_create(&debugger_id, NULL, initialize_debugger, NULL);
 #endif
     pthread_create(&cpu_id, NULL, start_cpu, NULL);
+    pthread_create(&ppu_id, NULL, start_ppu, NULL);
     main_loop();
     close_window();
 
@@ -55,8 +56,10 @@ int main(int argc, char **argv) {
     end_debugger();
     pthread_join(debugger_id, NULL);
 #endif
+    end_ppu();
     end_cpu();
     pthread_join(cpu_id, NULL);
+    pthread_join(ppu_id, NULL);
 
     return 0;
 }

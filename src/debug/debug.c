@@ -17,8 +17,8 @@ static void print_flags_window(WINDOW *flags_win);
 static void print_stack_window(WINDOW *stack_win);
 static void print_memory_window(WINDOW *mem_win, uint16_t start_address);
 static void print_oam_window(WINDOW *oam_win);
-//static void print_display_buffer_window(WINDOW *display_buf_win,
-//                                       const uint16_t start_address);
+static void print_display_buffer_window(WINDOW *display_buf_win,
+                                       const uint16_t start_address);
 
 void refresh_debugger(void);
 WINDOW *display_buff_win;
@@ -28,7 +28,7 @@ WINDOW *flags_win;
 WINDOW *stack_win;
 WINDOW *mem_win;
 WINDOW *oam_win;
-uint16_t mem_win_addr = 0xFF00;
+uint16_t mem_win_addr = 0x8800;
 uint16_t display_buf_addr = 0x0;
 
 pthread_mutex_t debugger_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -80,6 +80,7 @@ void *initialize_debugger(void *arg) {
             display_buf_addr -= 0x100;
         }
         refresh_debugger();
+        usleep(20000);
     }
     pthread_mutex_unlock(&debugger_lock);
     return NULL;
@@ -90,9 +91,9 @@ void refresh_debugger(void) {
     print_flags_window(flags_win);
     print_cpu_window(cpu_win);
     print_memory_window(mem_win, mem_win_addr);
-    //print_display_buffer_window(display_buff_win, display_buf_addr);
+    print_display_buffer_window(display_buff_win, display_buf_addr);
     print_stack_window(stack_win);
-    print_oam_window(oam_win);
+    //print_oam_window(oam_win);
     refresh();
 }
 
@@ -118,42 +119,41 @@ static void print_oam_window(WINDOW *oam_win) {
     wrefresh(oam_win);
 }
 
-//static void print_display_buffer_window(WINDOW *disp_win,
-//                                        const uint16_t start_address) {
-//
-//    uint16_t WIDTH = 0;
-//    uint16_t HEIGHT = 0;
-//
-//    getmaxyx(disp_win, HEIGHT, WIDTH);
-//    box(disp_win, 0, 0);
-//    mvwprintwhcenter(disp_win, 0, 0, WIDTH, "Display");
-//    for (int i = 2; i < WIDTH / 5; i++) {
-//        mvwprintw(disp_win, 1, i * 5, "0x%X", i - 2);
-//        wmove(disp_win, 1, i * 5 - 2);
-//        wvline(disp_win, 0, HEIGHT - 2);
-//    }
-//    wmove(disp_win, 2, 1);
-//    whline(disp_win, 0, WIDTH - 2);
-//
-//    for (int i = 3; i < HEIGHT - 1; i++) {
-//        mvwprintw(disp_win, i, 1, "0x%0.4X", start_address + 0x10 * (i - 3));
-//        for (int j = 2; j < WIDTH / 5; j++) {
-//            if (hardware
-//                    .display_buffer[start_address + 0x10 * (i - 3) + (j - 2)]) {
-//                wattron(disp_win, COLOR_PAIR(1));
-//                mvwprintw(disp_win, i, j * 5 - 1, "0x%0.2X",
-//                          hardware.display_buffer[start_address +
-//                                                  0x10 * (i - 3) + (j - 2)]);
-//                wattroff(disp_win, COLOR_PAIR(1));
-//            } else {
-//                mvwprintw(disp_win, i, j * 5 - 1, "0x%0.2X",
-//                          hardware.display_buffer[start_address +
-//                                                  0x10 * (i - 3) + (j - 2)]);
-//            }
-//        }
-//    }
-//    wrefresh(disp_win);
-//}
+static void print_display_buffer_window(WINDOW *disp_win,
+                                        const uint16_t start_address) {
+
+    uint16_t WIDTH = 0;
+    uint16_t HEIGHT = 0;
+
+    getmaxyx(disp_win, HEIGHT, WIDTH);
+    box(disp_win, 0, 0);
+    mvwprintwhcenter(disp_win, 0, 0, WIDTH, "Display");
+    for (int i = 2; i < WIDTH / 5; i++) {
+        mvwprintw(disp_win, 1, i * 5, "0x%X", i - 2);
+        wmove(disp_win, 1, i * 5 - 2);
+        wvline(disp_win, 0, HEIGHT - 2);
+    }
+    wmove(disp_win, 2, 1);
+    whline(disp_win, 0, WIDTH - 2);
+
+    for (int i = 3; i < HEIGHT - 1; i++) {
+        mvwprintw(disp_win, i, 1, "0x%0.4X", start_address + 0x10 * (i - 3));
+        for (int j = 2; j < WIDTH / 5; j++) {
+            if (get_display_buffer()[start_address + 0x10 * (i - 3) + (j - 2)]) {
+                wattron(disp_win, COLOR_PAIR(1));
+                mvwprintw(disp_win, i, j * 5 - 1, "0x%0.2X",
+                          get_display_buffer()[start_address +
+                                                  0x10 * (i - 3) + (j - 2)]);
+                wattroff(disp_win, COLOR_PAIR(1));
+            } else {
+                mvwprintw(disp_win, i, j * 5 - 1, "0x%0.2X",
+                          get_display_buffer()[start_address +
+                                                  0x10 * (i - 3) + (j - 2)]);
+            }
+        }
+    }
+    wrefresh(disp_win);
+}
 
 static void print_memory_window(WINDOW *mem_win, uint16_t start_address) {
     uint16_t WIDTH = 0;

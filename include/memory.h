@@ -35,6 +35,7 @@ enum IO_REGISTERS {
   TAC = 0xFF07,
   IF = 0xFF0F,
   LCDC = 0xFF40,
+  STAT = 0xFF41,
   SCY = 0xFF42,
   SCX = 0xFF43,
   DMA = 0xFF46,

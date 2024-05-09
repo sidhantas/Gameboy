@@ -17,6 +17,8 @@
 PPU ppu;
 
 static bool close_ppu;
+static uint8_t line_y = 0;
+pthread_mutex_t dots_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t display_buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static bool execute_mode_0(void);
@@ -36,6 +38,12 @@ void initialize_ppu(void) {
     ppu.available_dots = 0;
     ppu.consumed_dots = 0;
     ppu.line_x = 0;
+}
+void *start_ppu(void *arg) {
+    (void)arg;
+    ppu.mode = 2;
+    render_loop();
+    return NULL;
 }
 
 void render_loop(void) {
@@ -87,7 +95,7 @@ static bool execute_mode_2(void) {
     }
     add_sprite(object_index);
     object_index++;
-    if (ppu.line_dots > 80) {
+    if (ppu.line_dots >= 80) {
         object_index = 0;
         ppu.line_x = 0;
         ppu.mode = 3;
@@ -140,7 +148,8 @@ static bool execute_mode_3(void) {
     set_display_pixel(ppu.line_x, get_memory_byte(LCDY),
                       get_color_from_byte(pixel));
     pthread_mutex_unlock(&display_buffer_mutex);
-    if (++ppu.line_x > DISPLAY_WIDTH) {
+
+    if (++ppu.line_x >= DISPLAY_WIDTH) {
         ppu.mode = 0;
     }
     return true;
@@ -152,14 +161,14 @@ static bool execute_mode_0(void) {
     }
     if (ppu.line_dots >= 456) {
         uint8_t current_y = get_memory_byte(LCDY) + 1;
-        if (current_y > DISPLAY_HEIGHT) {
+        if (current_y >= DISPLAY_HEIGHT) {
             ppu.ready_to_render = true;
             set_interrupts_flag(VBLANK);
             ppu.mode = 1;
         } else {
             ppu.mode = 2;
+            initialize_sprite_store();
         }
-        initialize_sprite_store();
         set_memory_byte(LCDY, current_y);
         ppu.line_dots %= 456;
     }
@@ -220,6 +229,8 @@ static uint32_t get_color_from_byte(uint8_t byte) {
         case 0x02: return 0x55555555;
         case 0x01: return 0xAAAAAAAA;
         case 0x00: return 0xFFFFFFFF;
-        default: return UINT32_MAX;
+        default: exit(1);
     }
 }
+
+void end_ppu(void) { close_ppu = true; }
