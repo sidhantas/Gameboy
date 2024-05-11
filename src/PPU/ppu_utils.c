@@ -8,6 +8,7 @@
 static inline uint16_t get_tile_start(uint8_t relative_tile_address);
 static uint8_t get_background_pixel_color(uint8_t pixel_id);
 static uint8_t get_obj_pixel_color(uint8_t pixel_id, uint16_t pallete);
+static uint8_t get_color_id(uint8_t hi_byte, uint8_t lo_byte, uint8_t pixel_num);
 
 uint8_t get_bg_pixel(uint8_t x, uint8_t y) {
     const uint8_t x_off = get_memory_byte(SCX);
@@ -25,10 +26,9 @@ uint8_t get_bg_pixel(uint8_t x, uint8_t y) {
     uint8_t low = get_memory_byte(tile_start + (y % 8) * 2);
     uint8_t hi = get_memory_byte(tile_start + (y % 8) * 2 + 1);
 
+    uint8_t color_id = get_color_id(hi, low, x);
     // intertwine bytes
-    const uint8_t hi_bit = get_bit(hi, 7 - x % 8);
-    const uint8_t low_bit = get_bit(low, 7 - x % 8);
-    return get_background_pixel_color((uint8_t)(hi_bit << 1 | low_bit));
+    return get_background_pixel_color(color_id);
 }
 
 uint8_t get_win_pixel(uint8_t x, uint8_t y) {
@@ -58,9 +58,8 @@ uint8_t get_win_pixel(uint8_t x, uint8_t y) {
     uint8_t hi = get_memory_byte(tile_start + (y % 8) * 2 + 1);
 
     // intertwine bytes
-    const uint8_t hi_bit = get_bit(hi, 7 - x % 8);
-    const uint8_t low_bit = get_bit(low, 7 - x % 8);
-    return get_background_pixel_color((uint8_t)(hi_bit << 1 | low_bit));
+    uint8_t color_id = get_color_id(hi, low, x);
+    return get_background_pixel_color(color_id);
 }
 
 uint8_t get_obj_pixel(uint8_t x_pixel) {
@@ -77,18 +76,19 @@ uint8_t get_obj_pixel(uint8_t x_pixel) {
             if (obj.y_flipped) {
                 relative_y = 15 - relative_y;
             }
+
             uint8_t low = get_memory_byte(tile_start + relative_y);
             uint8_t hi = get_memory_byte(tile_start + relative_y + 1);
+
             uint8_t relative_x = x_start - x_pixel - 1;
-            if (obj.x_flipped) {
+            if (!obj.x_flipped) {
                 relative_x = 7 - relative_x;
             }
-            const uint8_t hi_bit = get_bit(hi, relative_x);
-            const uint8_t low_bit = get_bit(low, relative_x);
 
+            uint8_t color_id = get_color_id(hi, low, relative_x);
             uint16_t obj_palette = obj.DMG_palette == 1 ? 0xFF49 : 0xFF48;
             enum COLOR_VALUES color = get_obj_pixel_color(
-                (uint8_t)(hi_bit << 1 | low_bit), obj_palette);
+                color_id, obj_palette);
             if (color != TRANSPARENT) {
                 return (uint8_t)color;
             }
@@ -108,6 +108,12 @@ static inline uint16_t get_tile_start(uint8_t relative_tile_address) {
     return (uint16_t)tile_start;
 }
 
+static uint8_t get_color_id(uint8_t hi_byte, uint8_t lo_byte, uint8_t pixel_num) {
+    const uint8_t hi_bit = get_bit(hi_byte, 7 - pixel_num % 8);
+    const uint8_t low_bit = get_bit(lo_byte, 7 - pixel_num % 8);
+
+    return (uint8_t)(hi_bit << 1 | low_bit);
+}
 static uint8_t get_background_pixel_color(uint8_t pixel_id) {
     uint8_t bgp = get_memory_byte(0xFF47);
     return (bgp >> pixel_id * 2) & 0x03;
