@@ -62,20 +62,13 @@ void add_sprite(uint16_t object_no) {
     uint8_t obj_h = get_bit(get_memory_byte(LCDC), 2) ? 16 : 8;
     uint16_t current_draw_height = get_memory_byte(LCDY) + 16;
     
-    if (obj.y_pos > current_draw_height || current_draw_height >= obj.y_pos + obj_h) {
+    if (obj.y_pos < current_draw_height && current_draw_height < obj.y_pos + obj_h) {
         return;
-    } 
-    uint8_t tile_index;
-    if (obj_h == 16) {
-        tile_index = (current_draw_height - obj.y_pos > 8) ? obj.tile_index & 0xFE : obj.tile_index | 0x01;
-    }
-    else {
-        tile_index = obj.tile_index;
-    }
+    }  
     sprite_store.selected_objects[sprite_store.length].x_start = obj.x_pos;
     sprite_store.selected_objects[sprite_store.length].tile_row_index =
-        get_tile_row_address(tile_index);
-    sprite_store.selected_objects[sprite_store.length].y = get_memory_byte(LCDY) - obj.y_pos % obj_h;
+        get_tile_row_address(((current_draw_height - obj.y_pos > 8) ? obj.tile_index & 0xFE : obj.tile_index | 0x01));
+    sprite_store.selected_objects[sprite_store.length].y = get_memory_byte(LCDY);
     sprite_store.length++;
     return;
 }

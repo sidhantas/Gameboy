@@ -91,9 +91,9 @@ void refresh_debugger(void) {
     print_flags_window(flags_win);
     print_cpu_window(cpu_win);
     print_memory_window(mem_win, mem_win_addr);
-    print_display_buffer_window(display_buff_win, display_buf_addr);
+    //print_display_buffer_window(display_buff_win, display_buf_addr);
     print_stack_window(stack_win);
-    //print_oam_window(oam_win);
+    print_oam_window(oam_win);
     refresh();
 }
 

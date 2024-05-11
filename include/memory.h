@@ -40,8 +40,8 @@ enum IO_REGISTERS {
   SCX = 0xFF43,
   LYC = 0xFF45,
   DMA = 0xFF46,
-  WX = 0xFF4A,
-  WY = 0xFF4B,
+  WY = 0xFF4A,
+  WX = 0xFF4B,
   DISABLE_BOOT_ROM = 0xFF50,
   LCDY = 0xFF44,
   IE = 0xFFFF
