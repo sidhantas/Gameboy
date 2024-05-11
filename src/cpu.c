@@ -90,7 +90,7 @@ void *start_cpu(void *arg) {
             }
             // suseconds_t remaining_time = expected_time - diff.tv_usec;
             gettimeofday(&start, NULL);
-            usleep(5);
+            //usleep(10);
         }
     }
     return NULL;

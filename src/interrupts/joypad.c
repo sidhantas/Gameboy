@@ -16,9 +16,9 @@ void set_joypad_state(joypad_t button) {
 }
 
 void reset_joypad_state(joypad_t button) {
-    joy.inputs &= ~(1 << button); 
+    reset_bit(&joy.inputs, (uint8_t)button);
     uint8_t joypad_mem = privileged_get_memory_byte(JOYP);
-    if (joypad_mem & 0x30) {
+    if (!(joypad_mem & 0x10 || joypad_mem & 0x20)) {
         set_interrupts_flag(JOYPAD);
     }
 }

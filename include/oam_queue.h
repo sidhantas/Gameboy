@@ -2,14 +2,17 @@
 #include <stdint.h>
 #define MAX_OBJECTS 10
 
-struct OAMRow {
+struct ObjectRowData {
     uint8_t x_start; // starting x position on the display
     uint8_t y;
     uint16_t tile_row_index; // objects tile index in memory
+    bool x_flipped;
+    bool y_flipped;
+    uint8_t DMG_palette;
 };
 
 typedef struct SpriteStore {
-    struct OAMRow selected_objects[MAX_OBJECTS];
+    struct ObjectRowData selected_objects[MAX_OBJECTS];
     uint8_t length;
 } SpriteStore;
 

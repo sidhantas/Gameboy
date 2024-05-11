@@ -1,22 +1,19 @@
 #include "hardware.h"
-#include "oam_queue.h"
 #include "memory.h"
+#include "oam_queue.h"
 #include "utils.h"
 #include <string.h>
-
 
 SpriteStore sprite_store;
 
 void initialize_sprite_store(void) {
     sprite_store.length = 0;
     memset(sprite_store.selected_objects, 0,
-           MAX_OBJECTS * sizeof(struct OAMRow));
+           MAX_OBJECTS * sizeof(struct ObjectRowData));
     return;
 }
 
-SpriteStore *get_sprite_store(void) {
-    return &sprite_store;
-}
+SpriteStore *get_sprite_store(void) { return &sprite_store; }
 
 clock_cycles_t try_oam_dma_transfer(void) {
     if (!get_oam_dma_transfer()) {
@@ -61,14 +58,36 @@ void add_sprite(uint16_t object_no) {
     object_t obj = get_object(object_no);
     uint8_t obj_h = get_bit(get_memory_byte(LCDC), 2) ? 16 : 8;
     uint16_t current_draw_height = get_memory_byte(LCDY) + 16;
-    
-    if (obj.y_pos < current_draw_height && current_draw_height < obj.y_pos + obj_h) {
+
+    if (obj.y_pos >= current_draw_height ||
+        current_draw_height > obj.y_pos + obj_h) {
         return;
-    }  
+    }
+    uint8_t tile_index;
+    bool y_flipped = get_bit(obj.attribute_flags, 6);
+    if (obj_h == 16) {
+        if (!y_flipped) {
+            tile_index = (current_draw_height - obj.y_pos > 8)
+                             ? obj.tile_index | 0x01
+                             : obj.tile_index & 0xFE;
+        } else {
+            tile_index = (current_draw_height - obj.y_pos > 8)
+                             ? obj.tile_index & 0xFE
+                             : obj.tile_index | 0x01;
+        }
+    } else {
+        tile_index = obj.tile_index;
+    }
     sprite_store.selected_objects[sprite_store.length].x_start = obj.x_pos;
     sprite_store.selected_objects[sprite_store.length].tile_row_index =
-        get_tile_row_address(((current_draw_height - obj.y_pos > 8) ? obj.tile_index & 0xFE : obj.tile_index | 0x01));
-    sprite_store.selected_objects[sprite_store.length].y = get_memory_byte(LCDY);
+        get_tile_row_address(tile_index);
+    sprite_store.selected_objects[sprite_store.length].y =
+        get_memory_byte(LCDY) - obj.y_pos - 1 % obj_h;
+    sprite_store.selected_objects[sprite_store.length].x_flipped =
+        get_bit(obj.attribute_flags, 5);
+    sprite_store.selected_objects[sprite_store.length].y_flipped = y_flipped;
+    sprite_store.selected_objects[sprite_store.length].DMG_palette =
+        get_bit(obj.attribute_flags, 4);
     sprite_store.length++;
     return;
 }

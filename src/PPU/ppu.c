@@ -3,15 +3,13 @@
 #include "interrupts.h"
 #include "memory.h"
 #include "oam_queue.h"
-#include "utils.h"
+#include "ppu_utils.h"
 #include <ncurses.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-#define ADDRESS_MODE_0_BP 0x8000
-#define ADDRESS_MODE_1_BP 0x9000
 #define DOTS_PER_LINE 456
 
 PPU ppu;
@@ -27,9 +25,6 @@ static bool execute_mode_3(void);
 static bool consume_dots(uint64_t dots_to_consume);
 static void increase_scan_line(void);
 static void set_ppu_mode(uint8_t mode);
-static uint8_t get_bg_pixel(uint8_t x, uint8_t y);
-static uint8_t get_win_pixel(uint8_t x, uint8_t y);
-static uint32_t get_color_from_byte(uint8_t byte);
 
 void initialize_ppu(void) {
     close_ppu = false;
@@ -105,29 +100,6 @@ static bool execute_mode_2(void) {
     return true;
 }
 
-uint8_t get_obj_pixel(uint8_t x_pixel) {
-    for (uint8_t i = 0; i < get_sprite_store()->length; i++) {
-        const uint8_t x_start = get_sprite_store()->selected_objects[i].x_start;
-        if (x_start < 8) {
-            continue;
-        }
-        if (x_start - 8 <= x_pixel && x_pixel < x_start ) {
-            uint16_t tile_start =
-                get_sprite_store()->selected_objects[i].tile_row_index;
-
-            uint8_t y = get_sprite_store()->selected_objects[i].y;
-            uint8_t low = get_memory_byte(tile_start + (y % 8) * 2);
-            uint8_t hi = get_memory_byte(tile_start + (y % 8) * 2 + 1);
-            uint8_t relative_x = x_start - 8 - x_pixel;
-            const uint8_t hi_bit = get_bit(hi, 7 - relative_x );
-            const uint8_t low_bit = get_bit(low, 7 - relative_x);
-
-            return (uint8_t)(hi_bit << 1 | low_bit);
-        }
-    }
-    return 0x05;
-}
-
 static bool execute_mode_3(void) {
     uint16_t penalty_dots = 0;
     if (ppu.line_x == 0) {
@@ -143,12 +115,12 @@ static bool execute_mode_3(void) {
     // Should overlap with win pixel if it exists
     uint8_t pixel = get_bg_pixel(ppu.line_x, ppu.current_scan_line);
     uint8_t win_pixel = get_win_pixel(ppu.line_x, ppu.current_scan_line);
-    if (win_pixel != 0x05) {
+    if (win_pixel != TRANSPARENT) {
         pixel = win_pixel;
     }
 
     const uint8_t object_pixel = get_obj_pixel(ppu.line_x);
-    if (object_pixel != 0x05) {
+    if (object_pixel != TRANSPARENT) {
         pixel = object_pixel;
     }
 
@@ -167,7 +139,7 @@ static bool execute_mode_0(void) {
     if (!consume_dots(1)) {
         return false;
     }
-    if (ppu.line_dots >= 456) {
+    if (ppu.line_dots >= 376) {
         increase_scan_line();
         if (ppu.current_scan_line >= DISPLAY_HEIGHT) {
             ppu.ready_to_render = true;
@@ -180,7 +152,7 @@ static bool execute_mode_0(void) {
             initialize_sprite_store();
         }
         set_memory_byte(LCDY, ppu.current_scan_line);
-        ppu.line_dots %= 456;
+        ppu.line_dots %= 376;
     }
     return true;
 }
@@ -199,73 +171,6 @@ static bool execute_mode_1(void) {
     return true;
 }
 
-static inline uint16_t get_tile_start(uint8_t relative_tile_address) {
-    int32_t tile_start;
-    if (get_bit(get_memory_byte(LCDC), 4) == 1) {
-        tile_start = ADDRESS_MODE_0_BP + relative_tile_address * 0x10;
-    } else {
-        tile_start =
-            ADDRESS_MODE_1_BP + uint8_to_int8(relative_tile_address) * 0x10;
-    }
-    return (uint16_t)tile_start;
-}
-
-uint8_t get_bg_pixel(uint8_t x, uint8_t y) {
-    const uint8_t x_off = get_memory_byte(SCX);
-    const uint8_t y_off = get_memory_byte(SCY);
-
-    x = x + x_off;
-    y = y + y_off;
-    const uint8_t tile_x = x / 8;
-    const uint8_t tile_y = y / 8;
-
-    const uint16_t BG_TILE_MAP_AREA =
-        get_bit(get_memory_byte(LCDC), 3) ? 0x9C00 : 0x9800;
-    const uint16_t TILE_MAP_ADDR = BG_TILE_MAP_AREA + tile_y * 32 + tile_x;
-    const uint16_t tile_start = get_tile_start(get_memory_byte(TILE_MAP_ADDR));
-    uint8_t low = get_memory_byte(tile_start + (y % 8) * 2);
-    uint8_t hi = get_memory_byte(tile_start + (y % 8) * 2 + 1);
-
-    // intertwine bytes
-    const uint8_t hi_bit = get_bit(hi, 7 - x % 8);
-    const uint8_t low_bit = get_bit(low, 7 - x % 8);
-    return (uint8_t)(hi_bit << 1 | low_bit);
-}
-
-static uint8_t get_win_pixel(uint8_t x, uint8_t y) {
-    const uint8_t x_off = get_memory_byte(WX);
-    const uint8_t y_off = get_memory_byte(WY);
-
-    x = x + x_off;
-    y = y + y_off;
-    const uint8_t tile_x = x / 8;
-    const uint8_t tile_y = y / 8;
-
-    const uint16_t BG_TILE_MAP_AREA =
-        get_bit(get_memory_byte(LCDC), 6) ? 0x9C00 : 0x9800;
-    const uint16_t TILE_MAP_ADDR = BG_TILE_MAP_AREA + tile_y * 32 + tile_x;
-    const uint16_t tile_start = get_tile_start(get_memory_byte(TILE_MAP_ADDR));
-    if (tile_start == ADDRESS_MODE_0_BP || tile_start == ADDRESS_MODE_1_BP) {
-        return 0x05;
-    }
-    uint8_t low = get_memory_byte(tile_start + (y % 8) * 2);
-    uint8_t hi = get_memory_byte(tile_start + (y % 8) * 2 + 1);
-
-    // intertwine bytes
-    const uint8_t hi_bit = get_bit(hi, 7 - x % 8);
-    const uint8_t low_bit = get_bit(low, 7 - x % 8);
-    return (uint8_t)(hi_bit << 1 | low_bit);
-}
-
-static uint32_t get_color_from_byte(uint8_t byte) {
-    switch (byte) {
-        case 0x03: return 0;
-        case 0x02: return 0x55555555;
-        case 0x01: return 0xAAAAAAAA;
-        case 0x00: return 0xFFFFFFFF;
-        default: exit(1);
-    }
-}
 
 static void increase_scan_line(void) {
     ppu.current_scan_line += 1;
@@ -273,6 +178,8 @@ static void increase_scan_line(void) {
 
     if (privileged_get_memory_byte(LYC) == ppu.current_scan_line) {
         trigger_stat_source(LYC_INT);
+    } else {
+        clear_stat_source(LYC_INT);
     }
     return;
 }
