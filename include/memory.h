@@ -38,6 +38,7 @@ enum IO_REGISTERS {
   STAT = 0xFF41,
   SCY = 0xFF42,
   SCX = 0xFF43,
+  LYC = 0xFF45,
   DMA = 0xFF46,
   WX = 0xFF4A,
   WY = 0xFF4B,

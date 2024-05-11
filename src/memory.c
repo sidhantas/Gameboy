@@ -195,10 +195,12 @@ static void handle_IO_write(uint16_t address, uint8_t byte) {
         case JOYP:
             if (get_bit(~byte, 4)) {
                 io_ram[address_offset] =
-                    (byte & 0xF0) | (get_joypad_state() & 0x0F);
+                    (byte & 0xF0) | (get_joypad_state() & 0x0F) | (0xC0);
             } else if (get_bit(~byte, 5)) {
                 io_ram[address_offset] =
-                    (byte & 0xF0) | (get_joypad_state() >> 4);
+                    (byte & 0xF0) | (get_joypad_state() >> 4) | (0xC0);
+            } else {
+                io_ram[address_offset] = (byte & 0xF0) | (0xC0);
             }
             return;
         case DISABLE_BOOT_ROM:

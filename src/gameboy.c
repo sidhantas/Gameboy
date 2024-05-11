@@ -27,10 +27,10 @@ int main(int argc, char **argv) {
     static struct option program_options[] = {
         {"game", required_argument, 0, 'g'}, {0, 0, 0, 0}};
 
+    open_window();
     initialize_hardware();
     initialize_ppu();
     initialize_io();
-    open_window();
     while ((opt = getopt_long(argc, argv, "g:", program_options,
                               &long_index)) != -1) {
         switch (opt) {
@@ -74,6 +74,7 @@ void main_loop(void) {
                 case SDL_KEYDOWN:
                     switch (e.key.keysym.scancode) {
                         case SDL_SCANCODE_N: instructions_left += 1; break;
+                        case SDL_SCANCODE_M: instructions_left += 100; break;
                         case SDL_SCANCODE_B: instructions_left += 1000; break;
                         case SDL_SCANCODE_O: toggle_step_mode(); break;
                         case SDL_SCANCODE_G: tracer_dump(&t); break;

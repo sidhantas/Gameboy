@@ -15,13 +15,18 @@ void set_interrupts_flag(interrupts_t interrupt) {
 }
 
 clock_cycles_t handle_interrupts(void) {
-    //enum INTERRUPT_STATE interrupt_state = get_interrupt_state();
-    //if (interrupt_state == ENABLE) {
-    //    set_ime_flag(1);
-    //    return 0;
-    //} else if (interrupt_state == DISABLE) {
-    //    set_ime_flag(0);
-    //}
+    enum INTERRUPT_STATE interrupt_state = get_interrupt_state();
+    if (interrupt_state == ENABLE) {
+        // Allows one instruction to go through when calling EI
+        // before interrupts are enabled
+        set_ime_flag(1);
+        set_interrupt_state(NOTHING);
+        return 0;
+    } else if (interrupt_state == DISABLE) {
+        set_ime_flag(0);
+        set_interrupt_state(NOTHING);
+    }
+
     if (!get_ime_flag() || !(get_memory_byte(IE) & get_memory_byte(IF))) {
         return 0;
     }

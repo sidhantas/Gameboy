@@ -28,7 +28,7 @@ WINDOW *flags_win;
 WINDOW *stack_win;
 WINDOW *mem_win;
 WINDOW *oam_win;
-uint16_t mem_win_addr = 0x8800;
+uint16_t mem_win_addr = 0x0000;
 uint16_t display_buf_addr = 0x0;
 
 pthread_mutex_t debugger_lock = PTHREAD_MUTEX_INITIALIZER;

@@ -26,6 +26,7 @@ void initialize_hardware(void) {
     hardware.interrupt_state = NOTHING;
     hardware.ime_flag = 0;
     hardware.oam_dma_started = false;
+    hardware.base_sp = 0xFFFE;
 
     // initial state after boot
 #ifdef SKIP_BOOT

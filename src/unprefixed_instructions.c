@@ -1130,7 +1130,7 @@ clock_cycles_t LD_A_DEREF_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
 clock_cycles_t EI(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     (void)instruction;
 
-    set_ime_flag(1);
+    set_interrupt_state(ENABLE);
     set_decoded_instruction("EI");
 
     return FOUR_CLOCKS;

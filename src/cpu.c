@@ -33,6 +33,9 @@ void *start_cpu(void *arg) {
         if (close_cpu) {
             break;
         }
+        if (get_pc() == 0x0190) {
+            //step_mode = true;
+        }
         if (step_mode && instructions_left <= 0) {
             continue;
         } else if (step_mode) {
