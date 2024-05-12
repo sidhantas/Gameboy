@@ -79,7 +79,7 @@ void add_sprite(uint16_t object_no) {
         tile_index = obj.tile_index;
     }
     sprite_store.selected_objects[sprite_store.length].x_start = obj.x_pos;
-    sprite_store.selected_objects[sprite_store.length].tile_row_index =
+    sprite_store.selected_objects[sprite_store.length].tile_start =
         get_tile_row_address(tile_index);
     sprite_store.selected_objects[sprite_store.length].y =
         get_memory_byte(LCDY) - obj.y_pos - 1 % obj_h;

@@ -1,7 +1,7 @@
 CC=clang
-CFLAGS=-Wall -g -Wextra -Wpedantic -Wconversion -std=c1x  -D_THREAD_SAFE -I/opt/homebrew/include -I/opt/homebrew/include/SDL2 -I./include
+CFLAGS=-Wall -O3 -g -Wextra -pedantic -Wconversion -std=c1x  -D_THREAD_SAFE -I/opt/homebrew/include -I/opt/homebrew/include/SDL2 -I./include
 CFLAGS += -D SKIP_BOOT
-CFLAGS += -D ENABLE_DEBUGGER
+#CFLAGS += -D ENABLE_DEBUGGER
 LDFLAGS= -lncurses -pthread  -L/opt/homebrew/lib -lSDL2
 SRC_DIR := src
 OBJ_DIR := obj

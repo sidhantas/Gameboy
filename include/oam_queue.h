@@ -5,7 +5,7 @@
 struct ObjectRowData {
     uint8_t x_start; // starting x position on the display
     uint8_t y;
-    uint16_t tile_row_index; // objects tile index in memory
+    uint16_t tile_start; // objects tile index in memory
     bool x_flipped;
     bool y_flipped;
     uint8_t DMG_palette;

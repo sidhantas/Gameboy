@@ -4,6 +4,7 @@
 #include "memory.h"
 #include "oam_queue.h"
 #include "ppu_utils.h"
+#include "utils.h"
 #include <ncurses.h>
 #include <pthread.h>
 #include <stdbool.h>
@@ -92,9 +93,10 @@ static bool execute_mode_2(void) {
     }
     add_sprite(object_index++);
     if (ppu.line_dots >= 80) {
+        // Setup for Mode 3
+        set_ppu_mode(3);
         object_index = 0;
         ppu.line_x = 0;
-        set_ppu_mode(3);
         ppu.current_scan_line = get_memory_byte(LCDY);
     }
     return true;
@@ -113,15 +115,18 @@ static bool execute_mode_3(void) {
         return false;
     }
     // Should overlap with win pixel if it exists
-    uint8_t pixel = get_bg_pixel(ppu.line_x, ppu.current_scan_line);
-    uint8_t win_pixel = get_win_pixel(ppu.line_x, ppu.current_scan_line);
-    if (win_pixel != TRANSPARENT) {
-        pixel = win_pixel;
-    }
+    uint8_t pixel = 0;
+    if (get_bit(get_memory_byte(LCDC), 7)) {
+        pixel = get_bg_pixel(ppu.line_x, ppu.current_scan_line);
+        uint8_t win_pixel = get_win_pixel(ppu.line_x, ppu.current_scan_line);
+        if (win_pixel != TRANSPARENT) {
+            pixel = win_pixel;
+        }
 
-    const uint8_t object_pixel = get_obj_pixel(ppu.line_x);
-    if (object_pixel != TRANSPARENT) {
-        pixel = object_pixel;
+        const uint8_t object_pixel = get_obj_pixel(ppu.line_x);
+        if (object_pixel != TRANSPARENT) {
+            pixel = object_pixel;
+        }
     }
 
     pthread_mutex_lock(&display_buffer_mutex);
@@ -170,7 +175,6 @@ static bool execute_mode_1(void) {
     }
     return true;
 }
-
 
 static void increase_scan_line(void) {
     ppu.current_scan_line += 1;

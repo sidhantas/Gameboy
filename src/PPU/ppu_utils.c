@@ -8,7 +8,8 @@
 static inline uint16_t get_tile_start(uint8_t relative_tile_address);
 static uint8_t get_background_pixel_color(uint8_t pixel_id);
 static uint8_t get_obj_pixel_color(uint8_t pixel_id, uint16_t pallete);
-static uint8_t get_color_id(uint8_t hi_byte, uint8_t lo_byte, uint8_t pixel_num);
+static uint8_t get_color_id(uint8_t hi_byte, uint8_t lo_byte,
+                            uint8_t pixel_num);
 
 uint8_t get_bg_pixel(uint8_t x, uint8_t y) {
     const uint8_t x_off = get_memory_byte(SCX);
@@ -47,30 +48,29 @@ uint8_t get_win_pixel(uint8_t x, uint8_t y) {
     const uint8_t tile_x = x / 8;
     const uint8_t tile_y = y / 8;
 
-    const uint16_t BG_TILE_MAP_AREA =
+    const uint16_t win_tile_map_area =
         get_bit(get_memory_byte(LCDC), 6) ? 0x9C00 : 0x9800;
-    const uint16_t TILE_MAP_ADDR = BG_TILE_MAP_AREA + tile_y * 32 + tile_x;
-    const uint16_t tile_start = get_tile_start(get_memory_byte(TILE_MAP_ADDR));
+    const uint16_t tile_map_addr = win_tile_map_area + tile_y * 32 + tile_x;
+    const uint16_t tile_start = get_tile_start(get_memory_byte(tile_map_addr));
     if (tile_start == ADDRESS_MODE_0_BP || tile_start == ADDRESS_MODE_1_BP) {
         return TRANSPARENT;
     }
     uint8_t low = get_memory_byte(tile_start + (y % 8) * 2);
     uint8_t hi = get_memory_byte(tile_start + (y % 8) * 2 + 1);
 
-    // intertwine bytes
     uint8_t color_id = get_color_id(hi, low, x);
     return get_background_pixel_color(color_id);
 }
 
 uint8_t get_obj_pixel(uint8_t x_pixel) {
+    if (!get_bit(get_memory_byte(LCDC), 1)) {
+        return TRANSPARENT;
+    }
     for (uint8_t i = 0; i < get_sprite_store()->length; i++) {
         struct ObjectRowData obj = get_sprite_store()->selected_objects[i];
         const uint8_t x_start = obj.x_start;
-        if (x_start < 8) {
-            continue;
-        }
         if (x_start - 8 <= x_pixel && x_pixel < x_start) {
-            uint16_t tile_start = obj.tile_row_index;
+            uint16_t tile_start = obj.tile_start;
 
             uint8_t relative_y = (obj.y % 8) * 2;
             if (obj.y_flipped) {
@@ -87,8 +87,8 @@ uint8_t get_obj_pixel(uint8_t x_pixel) {
 
             uint8_t color_id = get_color_id(hi, low, relative_x);
             uint16_t obj_palette = obj.DMG_palette == 1 ? 0xFF49 : 0xFF48;
-            enum COLOR_VALUES color = get_obj_pixel_color(
-                color_id, obj_palette);
+            enum COLOR_VALUES color =
+                get_obj_pixel_color(color_id, obj_palette);
             if (color != TRANSPARENT) {
                 return (uint8_t)color;
             }
@@ -108,7 +108,8 @@ static inline uint16_t get_tile_start(uint8_t relative_tile_address) {
     return (uint16_t)tile_start;
 }
 
-static uint8_t get_color_id(uint8_t hi_byte, uint8_t lo_byte, uint8_t pixel_num) {
+static uint8_t get_color_id(uint8_t hi_byte, uint8_t lo_byte,
+                            uint8_t pixel_num) {
     const uint8_t hi_bit = get_bit(hi_byte, 7 - pixel_num % 8);
     const uint8_t low_bit = get_bit(lo_byte, 7 - pixel_num % 8);
 
