@@ -117,10 +117,14 @@ static bool execute_mode_3(void) {
     // Should overlap with win pixel if it exists
     uint8_t pixel = 0;
     if (get_bit(get_memory_byte(LCDC), 7)) {
-        pixel = get_bg_pixel(ppu.line_x, ppu.current_scan_line);
-        uint8_t win_pixel = get_win_pixel(ppu.line_x, ppu.current_scan_line);
-        if (win_pixel != TRANSPARENT) {
-            pixel = win_pixel;
+
+        if (get_bit(get_memory_byte(LCDC), 0)) {
+            pixel = get_bg_pixel(ppu.line_x, ppu.current_scan_line);
+            uint8_t win_pixel =
+                get_win_pixel(ppu.line_x, ppu.current_scan_line);
+            if (win_pixel != TRANSPARENT) {
+                pixel = win_pixel;
+            }
         }
 
         const uint8_t object_pixel = get_obj_pixel(ppu.line_x);
@@ -144,20 +148,18 @@ static bool execute_mode_0(void) {
     if (!consume_dots(1)) {
         return false;
     }
-    if (ppu.line_dots >= 376) {
+    if (ppu.line_dots >= DOTS_PER_LINE) {
         increase_scan_line();
         if (ppu.current_scan_line >= DISPLAY_HEIGHT) {
             ppu.ready_to_render = true;
             set_interrupts_flag(VBLANK);
-            trigger_stat_source(MODE_1_INT);
             set_ppu_mode(1);
         } else {
-            trigger_stat_source(MODE_2_INT);
             set_ppu_mode(2);
             initialize_sprite_store();
         }
         set_memory_byte(LCDY, ppu.current_scan_line);
-        ppu.line_dots %= 376;
+        ppu.line_dots %= DOTS_PER_LINE;
     }
     return true;
 }
@@ -182,6 +184,7 @@ static void increase_scan_line(void) {
 
     if (privileged_get_memory_byte(LYC) == ppu.current_scan_line) {
         trigger_stat_source(LYC_INT);
+        set_memory_byte(STAT, 0x04);
     } else {
         clear_stat_source(LYC_INT);
     }
@@ -209,7 +212,7 @@ static void set_ppu_mode(uint8_t mode) {
 
     uint8_t lcd_status = get_memory_byte(STAT);
     lcd_status &= ~(0x03);
-    set_memory_byte(STAT, lcd_status | mode);
+    privileged_set_memory_byte(STAT, lcd_status | mode);
     ppu.mode = mode;
 }
 

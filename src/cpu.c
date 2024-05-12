@@ -18,7 +18,7 @@
 bool step_mode = false;
 bool close_cpu = false;
 bool boot_completed = false;
-#define CYCLES_PER_FRAME 69905 * 4
+#define CYCLES_PER_FRAME 69905
 void *start_cpu(void *arg) {
     (void)arg;
     struct timespec start, end, diff;
@@ -34,11 +34,7 @@ void *start_cpu(void *arg) {
         if (close_cpu) {
             break;
         }
-        if (get_pc() == 0x0190) {
-            // step_mode = true;
-        }
         if (step_mode && instructions_left <= 0) {
-            usleep(5);
             continue;
         } else if (step_mode) {
             instructions_left -= 1;
@@ -94,7 +90,7 @@ void *start_cpu(void *arg) {
             }
 
             long remaining_time = 16666667L - diff.tv_nsec;
-            usleep((useconds_t)remaining_time / 1000);
+            usleep((useconds_t)remaining_time / 2500);
             clock_gettime(CLOCK_REALTIME, &start);
         }
     }

@@ -143,16 +143,47 @@ void set_long_mem(uint16_t address, uint16_t val) {
 }
 
 static uint8_t handle_io_read(uint16_t address) {
-    if (address == JOYP || address == SB || address == SC || address == DIV ||
-        address == TIMA || address == TMA || address == TAC || address == IF ||
-        (0xFF10 <= address && address <= 0xFF26) ||
-        (0xFF30 <= address && address <= 0xFF3F) ||
-        (0xFF40 <= address && address <= 0xFF4B) || address == 0xFF4F ||
-        address == 0xFF50 || (0xFF51 <= address && address <= 0xFF55) ||
-        (0xFF68 <= address && address <= 0xFF6B) || address == 0xFF70) {
-        return io_ram[address - IO_RAM_BASE];
+    switch (address) {
+        case JOYP: return io_ram[address - IO_RAM_BASE] | 0xA0;
+        case SB: return io_ram[address - IO_RAM_BASE];
+        case SC: return io_ram[address - IO_RAM_BASE] | 0xFF;
+        case DIV: return io_ram[address - IO_RAM_BASE];
+        case TIMA: return io_ram[address - IO_RAM_BASE];
+        case TMA: return io_ram[address - IO_RAM_BASE];
+        case TAC: return io_ram[address - IO_RAM_BASE] | 0xF8;
+        case IF: return io_ram[address - IO_RAM_BASE] | 0xE0;
+        case NR10: return io_ram[address - IO_RAM_BASE] | 0x80;
+        case 0xFF15: return 0xFF;
+        case DAC: return io_ram[address - IO_RAM_BASE] | 0x7F;
+        case NR32: return io_ram[address - IO_RAM_BASE] | 0x9F;
+        case 0xFF1F: return 0xFF;
+        case NR41: return 0xFF;
+        case NR44: return io_ram[address - IO_RAM_BASE] | 0x3F;
+        case NR52: return io_ram[address - IO_RAM_BASE] | 0x70;
+        case LCDC: return io_ram[address - IO_RAM_BASE];
+        case STAT: return io_ram[address - IO_RAM_BASE] | 0x80;
+        case SCY: return io_ram[address - IO_RAM_BASE];
+        case SCX: return io_ram[address - IO_RAM_BASE];
+        case LCDY: return io_ram[address - IO_RAM_BASE];
+        case LYC: return io_ram[address - IO_RAM_BASE];
+        case BGP: return io_ram[address - IO_RAM_BASE];
+        case OBP0: return io_ram[address - IO_RAM_BASE];
+        case OBP1: return io_ram[address - IO_RAM_BASE];
+        case WY: return io_ram[address - IO_RAM_BASE];
+        case WX: return io_ram[address - IO_RAM_BASE];
+        case IE: return io_ram[address - IO_RAM_BASE];
+        default:
+
+            if (address >= 0xFF10 && address <= 0xFF26) {
+                return io_ram[address - IO_RAM_BASE];
+            }
+            if ((address >= 0xFF68 && address <= 0xFF6B) || address == 0xFF70 ||
+                (0xFF40 <= address && address <= 0xFF4B) || address == 0xFF4F ||
+                address == 0xFF50 || (0xFF51 <= address && address <= 0xFF55)) {
+                return io_ram[address - IO_RAM_BASE];
+            }
+            return 0xFF;
     }
-    return 0xFF;
 }
 
 uint8_t get_memory_byte(uint16_t address) {
@@ -170,7 +201,7 @@ uint8_t get_memory_byte(uint16_t address) {
     } else if (address >= WRAM_BASE && address < ECHO_RAM_BASE) {
         return wram[address - WRAM_BASE];
     } else if (address >= ECHO_RAM_BASE && address < OAM_BASE) {
-        return 0xFF;
+        return wram[address - 0x2000 - WRAM_BASE];
     } else if (address >= OAM_BASE && address < PROHIBITED_BASE) {
         return oam[address - OAM_BASE];
     } else if (address >= PROHIBITED_BASE && address < IO_RAM_BASE) {
@@ -210,7 +241,7 @@ static void handle_IO_write(uint16_t address, uint8_t byte) {
                 return;
             }
         case DIV: io_ram[address_offset] = 0; return;
-        case STAT: io_ram[address_offset] = byte; return;
+        case STAT: io_ram[address_offset] |= ((byte) & 0x78); return;
         case TIMA: io_ram[address_offset] += 1; return;
         case DMA:
             io_ram[address_offset] = byte;
@@ -232,7 +263,7 @@ void set_memory_byte(uint16_t address, uint8_t byte) {
     } else if (address >= WRAM_BASE && address < ECHO_RAM_BASE) {
         wram[address - WRAM_BASE] = byte;
     } else if (address >= ECHO_RAM_BASE && address < OAM_BASE) {
-        return;
+        wram[address - 0x2000 - WRAM_BASE] = byte;
     } else if (address >= OAM_BASE && address < PROHIBITED_BASE) {
         oam[address - OAM_BASE] = byte;
     } else if (address >= PROHIBITED_BASE && address < IO_RAM_BASE) {

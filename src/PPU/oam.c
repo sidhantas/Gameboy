@@ -59,19 +59,20 @@ void add_sprite(uint16_t object_no) {
     uint8_t obj_h = get_bit(get_memory_byte(LCDC), 2) ? 16 : 8;
     uint16_t current_draw_height = get_memory_byte(LCDY) + 16;
 
-    if (obj.y_pos >= current_draw_height ||
-        current_draw_height > obj.y_pos + obj_h) {
+    if (obj.y_pos > current_draw_height ||
+        current_draw_height >= obj.y_pos + obj_h) {
         return;
     }
     uint8_t tile_index;
     bool y_flipped = get_bit(obj.attribute_flags, 6);
+
     if (obj_h == 16) {
         if (!y_flipped) {
-            tile_index = (current_draw_height - obj.y_pos > 8)
+            tile_index = (current_draw_height - obj.y_pos >= 8)
                              ? obj.tile_index | 0x01
                              : obj.tile_index & 0xFE;
         } else {
-            tile_index = (current_draw_height - obj.y_pos > 8)
+            tile_index = (current_draw_height - obj.y_pos >= 8)
                              ? obj.tile_index & 0xFE
                              : obj.tile_index | 0x01;
         }
@@ -82,7 +83,7 @@ void add_sprite(uint16_t object_no) {
     sprite_store.selected_objects[sprite_store.length].tile_start =
         get_tile_row_address(tile_index);
     sprite_store.selected_objects[sprite_store.length].y =
-        get_memory_byte(LCDY) - obj.y_pos - 1 % obj_h;
+        get_memory_byte(LCDY) - obj.y_pos % obj_h;
     sprite_store.selected_objects[sprite_store.length].x_flipped =
         get_bit(obj.attribute_flags, 5);
     sprite_store.selected_objects[sprite_store.length].y_flipped = y_flipped;

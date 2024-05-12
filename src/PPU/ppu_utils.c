@@ -100,7 +100,7 @@ uint8_t get_obj_pixel(uint8_t x_pixel) {
 static inline uint16_t get_tile_start(uint8_t relative_tile_address) {
     int32_t tile_start;
     if (get_bit(get_memory_byte(LCDC), 4) == 1) {
-        tile_start = ADDRESS_MODE_0_BP + relative_tile_address * 0x10;
+        tile_start = ADDRESS_MODE_0_BP + (uint16_t)(relative_tile_address) * 0x10;
     } else {
         tile_start =
             ADDRESS_MODE_1_BP + uint8_to_int8(relative_tile_address) * 0x10;
@@ -131,10 +131,10 @@ static uint8_t get_obj_pixel_color(uint8_t pixel_id, uint16_t pallete) {
 
 uint32_t get_color_from_byte(uint8_t byte) {
     switch (byte) {
-        case 0x03: return 0;
-        case 0x02: return 0x55555555;
-        case 0x01: return 0xAAAAAAAA;
-        case 0x00: return 0xFFFFFFFF;
+        case BLACK: return 0;
+        case DARK_GRAY: return 0x55555555;
+        case LIGHT_GRAY: return 0xAAAAAAAA;
+        case WHITE: return 0xFFFFFFFF;
         default: fprintf(stderr, "Invalid color pallete value"); exit(1);
     }
 }

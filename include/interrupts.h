@@ -1,5 +1,6 @@
 #pragma once
 #include "hardware.h"
+
 typedef enum Interrupts {
     NO_INTERRUPT = -1,
     VBLANK,
@@ -12,10 +13,10 @@ typedef enum Interrupts {
 #define NUM_OF_INTERRUPTS 5
 
 typedef enum {
-    LYC_INT = 2,
-    MODE_2_INT,
+    MODE_0_INT = 3,
     MODE_1_INT,
-    MODE_0_INT,
+    MODE_2_INT,
+    LYC_INT,
     INVALID_STAT_SOURCE
 } stat_interrupts_t;
 

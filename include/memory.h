@@ -10,7 +10,7 @@ typedef struct {
 
 #define MAX_TITLE_SIZE 16
 #define ROM_BANK_SIZE 0x4000
-#define EX_RAM_SIZE 0x2000
+#define RAM_BANK_SIZE 0x2000
 
 enum MEMORY_MAP {
   ROM_BANK_00_BASE = 0x0000,
@@ -34,16 +34,25 @@ enum IO_REGISTERS {
   TMA = 0xFF06,
   TAC = 0xFF07,
   IF = 0xFF0F,
+  NR10 = 0xFF10,
+  DAC = 0xFF1A,
+  NR32 = 0xFF1C,
+  NR41 = 0xFF20,
+  NR44 = 0xFF23,
+  NR52 = 0xFF26,
   LCDC = 0xFF40,
   STAT = 0xFF41,
   SCY = 0xFF42,
   SCX = 0xFF43,
+  LCDY = 0xFF44,
   LYC = 0xFF45,
   DMA = 0xFF46,
+  BGP = 0xFF47,
+  OBP0 = 0xFF48,
+  OBP1 = 0xFF49,
   WY = 0xFF4A,
   WX = 0xFF4B,
   DISABLE_BOOT_ROM = 0xFF50,
-  LCDY = 0xFF44,
   IE = 0xFFFF
 };
 
