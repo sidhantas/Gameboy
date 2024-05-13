@@ -15,8 +15,8 @@ uint8_t get_bg_pixel(uint8_t x, uint8_t y) {
     const uint8_t x_off = get_memory_byte(SCX);
     const uint8_t y_off = get_memory_byte(SCY);
 
-    x = (x + x_off) % DISPLAY_WIDTH;
-    y = (y + y_off) % DISPLAY_WIDTH;
+    x = (x + x_off) % TILE_MAP_WIDTH;
+    y = (y + y_off) % TILE_MAP_WIDTH;
     const uint8_t tile_x = x / 8;
     const uint8_t tile_y = y / 8;
 
@@ -36,15 +36,15 @@ uint8_t get_win_pixel(uint8_t x, uint8_t y) {
     if (!get_bit(get_memory_byte(LCDC), 5)) {
         return TRANSPARENT;
     }
-    const uint8_t x_off = get_memory_byte(WX);
-    const uint8_t y_off = get_memory_byte(WY);
+    const uint8_t wx = get_memory_byte(WX);
+    const uint8_t wy = get_memory_byte(WY);
 
-    if (x_off > 166 || y_off > 143) {
+    if (x < (wx - 7) || y < wy) {
         return TRANSPARENT;
     }
 
-    x = x + x_off - 7;
-    y = y + y_off;
+    x = x - wx + 7;
+    y = y - wy;
     const uint8_t tile_x = x / 8;
     const uint8_t tile_y = y / 8;
 
@@ -52,9 +52,9 @@ uint8_t get_win_pixel(uint8_t x, uint8_t y) {
         get_bit(get_memory_byte(LCDC), 6) ? 0x9C00 : 0x9800;
     const uint16_t tile_map_addr = win_tile_map_area + tile_y * 32 + tile_x;
     const uint16_t tile_start = get_tile_start(get_memory_byte(tile_map_addr));
-    if (tile_start == ADDRESS_MODE_0_BP || tile_start == ADDRESS_MODE_1_BP) {
-        return TRANSPARENT;
-    }
+   if (tile_start == ADDRESS_MODE_0_BP || tile_start == ADDRESS_MODE_1_BP) {
+       return TRANSPARENT;
+   }
     uint8_t low = get_memory_byte(tile_start + (y % 8) * 2);
     uint8_t hi = get_memory_byte(tile_start + (y % 8) * 2 + 1);
 

@@ -101,7 +101,7 @@ static uint8_t mbc1_get_memory_byte(uint16_t address) {
     } else if (address >= ROM_BANK_NN_BASE && address < VRAM_BASE) {
         return rom_banks[get_rom_bank_01()][address - ROM_BANK_NN_BASE];
     } else if (address >= EX_RAM_BASE && address < WRAM_BASE) {
-        if (!ram_bank_enabled) {
+        if (!ram_bank_enabled || max_ram_banks == 0) {
             return 0xFF;
         }
         return ram_banks[get_ram_bank()][address - EX_RAM_BASE];
@@ -130,7 +130,7 @@ static void mbc1_set_memory_byte(uint16_t address, uint8_t byte) {
         }
         bank_mode_select = get_bit(byte, 0);
     } else if (address >= EX_RAM_BASE && address < WRAM_BASE) {
-        if (!ram_bank_enabled) {
+        if (!ram_bank_enabled || max_ram_banks == 0) {
             return;
         }
         ram_banks[get_ram_bank()][address - EX_RAM_BASE] = byte;

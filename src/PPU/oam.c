@@ -20,7 +20,7 @@ clock_cycles_t try_oam_dma_transfer(void) {
         return 0;
     }
     uint16_t start = (uint16_t)(get_memory_byte(DMA) << 8);
-    for (uint16_t i = 0; i < OAM_SIZE - 1; i++) {
+    for (uint16_t i = 0; i < OAM_SIZE; i++) {
         privileged_set_memory_byte(OAM_START + i, get_memory_byte(start + i));
     }
 

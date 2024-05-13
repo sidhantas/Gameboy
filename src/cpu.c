@@ -18,7 +18,7 @@
 bool step_mode = false;
 bool close_cpu = false;
 bool boot_completed = false;
-#define CYCLES_PER_FRAME 69905
+#define CYCLES_PER_FRAME 35000
 void *start_cpu(void *arg) {
     (void)arg;
     struct timespec start, end, diff;
@@ -28,9 +28,9 @@ void *start_cpu(void *arg) {
 
     while (true) {
         clock_cycles_t clocks = 0;
-//        if (get_instruction()[0] == 0xEA && get_instruction()[2] == 0x60) {
-//            step_mode = true;
-//        }
+        if (get_pc() == 0x48) {
+            step_mode = true;
+        }
         if (close_cpu) {
             break;
         }
@@ -49,13 +49,8 @@ void *start_cpu(void *arg) {
         //         get_memory_byte(get_pc()), get_memory_byte(get_pc() + 1),
         //         get_memory_byte(get_pc() + 2), get_memory_byte(get_pc() +
         //         3));
-
-        if (is_halted()) {
-            if (get_memory_byte(IE) & get_memory_byte(IF)) {
-                set_halted(false);
-            }
-        }
         clocks += handle_interrupts();
+
         pthread_mutex_lock(&dots_mutex);
         if (!is_halted()) {
             clock_cycles_t (*func)(uint8_t *) = fetch_instruction();
@@ -64,10 +59,11 @@ void *start_cpu(void *arg) {
         } else {
             clocks += 4;
         }
+
         ppu.available_dots += clocks;
         pthread_mutex_unlock(&dots_mutex);
         update_timer(clocks);
-        // run_ppu((uint16_t)clocks);
+        run_ppu((uint16_t)clocks);
         //         snprintf(trace_str, 255,
         //                  "Instruction: 0x%0.2x 0x%0.2x 0x%0.2x %-15s A:
         //                  0x%0.2x, B: " "0x%0.2x, C: " "0x%0.2x, D: 0x%0.2x,
@@ -80,19 +76,18 @@ void *start_cpu(void *arg) {
         //                  get_register(L), get_flag(C_FLAG));
         //         tracer_enqueue(&t, old_pc, trace_str);
         exec_count += (uint32_t)clocks;
-
-        if (exec_count >= CYCLES_PER_FRAME && !step_mode) {
-            exec_count -= CYCLES_PER_FRAME;
-            clock_gettime(CLOCK_REALTIME, &end);
-            diff.tv_nsec = end.tv_nsec - start.tv_nsec;
-            if (diff.tv_nsec < 0) {
-                diff.tv_nsec += 1000000000;
-            }
-
-            long remaining_time = 16666667L - diff.tv_nsec;
-            usleep((useconds_t)remaining_time / 2500);
-            clock_gettime(CLOCK_REALTIME, &start);
-        }
+                if (exec_count >= CYCLES_PER_FRAME && !step_mode) {
+                    exec_count -= CYCLES_PER_FRAME;
+                    clock_gettime(CLOCK_REALTIME, &end);
+                    diff.tv_nsec = end.tv_nsec - start.tv_nsec;
+                    if (diff.tv_nsec < 0) {
+                        diff.tv_nsec += 1000000000;
+                    }
+        
+                    long remaining_time = 8888888L - diff.tv_nsec;
+                    usleep((useconds_t)remaining_time / 2500);
+                    clock_gettime(CLOCK_REALTIME, &start);
+                }
     }
     return NULL;
 }

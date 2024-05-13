@@ -14,6 +14,8 @@ void set_interrupts_flag(interrupts_t interrupt) {
     set_memory_byte(IF, get_memory_byte(IF) | (uint8_t)(1 << interrupt));
 }
 
+static uint32_t serviced_interrupts[NUM_OF_INTERRUPTS] = {0, 0, 0, 0, 0};
+
 clock_cycles_t handle_interrupts(void) {
     enum INTERRUPT_STATE interrupt_state = get_interrupt_state();
     if (interrupt_state == ENABLE) {
@@ -30,6 +32,7 @@ clock_cycles_t handle_interrupts(void) {
     if (!get_ime_flag() || !(get_memory_byte(IE) & get_memory_byte(IF))) {
         return 0;
     }
+    set_halted(false);
     interrupts_t highest_priority_interrupt = get_highest_priority_interrupt();
     if (highest_priority_interrupt >= 0) {
         reset_interrupt_flag(highest_priority_interrupt);
@@ -56,6 +59,7 @@ void reset_interrupt_flag(interrupts_t interrupt) {
 }
 
 uint16_t get_interrupt_handler(interrupts_t interrupt) {
+    serviced_interrupts[interrupt] += 1;
     switch (interrupt) {
         case VBLANK: return 0x40;
         case LCD: return 0x48;
@@ -64,4 +68,8 @@ uint16_t get_interrupt_handler(interrupts_t interrupt) {
         case JOYPAD: return 0x60;
         default: exit(1);
     }
+}
+
+uint32_t *get_serviced_interrupts(void) {
+    return serviced_interrupts;
 }

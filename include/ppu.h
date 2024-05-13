@@ -20,4 +20,6 @@ void initialize_ppu(void);
 void run_ppu(uint16_t dots);
 void *start_ppu(void *arg);
 void render_loop(void);
+uint8_t get_x_pixel(void);
+uint8_t get_y_pixel(void);
 void end_ppu(void);

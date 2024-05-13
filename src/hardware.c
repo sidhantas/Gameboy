@@ -69,7 +69,7 @@ uint16_t get_base_sp(void) { return hardware.base_sp; }
 
 void stack_push_u16(uint16_t val) {
     uint8_t low = val & 0xFF;
-    uint8_t high = val >> 8 & 0xFF;
+    uint8_t high = val >> 8;
     set_sp(get_sp() - 2);
     set_memory_byte(get_sp(), low);
     set_memory_byte(get_sp() + 1, high);

@@ -21,3 +21,6 @@ void clear_stat_source(stat_interrupts_t stat_source) {
     reset_bit(&stat_line, (uint8_t)stat_source);
 }
 
+uint8_t get_stat_line(void) {
+    return stat_line;
+}

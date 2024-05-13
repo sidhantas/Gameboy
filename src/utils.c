@@ -12,8 +12,8 @@ void check_alloc(void *allocated_block, const char *msg_on_failure) {
     }
 }
 
-void mvwprintwhcenter(WINDOW *win, uint8_t row, uint8_t row_start,
-                      uint8_t width, const char *str, ...) {
+void mvwprintwhcenter(WINDOW *win, int row, int row_start,
+                      int width, const char *str, ...) {
     char formatted_string[UINT8_MAX];
     va_list args;
     va_start(args, str);

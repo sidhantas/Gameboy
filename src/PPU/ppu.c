@@ -171,7 +171,7 @@ static bool execute_mode_1(void) {
     if (ppu.line_dots >= 456) {
         increase_scan_line();
         ppu.line_dots %= 456;
-        if (ppu.current_scan_line >= SCAN_LINES) {
+        if (ppu.current_scan_line == 0) {
             set_ppu_mode(2);
         }
     }
@@ -180,13 +180,18 @@ static bool execute_mode_1(void) {
 
 static void increase_scan_line(void) {
     ppu.current_scan_line += 1;
-    set_memory_byte(LCDY, ppu.current_scan_line % SCAN_LINES);
+    ppu.current_scan_line %= SCAN_LINES;
+    set_memory_byte(LCDY, ppu.current_scan_line);
 
+    uint8_t lcd_status = get_memory_byte(STAT);
     if (privileged_get_memory_byte(LYC) == ppu.current_scan_line) {
         trigger_stat_source(LYC_INT);
-        set_memory_byte(STAT, 0x04);
+        set_bit(&lcd_status, 2);
+        privileged_set_memory_byte(STAT, lcd_status);
     } else {
+        reset_bit(&lcd_status, 2);
         clear_stat_source(LYC_INT);
+        privileged_set_memory_byte(STAT, lcd_status);
     }
     return;
 }
@@ -216,4 +221,11 @@ static void set_ppu_mode(uint8_t mode) {
     ppu.mode = mode;
 }
 
+uint8_t get_x_pixel(void) {
+    return ppu.line_x;
+}
+
+uint8_t get_y_pixel(void) {
+    return ppu.current_scan_line;
+}
 void end_ppu(void) { close_ppu = true; }

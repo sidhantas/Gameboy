@@ -10,8 +10,8 @@ static inline uint16_t two_u8s_to_u16(uint8_t low, uint8_t high) {
     return (uint16_t)(high << 8 | low);
 }
 
-void mvwprintwhcenter(WINDOW *win, uint8_t row, uint8_t row_start,
-                      uint8_t width, const char *str, ...);
+void mvwprintwhcenter(WINDOW *win, int row, int row_start,
+                      int width, const char *str, ...);
 
 uint16_t post_inc(uint16_t *val);
 

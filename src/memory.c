@@ -42,6 +42,7 @@ void initialize_memory(CartridgeHeader ch) {
     switch (ch.cartridge_type) {
         case 0x00: mbc = initialize_mbc0(); return;
         case 0x01: mbc = initialize_mbc1(ch); return;
+        case 0x02: mbc = initialize_mbc1(ch); return;
         case 0x03: mbc = initialize_mbc1(ch); return;
         default:
             fprintf(stderr, "Cartridge type not implemented: %d\n",

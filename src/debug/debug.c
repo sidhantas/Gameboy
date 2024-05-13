@@ -1,4 +1,5 @@
 #include "debug.h"
+#include "interrupts.h"
 #include "memory.h"
 #include "decoder.h"
 #include "oam_queue.h"
@@ -13,6 +14,7 @@
 
 static void print_register_window(WINDOW *reg_win);
 static void print_cpu_window(WINDOW *cpu_win);
+static void print_ppu_window(WINDOW *ppu_win);
 static void print_flags_window(WINDOW *flags_win);
 static void print_stack_window(WINDOW *stack_win);
 static void print_memory_window(WINDOW *mem_win, uint16_t start_address);
@@ -24,6 +26,7 @@ void refresh_debugger(void);
 WINDOW *display_buff_win;
 WINDOW *registers_win;
 WINDOW *cpu_win;
+WINDOW *ppu_win;
 WINDOW *flags_win;
 WINDOW *stack_win;
 WINDOW *mem_win;
@@ -60,6 +63,7 @@ void *initialize_debugger(void *arg) {
     display_buff_win = newwin(20, 90, 0, 54);
     registers_win = newwin(17, 21, 0, 0);
     cpu_win = newwin(20, 31, 0, 23);
+    ppu_win = newwin(20, 31, 0, 55);
     flags_win = newwin(8, 21, 17, 0);
     mem_win = newwin(20, 90, 21, 23);
     stack_win = newwin(21, 31, 21, 114);
@@ -90,6 +94,7 @@ void refresh_debugger(void) {
     print_register_window(registers_win);
     print_flags_window(flags_win);
     print_cpu_window(cpu_win);
+    print_ppu_window(ppu_win);
     print_memory_window(mem_win, mem_win_addr);
     //print_display_buffer_window(display_buff_win, display_buf_addr);
     print_stack_window(stack_win);
@@ -99,9 +104,9 @@ void refresh_debugger(void) {
 
 static void print_oam_window(WINDOW *oam_win) {
     uint16_t WIDTH = 0;
-    uint16_t HEIGHT = 0;
+    uint16_t _HEIGHT = 0;
     werase(oam_win);
-    getmaxyx(oam_win, HEIGHT, WIDTH);
+    getmaxyx(oam_win, _HEIGHT, WIDTH);
     box(oam_win, 0, 0);
     mvwprintwhcenter(oam_win, 0, 0, WIDTH, "OAM");
     SpriteStore *sprite_store = get_sprite_store(); 
@@ -225,8 +230,48 @@ static void print_stack_window(WINDOW *stack_win) {
     wrefresh(stack_win);
 }
 
+static void print_ppu_window(WINDOW *ppu_win) {
+    int WIDTH = getmaxx(ppu_win);
+
+    box(ppu_win, 0, 0);
+
+    mvwprintwhcenter(ppu_win, 0, 0, WIDTH, "PPU");
+    mvwprintwhcenter(ppu_win, 1, 0, WIDTH / 2, "WX: ");
+    mvwprintwhcenter(ppu_win, 1, WIDTH / 2, WIDTH / 2, "%d", get_memory_byte(WX));
+    mvwprintwhcenter(ppu_win, 2, 0, WIDTH / 2, "WY: ");
+    mvwprintwhcenter(ppu_win, 2, WIDTH / 2, WIDTH / 2, "%d", get_memory_byte(WY));
+
+    mvwprintwhcenter(ppu_win, 3, 0, WIDTH / 2, "SCX: ");
+    mvwprintwhcenter(ppu_win, 3, WIDTH / 2, WIDTH / 2, "%d", get_memory_byte(SCX));
+    mvwprintwhcenter(ppu_win, 4, 0, WIDTH / 2, "SCY: ");
+    mvwprintwhcenter(ppu_win, 4, WIDTH / 2, WIDTH / 2, "%d", get_memory_byte(SCY));
+
+    mvwprintwhcenter(ppu_win, 5, 0, WIDTH / 2, "X pixel: ");
+    mvwprintwhcenter(ppu_win, 5, WIDTH / 2, WIDTH / 2, "%3d", get_x_pixel());
+    mvwprintwhcenter(ppu_win, 6, 0, WIDTH / 2, "Y pixel: ");
+    mvwprintwhcenter(ppu_win, 6, WIDTH / 2, WIDTH / 2, "%3d", get_y_pixel());
+
+
+    uint32_t *serviced_interrupts = get_serviced_interrupts();
+    mvwprintwhcenter(ppu_win, 8, 0, WIDTH / 2, "VBLANK ");
+    mvwprintwhcenter(ppu_win, 8, WIDTH / 2, WIDTH / 2, "%10d", serviced_interrupts[0]);
+    mvwprintwhcenter(ppu_win, 9, 0, WIDTH / 2, "LCD ");
+    mvwprintwhcenter(ppu_win, 9, WIDTH / 2, WIDTH / 2, "%10d", serviced_interrupts[1]);
+    mvwprintwhcenter(ppu_win, 10, 0, WIDTH / 2, "TIMER ");
+    mvwprintwhcenter(ppu_win, 10, WIDTH / 2, WIDTH / 2, "%10d", serviced_interrupts[2]);
+    mvwprintwhcenter(ppu_win, 11, 0, WIDTH / 2, "JOYPAD ");
+    mvwprintwhcenter(ppu_win, 11, WIDTH / 2, WIDTH / 2, "%10d", serviced_interrupts[4]);
+
+    mvwprintwhcenter(ppu_win, 12, 0, WIDTH / 2, "STAT LINE");
+    mvwprintwhcenter(ppu_win, 12, WIDTH / 2, WIDTH / 2, "0x%0.2x", get_stat_line());
+    mvwprintwhcenter(ppu_win, 13, 0, WIDTH / 2, "STAT REG");
+    mvwprintwhcenter(ppu_win, 13, WIDTH / 2, WIDTH / 2, "0x%0.2x", get_memory_byte(STAT));
+
+
+    wrefresh(ppu_win);
+}
 static void print_cpu_window(WINDOW *cpu_win) {
-    uint16_t WIDTH = getmaxx(cpu_win);
+    int WIDTH = getmaxx(cpu_win);
 
     box(cpu_win, 0, 0);
 
