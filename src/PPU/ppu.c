@@ -72,6 +72,16 @@ void run_ppu(uint16_t dots) {
     do {
         bool (*current_mode_func)(void) = get_current_mode_func();
         executed = current_mode_func();
+        uint8_t lcd_status = get_memory_byte(STAT);
+        if (privileged_get_memory_byte(LYC) == ppu.current_scan_line) {
+            trigger_stat_source(LYC_INT);
+            set_bit(&lcd_status, 2);
+            privileged_set_memory_byte(STAT, lcd_status);
+        } else {
+            reset_bit(&lcd_status, 2);
+            clear_stat_source(LYC_INT);
+            privileged_set_memory_byte(STAT, lcd_status);
+        }
     } while (executed == true);
 }
 
@@ -183,16 +193,6 @@ static void increase_scan_line(void) {
     ppu.current_scan_line %= SCAN_LINES;
     set_memory_byte(LCDY, ppu.current_scan_line);
 
-    uint8_t lcd_status = get_memory_byte(STAT);
-    if (privileged_get_memory_byte(LYC) == ppu.current_scan_line) {
-        trigger_stat_source(LYC_INT);
-        set_bit(&lcd_status, 2);
-        privileged_set_memory_byte(STAT, lcd_status);
-    } else {
-        reset_bit(&lcd_status, 2);
-        clear_stat_source(LYC_INT);
-        privileged_set_memory_byte(STAT, lcd_status);
-    }
     return;
 }
 
@@ -221,11 +221,7 @@ static void set_ppu_mode(uint8_t mode) {
     ppu.mode = mode;
 }
 
-uint8_t get_x_pixel(void) {
-    return ppu.line_x;
-}
+uint8_t get_x_pixel(void) { return ppu.line_x; }
 
-uint8_t get_y_pixel(void) {
-    return ppu.current_scan_line;
-}
+uint8_t get_y_pixel(void) { return ppu.current_scan_line; }
 void end_ppu(void) { close_ppu = true; }
