@@ -33,7 +33,7 @@ void initialize_memory(CartridgeHeader ch) {
         exit(1);
     }
 
-    io_ram = calloc(0xFFFF - 0xFDFF, sizeof(uint8_t));
+    io_ram = calloc(0xFFFF - 0xFE9F, sizeof(uint8_t));
     if (!io_ram) {
         fprintf(stderr, "Unable to allocate memory for memory");
         exit(1);
@@ -60,7 +60,7 @@ static CartridgeHeader decode_cartridge_header(FILE *rom) {
     ch.title[MAX_TITLE_SIZE] = '\0';
 
     ch.cartridge_type = buffer[0x47];
-    ch.rom_banks = (uint16_t)(2 * (1 << buffer[0x48]));
+    ch.rom_banks = (uint16_t)(1 << (buffer[0x48] + 1));
     switch (buffer[0x49]) {
         case 0: ch.ram_banks = 0; break;
         case 0x01: ch.ram_banks = 0; break;
@@ -220,7 +220,7 @@ uint8_t get_memory_byte(uint16_t address) {
     exit(1);
 }
 
-static void handle_IO_write(uint16_t address, uint8_t byte) {
+static void handle_io_write(uint16_t address, uint8_t byte) {
     uint16_t address_offset = address - IO_RAM_BASE;
     switch (address) {
         case JOYP:
@@ -254,7 +254,7 @@ static void handle_IO_write(uint16_t address, uint8_t byte) {
 void set_memory_byte(uint16_t address, uint8_t byte) {
     if (address >= ROM_BANK_00_BASE && address < ROM_BANK_NN_BASE) {
         mbc.set_memory_byte(address, byte);
-    } else if (address > ROM_BANK_NN_BASE && address < VRAM_BASE) {
+    } else if (address >= ROM_BANK_NN_BASE && address < VRAM_BASE) {
         mbc.set_memory_byte(address, byte);
     } else if (address >= VRAM_BASE && address < EX_RAM_BASE) {
         vram[address - VRAM_BASE] = byte;
@@ -269,6 +269,6 @@ void set_memory_byte(uint16_t address, uint8_t byte) {
     } else if (address >= PROHIBITED_BASE && address < IO_RAM_BASE) {
         return;
     } else if (address >= IO_RAM_BASE) {
-        handle_IO_write(address, byte);
+        handle_io_write(address, byte);
     }
 }

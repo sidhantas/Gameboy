@@ -241,16 +241,20 @@ static void print_cpu_window(WINDOW *cpu_win) {
     mvwprintwhcenter(cpu_win, 7, 0, WIDTH, "%s", get_decoded_instruction());
     mvwprintwhcenter(cpu_win, 9, 0, WIDTH, "Is Implemented: %-5s",
                      get_is_implemented() ? "True" : "False");
-    mvwprintwhcenter(cpu_win, 11, 0, WIDTH, "Instruction Count: %"PRIu64, get_instruction_count());
-    mvwprintwhcenter(cpu_win, 13, 0, WIDTH, "%-22s", "");
-    mvwprintwhcenter(cpu_win, 13, 0, WIDTH, "Available Dots: %0.5"PRIu64, ppu.available_dots);
-    mvwprintwhcenter(cpu_win, 14, 0, WIDTH, "Consumed Dots: %0.10"PRIu64, ppu.consumed_dots);
-    mvwprintwhcenter(cpu_win, 15, 0, WIDTH, "Mode: %"PRIu8, get_memory_byte(STAT) & 0x03);
-   // mvwprintwhcenter(cpu_win, 16, 0, WIDTH, "Previous Decode:");
-   // mvwprintwhcenter(cpu_win, 17, 0, WIDTH, "%-22s", "");
-   // mvwprintwhcenter(cpu_win, 17, 0, WIDTH, "%s", get_previous_decoded_instruction());
-    mvwprintwhcenter(cpu_win, 16, 0, WIDTH, "Requested interrupts");
-    mvwprintwhcenter(cpu_win, 17, 0, WIDTH, "0x%0.2x", get_memory_byte(IE) & get_memory_byte(IF));
+//    mvwprintwhcenter(cpu_win, 11, 0, WIDTH, "Instruction Count: %"PRIu64, get_instruction_count());
+//    mvwprintwhcenter(cpu_win, 13, 0, WIDTH, "%-22s", "");
+//    mvwprintwhcenter(cpu_win, 13, 0, WIDTH, "Available Dots: %0.5"PRIu64, ppu.available_dots);
+//    mvwprintwhcenter(cpu_win, 14, 0, WIDTH, "Consumed Dots: %0.10"PRIu64, ppu.consumed_dots);
+//    mvwprintwhcenter(cpu_win, 15, 0, WIDTH, "Mode: %"PRIu8, get_memory_byte(STAT) & 0x03);
+ //   mvwprintwhcenter(cpu_win, 16, 0, WIDTH, "Previous Decode:");
+ //   mvwprintwhcenter(cpu_win, 17, 0, WIDTH, "%-22s", "");
+ //   mvwprintwhcenter(cpu_win, 17, 0, WIDTH, "%s", get_previous_decoded_instruction());
+    //mvwprintwhcenter(cpu_win, 16, 0, WIDTH, "Requested interrupts");
+    //mvwprintwhcenter(cpu_win, 17, 0, WIDTH, "0x%0.2x", get_memory_byte(IE) & get_memory_byte(IF));
+    mvwprintwhcenter(cpu_win, 14, 0, WIDTH, "BANK Mode: ");
+    mvwprintwhcenter(cpu_win, 15, 0, WIDTH, "0x%0.2x", get_banking_mode());
+    mvwprintwhcenter(cpu_win, 16, 0, WIDTH, "RAM BANK: ");
+    mvwprintwhcenter(cpu_win, 17, 0, WIDTH, "0x%0.2x", get_ram_bank());
     wrefresh(cpu_win);
 }
 

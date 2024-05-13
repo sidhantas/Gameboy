@@ -28,9 +28,9 @@ void *start_cpu(void *arg) {
 
     while (true) {
         clock_cycles_t clocks = 0;
-        if (get_is_implemented() == false) {
-            step_mode = true;
-        }
+//        if (get_instruction()[0] == 0xEA && get_instruction()[2] == 0x60) {
+//            step_mode = true;
+//        }
         if (close_cpu) {
             break;
         }
@@ -81,7 +81,7 @@ void *start_cpu(void *arg) {
         //         tracer_enqueue(&t, old_pc, trace_str);
         exec_count += (uint32_t)clocks;
 
-        if (exec_count >= CYCLES_PER_FRAME) {
+        if (exec_count >= CYCLES_PER_FRAME && !step_mode) {
             exec_count -= CYCLES_PER_FRAME;
             clock_gettime(CLOCK_REALTIME, &end);
             diff.tv_nsec = end.tv_nsec - start.tv_nsec;

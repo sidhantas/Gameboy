@@ -1,6 +1,9 @@
+#include "cpu.h"
 #include "memory.h"
+#include "utils.h"
 #include <stdbool.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #define MAX_ROM_BANKS 0x80
 
@@ -8,14 +11,15 @@ static uint8_t **rom_banks;
 static uint8_t max_rom_banks;
 static uint8_t **ram_banks;
 static uint8_t max_ram_banks;
+static uint8_t bank_1_mask;
 
 static bool ram_bank_enabled;
 static bool rom_bank_enabled;
 
 static bool is_large_cartridge = false;
 
-static uint8_t selected_rom_bank;
-static uint8_t selected_ram_bank;
+static uint8_t bank_register_1;
+static uint8_t bank_register_2;
 static uint8_t bank_mode_select;
 
 static uint8_t mbc1_get_memory_byte(uint16_t address);
@@ -28,8 +32,9 @@ MBC initialize_mbc1(CartridgeHeader ch) {
     mbc1.get_memory_byte = &mbc1_get_memory_byte;
     mbc1.load_rom = &mbc1_load_rom;
 
-    max_rom_banks = ch.rom_banks & 0x7F;
+    max_rom_banks = ch.rom_banks & 0xFF;
     max_ram_banks = ch.ram_banks;
+    bank_1_mask = ~((max_rom_banks - 1) ^ 0xFF);
     if (max_rom_banks >= 64) {
         is_large_cartridge = true;
         max_ram_banks = 1;
@@ -61,12 +66,80 @@ MBC initialize_mbc1(CartridgeHeader ch) {
     }
     ram_bank_enabled = false;
     rom_bank_enabled = false;
-    selected_rom_bank = 1;
-    selected_ram_bank = 0;
+    bank_register_1 = 1;
+    bank_register_2 = 0;
     bank_mode_select = 0;
     return mbc1;
 }
 
+static uint8_t get_rom_bank_x0(void) {
+    if (bank_mode_select != 1 || !is_large_cartridge) {
+        return 0;
+    }
+    // Using extended banking
+    return (uint8_t)(bank_register_2 << 5);
+}
+
+static uint8_t get_rom_bank_01(void) {
+    uint8_t selected_rom_bank = bank_register_1;
+    if (is_large_cartridge) {
+        selected_rom_bank |= (bank_register_2 << 5);
+    }
+    return selected_rom_bank;
+}
+
+uint8_t get_ram_bank(void) {
+    if (bank_mode_select == 0 || is_large_cartridge || max_ram_banks == 1) {
+        return 0;
+    }
+    return bank_register_2;
+}
+
+static uint8_t mbc1_get_memory_byte(uint16_t address) {
+    if (address >= ROM_BANK_00_BASE && address < ROM_BANK_NN_BASE) {
+        return rom_banks[get_rom_bank_x0()][address];
+    } else if (address >= ROM_BANK_NN_BASE && address < VRAM_BASE) {
+        return rom_banks[get_rom_bank_01()][address - ROM_BANK_NN_BASE];
+    } else if (address >= EX_RAM_BASE && address < WRAM_BASE) {
+        if (!ram_bank_enabled) {
+            return 0xFF;
+        }
+        return ram_banks[get_ram_bank()][address - EX_RAM_BASE];
+    } else {
+        fprintf(stderr, "Unhandled memory read basic\n");
+        exit(1);
+    }
+    return 0x00;
+}
+
+static void mbc1_set_memory_byte(uint16_t address, uint8_t byte) {
+    if (address >= 0x000 && address < 0x2000) {
+        ram_bank_enabled = (byte & 0x0F) == 0x0A;
+    } else if (address >= 0x2000 && address < 0x4000) {
+        /*
+         * ROM bank is set according to byte unless it's 0
+         * in which case it is 1
+         */
+        bank_register_1 = byte & 0x1F ? byte & 0x1F : 1;
+        bank_register_1 &= bank_1_mask;
+    } else if (address >= 0x4000 && address < 0x6000) {
+        bank_register_2 = byte & 0x03;
+    } else if (address >= 0x6000 && address < 0x8000) {
+        if (max_ram_banks <= 1 || max_rom_banks <= 32) {
+            bank_mode_select = 0;
+        }
+        bank_mode_select = get_bit(byte, 0);
+    } else if (address >= EX_RAM_BASE && address < WRAM_BASE) {
+        if (!ram_bank_enabled) {
+            return;
+        }
+        ram_banks[get_ram_bank()][address - EX_RAM_BASE] = byte;
+    } else {
+        fprintf(stderr, "Unhandled memory write basic\n");
+        exit(1);
+    }
+    return;
+}
 static void load_rom_bank(uint8_t rom_bank_num, FILE *rom) {
     fread(rom_banks[rom_bank_num], 1, ROM_BANK_SIZE, rom);
 }
@@ -80,55 +153,4 @@ static void mbc1_load_rom(FILE *rom) {
     }
 }
 
-static uint8_t mbc1_get_memory_byte(uint16_t address) {
-    if (address >= ROM_BANK_00_BASE && address < ROM_BANK_NN_BASE) {
-        if (!bank_mode_select || !is_large_cartridge) {
-            return rom_banks[0][address];
-        }
-    } else if (address >= ROM_BANK_NN_BASE && address < VRAM_BASE) {
-        return rom_banks[selected_rom_bank][address - ROM_BANK_NN_BASE];
-    } else if (address >= EX_RAM_BASE && address < WRAM_BASE) {
-        if (!ram_bank_enabled || max_ram_banks == 0) {
-            return 0xFF;
-        }
-        if (!bank_mode_select || is_large_cartridge) {
-            return ram_banks[0][address - EX_RAM_BASE];
-        }
-        return ram_banks[selected_ram_bank][address - EX_RAM_BASE];
-    } else {
-        fprintf(stderr, "Unhandled memory read basic\n");
-        exit(1);
-    }
-    return 0x00;
-}
-
-static void mbc1_set_memory_byte(uint16_t address, uint8_t byte) {
-    if (address >= 0x000 && address < 0x2000) {
-        ram_bank_enabled = (byte & 0x0A) == 0x0A;
-    } else if (address >= 0x2000 && address < 0x4000) {
-        // ROM bank is set according to byte unless it's 0
-        // in which case it is 1
-        selected_rom_bank = byte & 0x1F ? byte & 0x1F : 1;
-    } else if (address >= 0x4000 && address < 0x6000) {
-        if (is_large_cartridge) {
-            selected_rom_bank |= (byte << 5);
-            return;
-        }
-        selected_ram_bank = byte & 0x03;
-        return;
-    } else if (address >= 0x6000 && address < 0x8000) {
-        bank_mode_select = byte == 0x01;
-    } else if (address >= EX_RAM_BASE && address < WRAM_BASE) {
-        if (!ram_bank_enabled || max_ram_banks == 0) {
-            return;
-        }
-        if (!bank_mode_select || is_large_cartridge) {
-            ram_banks[0][address - EX_RAM_BASE] = byte;
-        }
-        ram_banks[selected_ram_bank][address - EX_RAM_BASE] = byte;
-    } else {
-        fprintf(stderr, "Unhandled memory write basic\n");
-        exit(1);
-    }
-    return;
-}
+uint8_t get_banking_mode(void) { return bank_mode_select; }

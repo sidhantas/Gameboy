@@ -109,13 +109,14 @@ void set_register(reg_t dst, uint8_t val) { hardware.registers[dst] = val; }
 uint8_t get_register(reg_t src) { return hardware.registers[src]; }
 
 void set_decoded_instruction(const char *str, ...) {
-
+#ifdef ENABLE_DEBUGGER
     strncpy(hardware.previous_instruction, hardware.decoded_instruction,
             MAX_DECODED_INSTRUCTION_SIZE);
     va_list args;
     va_start(args, str);
     vsnprintf(hardware.decoded_instruction, MAX_DECODED_INSTRUCTION_SIZE, str,
               args);
+#endif
 }
 
 char *get_decoded_instruction(void) { return hardware.decoded_instruction; }

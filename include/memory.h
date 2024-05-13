@@ -66,3 +66,7 @@ typedef struct {
 void delete_mbc(MBC **mbc);
 MBC initialize_mbc0(void);
 MBC initialize_mbc1(CartridgeHeader ch);
+
+
+uint8_t get_banking_mode(void);
+uint8_t get_ram_bank(void);
