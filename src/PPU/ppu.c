@@ -35,9 +35,6 @@ void initialize_ppu(void) {
     ppu.available_dots = 0;
     ppu.consumed_dots = 0;
     ppu.current_scan_line = 0;
-    ppu.rendered_window_line = false;
-    ppu.wy_condition_triggered = false;
-    ppu.current_window_line = 0;
     ppu.line_x = 0;
 }
 
@@ -72,17 +69,19 @@ bool (*get_current_mode_func(void))(void) {
 void run_ppu(uint16_t dots) {
     bool executed;
     ppu.available_dots += dots;
-    uint8_t lcd_status = get_memory_byte(STAT);
-    if (privileged_get_memory_byte(LYC) == ppu.current_scan_line) {
-        trigger_stat_source(LYC_INT);
-        set_bit(&lcd_status, 2);
-    } else {
-        clear_stat_source(LYC_INT);
-        reset_bit(&lcd_status, 2);
-    }
     do {
         bool (*current_mode_func)(void) = get_current_mode_func();
         executed = current_mode_func();
+        uint8_t lcd_status = get_memory_byte(STAT);
+        if (privileged_get_memory_byte(LYC) == ppu.current_scan_line) {
+            trigger_stat_source(LYC_INT);
+            set_bit(&lcd_status, 2);
+            privileged_set_memory_byte(STAT, lcd_status);
+        } else {
+            reset_bit(&lcd_status, 2);
+            clear_stat_source(LYC_INT);
+            privileged_set_memory_byte(STAT, lcd_status);
+        }
     } while (executed == true);
 }
 
@@ -101,9 +100,6 @@ static bool execute_mode_2(void) {
     static uint8_t object_index = 0;
     if (!consume_dots(2)) {
         return false;
-    }
-    if (object_index == 0 && get_memory_byte(WY) == get_memory_byte(LCDY)) {
-        ppu.wy_condition_triggered = true;
     }
     add_sprite(object_index++);
     if (ppu.line_dots >= 80) {
@@ -130,15 +126,13 @@ static bool execute_mode_3(void) {
     }
     // Should overlap with win pixel if it exists
     uint8_t pixel = 0;
-    if (
-        get_bit(get_memory_byte(LCDC), 0)) {
+    if (get_bit(get_memory_byte(LCDC), 7)) {
 
-        pixel = get_bg_pixel(ppu.line_x, ppu.current_scan_line);
-        if (ppu.wy_condition_triggered) {
-            uint8_t win_pixel = get_win_pixel(ppu.line_x, ppu.current_window_line,
-                                              ppu.current_window_line);
+        if (get_bit(get_memory_byte(LCDC), 0)) {
+            pixel = get_bg_pixel(ppu.line_x, ppu.current_scan_line);
+            uint8_t win_pixel =
+                get_win_pixel(ppu.line_x, ppu.current_scan_line);
             if (win_pixel != TRANSPARENT) {
-                ppu.rendered_window_line = true;
                 pixel = win_pixel;
             }
         }
@@ -184,13 +178,10 @@ static bool execute_mode_1(void) {
     if (!consume_dots(1)) {
         return false;
     }
-    if (ppu.line_dots >= DOTS_PER_LINE) {
+    if (ppu.line_dots >= 456) {
         increase_scan_line();
-        ppu.line_dots %= DOTS_PER_LINE;
+        ppu.line_dots %= 456;
         if (ppu.current_scan_line == 0) {
-            ppu.current_window_line = 0;
-            ppu.rendered_window_line = false;
-            ppu.wy_condition_triggered = false;
             set_ppu_mode(2);
         }
     }
@@ -200,10 +191,6 @@ static bool execute_mode_1(void) {
 static void increase_scan_line(void) {
     ppu.current_scan_line += 1;
     ppu.current_scan_line %= SCAN_LINES;
-    if (ppu.rendered_window_line) {
-        ppu.current_window_line++;
-        ppu.rendered_window_line = false;
-    }
     set_memory_byte(LCDY, ppu.current_scan_line);
 
     return;
@@ -219,11 +206,7 @@ stat_interrupts_t ppu_mode_to_stat_source(uint8_t mode) {
 }
 
 static void set_ppu_mode(uint8_t mode) {
-    uint8_t lcd_status = get_memory_byte(STAT);
-    // clear the bottom 3 bits
-    lcd_status &= ~(0x03);
     stat_interrupts_t new_mode_stat_source = ppu_mode_to_stat_source(mode);
-
     if (new_mode_stat_source != INVALID_STAT_SOURCE) {
         trigger_stat_source(new_mode_stat_source);
     }
@@ -232,6 +215,8 @@ static void set_ppu_mode(uint8_t mode) {
         clear_stat_source(old_mode_stat_source);
     }
 
+    uint8_t lcd_status = get_memory_byte(STAT);
+    lcd_status &= ~(0x03);
     privileged_set_memory_byte(STAT, lcd_status | mode);
     ppu.mode = mode;
 }
@@ -239,6 +224,4 @@ static void set_ppu_mode(uint8_t mode) {
 uint8_t get_x_pixel(void) { return ppu.line_x; }
 
 uint8_t get_y_pixel(void) { return ppu.current_scan_line; }
-
-uint8_t get_window_line(void) { return ppu.current_window_line; }
 void end_ppu(void) { close_ppu = true; }
