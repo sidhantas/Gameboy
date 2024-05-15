@@ -250,6 +250,8 @@ static void print_ppu_window(WINDOW *ppu_win) {
     mvwprintwhcenter(ppu_win, 5, WIDTH / 2, WIDTH / 2, "%3d", get_x_pixel());
     mvwprintwhcenter(ppu_win, 6, 0, WIDTH / 2, "Y pixel: ");
     mvwprintwhcenter(ppu_win, 6, WIDTH / 2, WIDTH / 2, "%3d", get_y_pixel());
+    mvwprintwhcenter(ppu_win, 7, 0, WIDTH / 2, "Window Line: ");
+    mvwprintwhcenter(ppu_win, 7, WIDTH / 2, WIDTH / 2, "%3d", get_window_line());
 
 
     uint32_t *serviced_interrupts = get_serviced_interrupts();

@@ -5,6 +5,7 @@
 #include "memory.h"
 #include "oam_queue.h"
 #include "ppu.h"
+#include "utils.h"
 #include <inttypes.h>
 #include <pthread.h>
 #include <stdbool.h>
@@ -14,11 +15,24 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
+#include <assert.h>
 
 bool step_mode = false;
 bool close_cpu = false;
 bool boot_completed = false;
-#define CYCLES_PER_FRAME 35000
+#define CYCLES_PER_FRAME 69905
+struct timespec diff_timespec(const struct timespec *time1,
+    const struct timespec *time0) {
+  assert(time1);
+  assert(time0);
+  struct timespec diff = {.tv_sec = time1->tv_sec - time0->tv_sec, //
+      .tv_nsec = time1->tv_nsec - time0->tv_nsec};
+  if (diff.tv_nsec < 0) {
+    diff.tv_nsec += 1000000000; // nsec/sec
+    diff.tv_sec--;
+  }
+  return diff;
+}
 void *start_cpu(void *arg) {
     (void)arg;
     struct timespec start, end, diff;
@@ -48,7 +62,11 @@ void *start_cpu(void *arg) {
         //         get_register(H), get_register(L), get_sp(), get_pc(),
         //         get_memory_byte(get_pc()), get_memory_byte(get_pc() + 1),
         //         get_memory_byte(get_pc() + 2), get_memory_byte(get_pc() +
-        //         3));
+        //    !(get_memory_byte(IE) & get_memory_byte(IF))     3));
+
+        if (!(get_memory_byte(IE) & get_memory_byte(IF))) {
+            set_halted(false);
+        }
         clocks += handle_interrupts();
 
         pthread_mutex_lock(&dots_mutex);
@@ -76,18 +94,16 @@ void *start_cpu(void *arg) {
         //                  get_register(L), get_flag(C_FLAG));
         //         tracer_enqueue(&t, old_pc, trace_str);
         exec_count += (uint32_t)clocks;
-                if (exec_count >= CYCLES_PER_FRAME && !step_mode) {
-                    exec_count -= CYCLES_PER_FRAME;
-                    clock_gettime(CLOCK_REALTIME, &end);
-                    diff.tv_nsec = end.tv_nsec - start.tv_nsec;
-                    if (diff.tv_nsec < 0) {
-                        diff.tv_nsec += 1000000000;
-                    }
-        
-                    long remaining_time = 8888888L - diff.tv_nsec;
-                    usleep((useconds_t)remaining_time / 2500);
-                    clock_gettime(CLOCK_REALTIME, &start);
-                }
+        if (exec_count >= CYCLES_PER_FRAME && !step_mode) {
+            exec_count -= CYCLES_PER_FRAME;
+            clock_gettime(CLOCK_REALTIME, &end);
+            diff = diff_timespec(&start, &end);
+            diff.tv_nsec = 16666666 - diff.tv_nsec;
+            if (diff.tv_sec > 0) {
+                nanosleep(&diff, &diff);
+            }
+            clock_gettime(CLOCK_REALTIME, &start);
+        }
     }
     return NULL;
 }
