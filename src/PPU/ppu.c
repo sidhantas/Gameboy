@@ -132,30 +132,15 @@ static bool execute_mode_3(void) {
     if (!consume_dots(penalty_dots + 1)) {
         return false;
     }
-    // Should overlap with win pixel if it exists
-    // Get Tile
-    // Get pixel within tile
-    // Get obj pixel
-    // If object pixel is not transparent and obj enabled
-    //      display obj pixel
-    //  else display bg pixel
     uint8_t pixel = 0;
     if (get_bit(get_memory_byte(LCDC), 7)) {
         if (get_bit(get_memory_byte(LCDC), 0)) {
+            pixel = get_bg_pixel(ppu.line_x, ppu.current_scan_line);
             const uint8_t wx = get_memory_byte(WX);
-            const uint8_t wy = get_memory_byte(WY);
-            if (get_bit(get_memory_byte(LCDC), 5) &&
-                (ppu.line_x == (wx - 7) || ppu.current_scan_line == wy)) {
-                pixel = WINDOW_OUTLINE;
-                if (ppu.line_x == (wx - 7) && ppu.current_scan_line == wy) {
-                    ppu.window_rendered = true;
-                }
-            } else if (get_bit(get_memory_byte(LCDC), 5) &&
-                       ppu.line_x >= (wx - 7) && window_enabled) {
+            if (get_bit(get_memory_byte(LCDC), 5) && ppu.line_x >= (wx - 7) &&
+                window_enabled) {
                 pixel = get_win_pixel(ppu.line_x, ppu.current_window_line);
                 ppu.window_rendered = true;
-            } else {
-                pixel = get_bg_pixel(ppu.line_x, ppu.current_scan_line);
             }
         }
 

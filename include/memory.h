@@ -6,6 +6,8 @@ typedef struct {
   void (*set_memory_byte)(uint16_t address, uint8_t byte);
   uint8_t (*get_memory_byte)(uint16_t address);
   void (*load_rom)(FILE *rom);
+  void (*save_data)(FILE *save_location);
+  void (*load_save_data)(FILE *save_location);
 } MBC;
 
 #define MAX_TITLE_SIZE 16
@@ -71,3 +73,5 @@ MBC initialize_mbc1(CartridgeHeader ch);
 uint8_t get_banking_mode(void);
 uint8_t get_ram_bank(void);
 uint8_t update_stat_register(uint8_t byte);
+void save_data(void);
+void load_save_data(void);

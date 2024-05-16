@@ -5,6 +5,7 @@
 #include "decoder.h"
 #include "graphics.h"
 #include "hardware.h"
+#include "memory.h"
 #include "ppu.h"
 #include <getopt.h>
 #include <ncurses.h>
@@ -69,7 +70,9 @@ void main_loop(void) {
     while (!end_main_loop) {
         while (SDL_PollEvent(&e)) {
             switch (e.type) {
-                case SDL_QUIT: end_main_loop = true; break;
+                case SDL_QUIT:
+                    save_data();
+                    end_main_loop = true; break;
                 case SDL_KEYDOWN:
                     switch (e.key.keysym.scancode) {
                         case SDL_SCANCODE_N: instructions_left += 1; break;

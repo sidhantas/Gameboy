@@ -112,6 +112,7 @@ void load_rom(FILE *rom) {
     CartridgeHeader ch = decode_cartridge_header(rom);
     initialize_memory(ch);
     mbc.load_rom(rom);
+    load_save_data();
     map_dmg();
 }
 
@@ -272,4 +273,17 @@ void set_memory_byte(uint16_t address, uint8_t byte) {
     } else if (address >= IO_RAM_BASE) {
         handle_io_write(address, byte);
     }
+}
+
+void save_data(void) {
+    FILE *save_location = fopen("save.data", "w");
+    mbc.save_data(save_location);
+}
+
+void load_save_data(void) {
+    FILE *save_location = fopen("save.data", "r");
+    if (!save_location) {
+        return;
+    }
+    mbc.load_save_data(save_location);
 }
