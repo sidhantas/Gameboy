@@ -1,4 +1,6 @@
 #include "ppu.h"
+#include "cpu.h"
+#include "graphics.h"
 #include "hardware.h"
 #include "interrupts.h"
 #include "memory.h"
@@ -35,6 +37,8 @@ void initialize_ppu(void) {
     ppu.available_dots = 0;
     ppu.consumed_dots = 0;
     ppu.current_scan_line = 0;
+    ppu.window_rendered = false;
+    ppu.current_window_line = 0;
     ppu.line_x = 0;
 }
 
@@ -70,18 +74,18 @@ void run_ppu(uint16_t dots) {
     bool executed;
     ppu.available_dots += dots;
     do {
-        bool (*current_mode_func)(void) = get_current_mode_func();
-        executed = current_mode_func();
         uint8_t lcd_status = get_memory_byte(STAT);
-        if (privileged_get_memory_byte(LYC) == ppu.current_scan_line) {
-            trigger_stat_source(LYC_INT);
+        if (privileged_get_memory_byte(LYC) == get_memory_byte(LCDY)) {
             set_bit(&lcd_status, 2);
             privileged_set_memory_byte(STAT, lcd_status);
+            trigger_stat_source(LYC_INT);
         } else {
             reset_bit(&lcd_status, 2);
-            clear_stat_source(LYC_INT);
             privileged_set_memory_byte(STAT, lcd_status);
+            clear_stat_source(LYC_INT);
         }
+        bool (*current_mode_func)(void) = get_current_mode_func();
+        executed = current_mode_func();
     } while (executed == true);
 }
 
@@ -95,6 +99,7 @@ bool consume_dots(uint64_t dots_to_consume) {
     return true;
 }
 
+static bool window_enabled = false;
 static bool execute_mode_2(void) {
     // wait for 2 dots
     static uint8_t object_index = 0;
@@ -102,12 +107,15 @@ static bool execute_mode_2(void) {
         return false;
     }
     add_sprite(object_index++);
+    const uint8_t wy = get_memory_byte(WY);
+    if (wy == ppu.current_scan_line) {
+        window_enabled = true;
+    }
     if (ppu.line_dots >= 80) {
         // Setup for Mode 3
         set_ppu_mode(3);
         object_index = 0;
         ppu.line_x = 0;
-        ppu.current_scan_line = get_memory_byte(LCDY);
     }
     return true;
 }
@@ -125,15 +133,29 @@ static bool execute_mode_3(void) {
         return false;
     }
     // Should overlap with win pixel if it exists
+    // Get Tile
+    // Get pixel within tile
+    // Get obj pixel
+    // If object pixel is not transparent and obj enabled
+    //      display obj pixel
+    //  else display bg pixel
     uint8_t pixel = 0;
     if (get_bit(get_memory_byte(LCDC), 7)) {
-
         if (get_bit(get_memory_byte(LCDC), 0)) {
-            pixel = get_bg_pixel(ppu.line_x, ppu.current_scan_line);
-            uint8_t win_pixel =
-                get_win_pixel(ppu.line_x, ppu.current_scan_line);
-            if (win_pixel != TRANSPARENT) {
-                pixel = win_pixel;
+            const uint8_t wx = get_memory_byte(WX);
+            const uint8_t wy = get_memory_byte(WY);
+            if (get_bit(get_memory_byte(LCDC), 5) &&
+                (ppu.line_x == (wx - 7) || ppu.current_scan_line == wy)) {
+                pixel = WINDOW_OUTLINE;
+                if (ppu.line_x == (wx - 7) && ppu.current_scan_line == wy) {
+                    ppu.window_rendered = true;
+                }
+            } else if (get_bit(get_memory_byte(LCDC), 5) &&
+                       ppu.line_x >= (wx - 7) && window_enabled) {
+                pixel = get_win_pixel(ppu.line_x, ppu.current_window_line);
+                ppu.window_rendered = true;
+            } else {
+                pixel = get_bg_pixel(ppu.line_x, ppu.current_scan_line);
             }
         }
 
@@ -168,7 +190,6 @@ static bool execute_mode_0(void) {
             set_ppu_mode(2);
             initialize_sprite_store();
         }
-        set_memory_byte(LCDY, ppu.current_scan_line);
         ppu.line_dots %= DOTS_PER_LINE;
     }
     return true;
@@ -182,6 +203,9 @@ static bool execute_mode_1(void) {
         increase_scan_line();
         ppu.line_dots %= 456;
         if (ppu.current_scan_line == 0) {
+            ppu.current_window_line = 0;
+            window_enabled = false;
+            initialize_sprite_store();
             set_ppu_mode(2);
         }
     }
@@ -192,7 +216,10 @@ static void increase_scan_line(void) {
     ppu.current_scan_line += 1;
     ppu.current_scan_line %= SCAN_LINES;
     set_memory_byte(LCDY, ppu.current_scan_line);
-
+    if (ppu.window_rendered == true) {
+        ppu.current_window_line++;
+        ppu.window_rendered = false;
+    }
     return;
 }
 
@@ -224,4 +251,5 @@ static void set_ppu_mode(uint8_t mode) {
 uint8_t get_x_pixel(void) { return ppu.line_x; }
 
 uint8_t get_y_pixel(void) { return ppu.current_scan_line; }
+uint8_t get_window_line(void) { return ppu.current_window_line; }
 void end_ppu(void) { close_ppu = true; }

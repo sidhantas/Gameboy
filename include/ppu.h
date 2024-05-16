@@ -3,11 +3,13 @@
 #include <stdint.h>
 
 typedef struct PPU {
-    uint16_t available_dots;
+    uint32_t available_dots;
     uint64_t consumed_dots;
     uint16_t line_dots;
     uint8_t line_x;
     uint8_t current_scan_line;
+    uint8_t current_window_line;
+    bool window_rendered;
     uint8_t mode;
     bool ready_to_render;
 } PPU;
@@ -22,4 +24,5 @@ void *start_ppu(void *arg);
 void render_loop(void);
 uint8_t get_x_pixel(void);
 uint8_t get_y_pixel(void);
+uint8_t get_window_line(void);
 void end_ppu(void);

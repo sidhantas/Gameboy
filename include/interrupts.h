@@ -29,4 +29,5 @@ void trigger_stat_source(stat_interrupts_t stat_source);
 void clear_stat_source(stat_interrupts_t stat_source);
 
 uint32_t *get_serviced_interrupts(void);
+uint32_t *get_serviced_stat_interrupts(void);
 uint8_t get_stat_line(void);

@@ -70,3 +70,4 @@ MBC initialize_mbc1(CartridgeHeader ch);
 
 uint8_t get_banking_mode(void);
 uint8_t get_ram_bank(void);
+uint8_t update_stat_register(uint8_t byte);

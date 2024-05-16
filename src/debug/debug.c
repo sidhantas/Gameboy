@@ -237,19 +237,21 @@ static void print_ppu_window(WINDOW *ppu_win) {
 
     mvwprintwhcenter(ppu_win, 0, 0, WIDTH, "PPU");
     mvwprintwhcenter(ppu_win, 1, 0, WIDTH / 2, "WX: ");
-    mvwprintwhcenter(ppu_win, 1, WIDTH / 2, WIDTH / 2, "%d", get_memory_byte(WX));
+    mvwprintwhcenter(ppu_win, 1, WIDTH / 2, WIDTH / 2, "%3d", get_memory_byte(WX));
     mvwprintwhcenter(ppu_win, 2, 0, WIDTH / 2, "WY: ");
-    mvwprintwhcenter(ppu_win, 2, WIDTH / 2, WIDTH / 2, "%d", get_memory_byte(WY));
+    mvwprintwhcenter(ppu_win, 2, WIDTH / 2, WIDTH / 2, "%3d", get_memory_byte(WY));
 
     mvwprintwhcenter(ppu_win, 3, 0, WIDTH / 2, "SCX: ");
-    mvwprintwhcenter(ppu_win, 3, WIDTH / 2, WIDTH / 2, "%d", get_memory_byte(SCX));
+    mvwprintwhcenter(ppu_win, 3, WIDTH / 2, WIDTH / 2, "%3d", get_memory_byte(SCX));
     mvwprintwhcenter(ppu_win, 4, 0, WIDTH / 2, "SCY: ");
-    mvwprintwhcenter(ppu_win, 4, WIDTH / 2, WIDTH / 2, "%d", get_memory_byte(SCY));
+    mvwprintwhcenter(ppu_win, 4, WIDTH / 2, WIDTH / 2, "%3d", get_memory_byte(SCY));
 
     mvwprintwhcenter(ppu_win, 5, 0, WIDTH / 2, "X pixel: ");
     mvwprintwhcenter(ppu_win, 5, WIDTH / 2, WIDTH / 2, "%3d", get_x_pixel());
     mvwprintwhcenter(ppu_win, 6, 0, WIDTH / 2, "Y pixel: ");
     mvwprintwhcenter(ppu_win, 6, WIDTH / 2, WIDTH / 2, "%3d", get_y_pixel());
+    mvwprintwhcenter(ppu_win, 7, 0, WIDTH / 2, "Window Line: ");
+    mvwprintwhcenter(ppu_win, 7, WIDTH / 2, WIDTH / 2, "%3d", get_window_line());
 
 
     uint32_t *serviced_interrupts = get_serviced_interrupts();
@@ -266,6 +268,16 @@ static void print_ppu_window(WINDOW *ppu_win) {
     mvwprintwhcenter(ppu_win, 12, WIDTH / 2, WIDTH / 2, "0x%0.2x", get_stat_line());
     mvwprintwhcenter(ppu_win, 13, 0, WIDTH / 2, "STAT REG");
     mvwprintwhcenter(ppu_win, 13, WIDTH / 2, WIDTH / 2, "0x%0.2x", get_memory_byte(STAT));
+    
+    uint32_t *serviced_stat_interrupts = get_serviced_stat_interrupts();
+    mvwprintwhcenter(ppu_win, 14, 0, WIDTH / 2, "MODE 0 ");
+    mvwprintwhcenter(ppu_win, 14, WIDTH / 2, WIDTH / 2, "%10d", serviced_stat_interrupts[0]);
+    mvwprintwhcenter(ppu_win, 15, 0, WIDTH / 2, "MODE 1 ");
+    mvwprintwhcenter(ppu_win, 15, WIDTH / 2, WIDTH / 2, "%10d", serviced_stat_interrupts[1]);
+    mvwprintwhcenter(ppu_win, 16, 0, WIDTH / 2, "MODE 2 ");
+    mvwprintwhcenter(ppu_win, 16, WIDTH / 2, WIDTH / 2, "%10d", serviced_stat_interrupts[2]);
+    mvwprintwhcenter(ppu_win, 17, 0, WIDTH / 2, "LYC ");
+    mvwprintwhcenter(ppu_win, 17, WIDTH / 2, WIDTH / 2, "%10d", serviced_stat_interrupts[3]);
 
 
     wrefresh(ppu_win);

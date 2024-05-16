@@ -242,7 +242,7 @@ static void handle_io_write(uint16_t address, uint8_t byte) {
                 return;
             }
         case DIV: io_ram[address_offset] = 0; return;
-        case STAT: io_ram[address_offset] |= ((byte) & 0x78); return;
+        case STAT: io_ram[address_offset] |= update_stat_register(byte); return;
         case TIMA: io_ram[address_offset] += 1; return;
         case DMA:
             io_ram[address_offset] = byte;
