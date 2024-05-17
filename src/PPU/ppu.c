@@ -1,6 +1,5 @@
 #include "ppu.h"
 #include "cpu.h"
-#include "graphics.h"
 #include "hardware.h"
 #include "interrupts.h"
 #include "memory.h"
@@ -72,6 +71,9 @@ bool (*get_current_mode_func(void))(void) {
 
 void run_ppu(uint16_t dots) {
     bool executed;
+    if (!get_bit(get_memory_byte(LCDC), 7)) {
+        return;
+    }
     ppu.available_dots += dots;
     do {
         uint8_t lcd_status = get_memory_byte(STAT);
@@ -133,21 +135,19 @@ static bool execute_mode_3(void) {
         return false;
     }
     uint8_t pixel = 0;
-    if (get_bit(get_memory_byte(LCDC), 7)) {
-        if (get_bit(get_memory_byte(LCDC), 0)) {
-            pixel = get_bg_pixel(ppu.line_x, ppu.current_scan_line);
-            const uint8_t wx = get_memory_byte(WX);
-            if (get_bit(get_memory_byte(LCDC), 5) && ppu.line_x >= (wx - 7) &&
-                window_enabled) {
-                pixel = get_win_pixel(ppu.line_x, ppu.current_window_line);
-                ppu.window_rendered = true;
-            }
+    if (get_bit(get_memory_byte(LCDC), 0)) {
+        pixel = get_bg_pixel(ppu.line_x, ppu.current_scan_line);
+        const uint8_t wx = get_memory_byte(WX);
+        if (get_bit(get_memory_byte(LCDC), 5) && ppu.line_x >= (wx - 7) &&
+            window_enabled) {
+            pixel = get_win_pixel(ppu.line_x, ppu.current_window_line);
+            ppu.window_rendered = true;
         }
+    }
 
-        const uint8_t object_pixel = get_obj_pixel(ppu.line_x);
-        if (object_pixel != TRANSPARENT) {
-            pixel = object_pixel;
-        }
+    const uint8_t object_pixel = get_obj_pixel(ppu.line_x);
+    if (object_pixel != TRANSPARENT) {
+        pixel = object_pixel;
     }
 
     pthread_mutex_lock(&display_buffer_mutex);

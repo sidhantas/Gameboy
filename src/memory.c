@@ -1,8 +1,9 @@
 #include "memory.h"
-#include <inttypes.h>
 #include "graphics.h"
 #include "hardware.h"
+#include "ppu.h"
 #include "utils.h"
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -114,7 +115,8 @@ void load_rom(FILE *rom) {
     CartridgeHeader ch = decode_cartridge_header(rom);
     initialize_memory(ch);
     uint32_t hash = mbc.load_rom(rom);
-    snprintf(save_location_filename, MAX_SAVE_DATA_NAME_SIZE - 1, "%s-%"PRIu32, ch.title, hash);
+    snprintf(save_location_filename, MAX_SAVE_DATA_NAME_SIZE - 1, "%s-%" PRIu32,
+             ch.title, hash);
     save_location_filename[MAX_SAVE_DATA_NAME_SIZE - 1] = '\0';
     load_save_data(save_location_filename);
     map_dmg();
@@ -249,6 +251,19 @@ static void handle_io_write(uint16_t address, uint8_t byte) {
         case DIV: io_ram[address_offset] = 0; return;
         case STAT: io_ram[address_offset] |= update_stat_register(byte); return;
         case TIMA: io_ram[address_offset] += 1; return;
+        case LCDC: {
+            uint8_t old_lcdc = io_ram[address_offset];
+            if (get_bit(old_lcdc, 7) == 1 && get_bit(byte, 7) == 0) {
+                ppu.mode = 0;
+                ppu.current_scan_line = 0;
+                set_memory_byte(LCDY, 0);
+                ppu.line_x = 0;
+                ppu.current_window_line = 0;
+                ppu.window_rendered = false;
+                ppu.line_dots = 0;
+            }
+            io_ram[address_offset] = byte;
+        }
         case DMA:
             io_ram[address_offset] = byte;
             set_oam_dma_transfer(true);
