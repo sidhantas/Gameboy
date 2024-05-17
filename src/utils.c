@@ -12,8 +12,8 @@ void check_alloc(void *allocated_block, const char *msg_on_failure) {
     }
 }
 
-void mvwprintwhcenter(WINDOW *win, int row, int row_start,
-                      int width, const char *str, ...) {
+void mvwprintwhcenter(WINDOW *win, int row, int row_start, int width,
+                      const char *str, ...) {
     char formatted_string[UINT8_MAX];
     va_list args;
     va_start(args, str);
@@ -102,3 +102,25 @@ struct timeval time_diff(struct timeval start, struct timeval end) {
 }
 
 int8_t uint8_to_int8(uint8_t n) { return *(int8_t *)&n; }
+
+
+uint32_t crc32b(const uint8_t *str, uint32_t *current_hash) {
+    // Source: https://stackoverflow.com/a/21001712
+    unsigned int byte, crc, mask;
+    int i = 0, j;
+    if (current_hash) {
+        crc = *current_hash;
+    } else {
+        crc = 0xFFFFFFFF;
+    }
+    while (str[i] != 0) {
+        byte = str[i];
+        crc = crc ^ byte;
+        for (j = 7; j >= 0; j--) {
+            mask = -(crc & 1);
+            crc = (crc >> 1) ^ (0xEDB88320 & mask);
+        }
+        i = i + 1;
+    }
+    return ~crc;
+}

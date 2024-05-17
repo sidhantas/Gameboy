@@ -1,4 +1,5 @@
 #include "memory.h"
+#include <inttypes.h>
 #include "graphics.h"
 #include "hardware.h"
 #include "utils.h"
@@ -7,11 +8,12 @@
 
 static MBC mbc;
 static bool dmg_mapped = false;
-static uint8_t *dmg;
-static uint8_t *vram;
-static uint8_t *wram;
-static uint8_t *oam;
-static uint8_t *io_ram;
+static uint8_t *dmg = NULL;
+static uint8_t *vram = NULL;
+static uint8_t *wram = NULL;
+static uint8_t *oam = NULL;
+static uint8_t *io_ram = NULL;
+static char save_location_filename[MAX_SAVE_DATA_NAME_SIZE];
 
 static CartridgeHeader decode_cartridge_header(FILE *rom);
 
@@ -111,8 +113,10 @@ void unmap_dmg(void) {
 void load_rom(FILE *rom) {
     CartridgeHeader ch = decode_cartridge_header(rom);
     initialize_memory(ch);
-    mbc.load_rom(rom);
-    load_save_data();
+    uint32_t hash = mbc.load_rom(rom);
+    snprintf(save_location_filename, MAX_SAVE_DATA_NAME_SIZE - 1, "%s-%"PRIu32, ch.title, hash);
+    save_location_filename[MAX_SAVE_DATA_NAME_SIZE - 1] = '\0';
+    load_save_data(save_location_filename);
     map_dmg();
 }
 
@@ -276,14 +280,18 @@ void set_memory_byte(uint16_t address, uint8_t byte) {
 }
 
 void save_data(void) {
-    FILE *save_location = fopen("save.data", "w");
-    mbc.save_data(save_location);
+    FILE *save_location = fopen(save_location_filename, "w");
+    if (mbc.save_data) {
+        mbc.save_data(save_location);
+    }
 }
 
-void load_save_data(void) {
-    FILE *save_location = fopen("save.data", "r");
+void load_save_data(char *save_location_file_name) {
+    FILE *save_location = fopen(save_location_file_name, "r");
     if (!save_location) {
         return;
     }
-    mbc.load_save_data(save_location);
+    if (mbc.load_save_data) {
+        mbc.load_save_data(save_location);
+    }
 }

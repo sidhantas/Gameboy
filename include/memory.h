@@ -2,17 +2,25 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#define MAX_SAVE_DATA_NAME_SIZE 40
+#define MAX_TITLE_SIZE 16
+#define ROM_BANK_SIZE 0x4000
+#define RAM_BANK_SIZE 0x2000
+
+typedef struct {
+  char title[MAX_TITLE_SIZE + 1];
+  uint8_t cartridge_type;
+  uint16_t rom_banks;
+  uint8_t ram_banks;
+} CartridgeHeader;
 typedef struct {
   void (*set_memory_byte)(uint16_t address, uint8_t byte);
   uint8_t (*get_memory_byte)(uint16_t address);
-  void (*load_rom)(FILE *rom);
+  uint32_t (*load_rom)(FILE *rom);
   void (*save_data)(FILE *save_location);
   void (*load_save_data)(FILE *save_location);
 } MBC;
 
-#define MAX_TITLE_SIZE 16
-#define ROM_BANK_SIZE 0x4000
-#define RAM_BANK_SIZE 0x2000
 
 enum MEMORY_MAP {
   ROM_BANK_00_BASE = 0x0000,
@@ -58,12 +66,6 @@ enum IO_REGISTERS {
   IE = 0xFFFF
 };
 
-typedef struct {
-  char title[MAX_TITLE_SIZE + 1];
-  uint8_t cartridge_type;
-  uint16_t rom_banks;
-  uint8_t ram_banks;
-} CartridgeHeader;
 
 void delete_mbc(MBC **mbc);
 MBC initialize_mbc0(void);
@@ -74,4 +76,4 @@ uint8_t get_banking_mode(void);
 uint8_t get_ram_bank(void);
 uint8_t update_stat_register(uint8_t byte);
 void save_data(void);
-void load_save_data(void);
+void load_save_data(char *save_location_file_name);

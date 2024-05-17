@@ -1,4 +1,5 @@
 #include "memory.h"
+#include "utils.h"
 #include <stdlib.h>
 
 static uint8_t *rom;
@@ -6,7 +7,7 @@ static uint8_t *ex_ram;
 
 static uint8_t mbc0_get_memory_byte(uint16_t address);
 static void mbc0_set_memory_byte(uint16_t address, uint8_t byte);
-static void mbc0_load_rom(FILE *rom);
+static uint32_t mbc0_load_rom(FILE *rom);
 
 MBC initialize_mbc0(void) {
     MBC mbc0;
@@ -27,8 +28,10 @@ MBC initialize_mbc0(void) {
     return mbc0;
 }
 
-static void mbc0_load_rom(FILE *cartridge) {
+static uint32_t mbc0_load_rom(FILE *cartridge) {
     fread(rom, 1, ROM_BANK_SIZE * 2, cartridge);
+    uint32_t hash = crc32b(rom, NULL);
+    return hash;
 }
 
 static uint8_t mbc0_get_memory_byte(uint16_t address) {

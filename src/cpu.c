@@ -45,6 +45,9 @@ void *start_cpu(void *arg) {
         if (close_cpu) {
             break;
         }
+        if (get_is_implemented() == false) {
+            step_mode = true;
+        }
         if (step_mode && instructions_left <= 0) {
             ppu.ready_to_render = true;
             continue;

@@ -24,7 +24,7 @@ static uint8_t bank_mode_select;
 
 static uint8_t mbc1_get_memory_byte(uint16_t address);
 static void mbc1_set_memory_byte(uint16_t address, uint8_t byte);
-static void mbc1_load_rom(FILE *rom);
+static uint32_t mbc1_load_rom(FILE *rom);
 static void mbc1_load_save_data(FILE *save_location);
 static void mbc1_save_data(FILE *save_location);
 
@@ -35,7 +35,6 @@ MBC initialize_mbc1(CartridgeHeader ch) {
     mbc1.load_rom = &mbc1_load_rom;
     mbc1.save_data = &mbc1_save_data;
     mbc1.load_save_data = &mbc1_load_save_data;
-    mbc1.load_rom = &mbc1_load_rom;
 
     max_rom_banks = ch.rom_banks & 0xFF;
     max_ram_banks = ch.ram_banks;
@@ -149,13 +148,16 @@ static void load_rom_bank(uint8_t rom_bank_num, FILE *rom) {
     fread(rom_banks[rom_bank_num], 1, ROM_BANK_SIZE, rom);
 }
 
-static void mbc1_load_rom(FILE *rom) {
+static uint32_t mbc1_load_rom(FILE *rom) {
     // load address 0x000 - 0x4000
     // load all other rom banks with remaining data from rom
+    uint32_t hash = 0;
     fseek(rom, 0, SEEK_SET);
     for (uint8_t i = 0; i < max_rom_banks; i++) {
         load_rom_bank(i, rom);
+        hash = crc32b(rom_banks[i], hash ? &hash : NULL);
     }
+    return hash;
 }
 
 static void mbc1_save_data(FILE *save_location) {
