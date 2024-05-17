@@ -147,7 +147,9 @@ static bool execute_mode_3(void) {
 
     const uint8_t object_pixel = get_obj_pixel(ppu.line_x);
     if (object_pixel != TRANSPARENT) {
-        pixel = object_pixel;
+        if (!get_bit(object_pixel, 7) || pixel == 0) {
+            pixel = object_pixel & 0x03;
+        }
     }
 
     pthread_mutex_lock(&display_buffer_mutex);

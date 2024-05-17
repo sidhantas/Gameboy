@@ -53,8 +53,9 @@ uint8_t get_obj_pixel(uint8_t x_pixel) {
     if (!get_bit(get_memory_byte(LCDC), 1)) {
         return TRANSPARENT;
     }
-    for (uint8_t i = 0; i < get_sprite_store()->length; i++) {
-        struct ObjectRowData obj = get_sprite_store()->selected_objects[i];
+    SpriteStore *sprite_store = get_sprite_store();
+    for (uint8_t i = 0; i < sprite_store->length; i++) {
+        struct ObjectRowData obj = sprite_store->selected_objects[i];
         const uint8_t x_start = obj.x_start;
         if (x_start - 8 <= x_pixel && x_pixel < x_start) {
             uint16_t tile_start = obj.tile_start;
@@ -77,7 +78,7 @@ uint8_t get_obj_pixel(uint8_t x_pixel) {
             enum COLOR_VALUES color =
                 get_obj_pixel_color(color_id, obj_palette);
             if (color != TRANSPARENT) {
-                return (uint8_t)color;
+                return (uint8_t)(color | (uint8_t)(obj.priority << 7));
             }
         }
     }

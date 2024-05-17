@@ -89,6 +89,8 @@ void add_sprite(uint16_t object_no) {
     sprite_store.selected_objects[sprite_store.length].y_flipped = y_flipped;
     sprite_store.selected_objects[sprite_store.length].DMG_palette =
         get_bit(obj.attribute_flags, 4);
+    sprite_store.selected_objects[sprite_store.length].priority =
+        get_bit(obj.attribute_flags, 7);
     sprite_store.length++;
     return;
 }
