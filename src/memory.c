@@ -54,6 +54,28 @@ void initialize_memory(CartridgeHeader ch) {
     }
 }
 
+void destroy_memory(void) {
+    if (vram) {
+        free(vram);
+        vram = NULL;
+    }
+    if (wram) {
+        free(wram);
+        wram = NULL;
+    }
+    if (oam) {
+        free(oam);
+        oam = NULL;
+    }
+    if (io_ram) {
+        free(io_ram);
+        io_ram = NULL;
+    }
+    if (mbc.destroy_memory) {
+        mbc.destroy_memory();
+    }
+}
+
 static CartridgeHeader decode_cartridge_header(FILE *rom) {
     uint8_t buffer[0x50];
     fseek(rom, 0x100, SEEK_SET);
@@ -108,7 +130,10 @@ void map_dmg(void) {
 
 void unmap_dmg(void) {
     dmg_mapped = false;
-    free(dmg);
+    if (dmg) {
+        free(dmg);
+        dmg = NULL;
+    }
 }
 
 void load_rom(FILE *rom) {

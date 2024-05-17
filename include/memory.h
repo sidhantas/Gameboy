@@ -19,6 +19,7 @@ typedef struct {
   uint32_t (*load_rom)(FILE *rom);
   void (*save_data)(FILE *save_location);
   void (*load_save_data)(FILE *save_location);
+  void (*destroy_memory)(void);
 } MBC;
 
 
@@ -77,3 +78,4 @@ uint8_t get_ram_bank(void);
 uint8_t update_stat_register(uint8_t byte);
 void save_data(void);
 void load_save_data(char *save_location_file_name);
+void destroy_memory(void);

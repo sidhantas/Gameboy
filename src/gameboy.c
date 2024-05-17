@@ -16,11 +16,10 @@
 
 uint64_t instructions_left = 0;
 void main_loop(void);
+void cleanup(void);
 
 int main(int argc, char **argv) {
     pthread_t cpu_id;
-    pthread_t ppu_id;
-
     FILE *game;
     int long_index = 0;
     int opt = 0;
@@ -35,20 +34,28 @@ int main(int argc, char **argv) {
                               &long_index)) != -1) {
         switch (opt) {
             case 'g':
+                if (!optarg) {
+                    fprintf(stderr, "Must provide ROM path\n");
+                    exit(1);
+                }
                 game = fopen(optarg, "r");
+                if (!game) {
+                    fprintf(stderr, "ROM does not exist\n");
+                    exit(1);
+                }
                 load_rom(game);
                 fclose(game);
                 break;
             default: exit(1); break;
         }
     }
+    atexit(&cleanup);
 
 #ifdef ENABLE_DEBUGGER
     pthread_t debugger_id;
     pthread_create(&debugger_id, NULL, initialize_debugger, NULL);
 #endif
     pthread_create(&cpu_id, NULL, start_cpu, NULL);
-    //pthread_create(&ppu_id, NULL, start_ppu, NULL);
     main_loop();
     close_window();
 
@@ -59,9 +66,13 @@ int main(int argc, char **argv) {
     end_ppu();
     end_cpu();
     pthread_join(cpu_id, NULL);
-    //pthread_join(ppu_id, NULL);
-
+    cleanup();
     return 0;
+}
+
+void cleanup(void) {
+    destroy_memory();
+    destroy_hardware();
 }
 
 void main_loop(void) {
@@ -72,7 +83,8 @@ void main_loop(void) {
             switch (e.type) {
                 case SDL_QUIT:
                     save_data();
-                    end_main_loop = true; break;
+                    end_main_loop = true;
+                    break;
                 case SDL_KEYDOWN:
                     switch (e.key.keysym.scancode) {
                         case SDL_SCANCODE_N: instructions_left += 1; break;

@@ -27,6 +27,7 @@ static void mbc1_set_memory_byte(uint16_t address, uint8_t byte);
 static uint32_t mbc1_load_rom(FILE *rom);
 static void mbc1_load_save_data(FILE *save_location);
 static void mbc1_save_data(FILE *save_location);
+static void destroy_mbc_1(void);
 
 MBC initialize_mbc1(CartridgeHeader ch) {
     MBC mbc1;
@@ -35,6 +36,7 @@ MBC initialize_mbc1(CartridgeHeader ch) {
     mbc1.load_rom = &mbc1_load_rom;
     mbc1.save_data = &mbc1_save_data;
     mbc1.load_save_data = &mbc1_load_save_data;
+    mbc1.destroy_memory = &destroy_mbc_1;
 
     max_rom_banks = ch.rom_banks & 0xFF;
     max_ram_banks = ch.ram_banks;
@@ -74,6 +76,26 @@ MBC initialize_mbc1(CartridgeHeader ch) {
     bank_register_2 = 0;
     bank_mode_select = 0;
     return mbc1;
+}
+
+static void destroy_mbc_1(void) {
+    for (uint8_t i = 0; i < max_rom_banks; i++) {
+        if (rom_banks[i]) {
+            free(rom_banks[i]);
+            rom_banks[i] = NULL;
+        }
+    }
+    free(rom_banks);
+    rom_banks = NULL;
+
+    for (uint8_t i = 0; i < max_ram_banks; i++) {
+        if (ram_banks[i]) {
+            free(ram_banks[i]);
+            ram_banks[i] = NULL;
+        }
+    }
+    free(ram_banks);
+    ram_banks = NULL;
 }
 
 static uint8_t get_rom_bank_x0(void) {
@@ -168,6 +190,9 @@ static void mbc1_save_data(FILE *save_location) {
 }
 
 static void mbc1_load_save_data(FILE *save_location) {
+    if (!save_location) {
+        return;
+    }
     for (uint16_t i = 0; i < max_ram_banks; i++) {
         fread(ram_banks[i], 1, RAM_BANK_SIZE, save_location);
     }

@@ -43,6 +43,14 @@ void initialize_hardware(void) {
 #endif
 }
 
+void destroy_hardware(void) {
+    if (hardware.display_buffer) {
+        free(hardware.display_buffer);
+        hardware.display_buffer = NULL;
+    }
+    return;
+}
+
 
 uint8_t get_flag(flags_t flag) {
     const uint8_t FLAGS_REGISTER = hardware.registers[F];
