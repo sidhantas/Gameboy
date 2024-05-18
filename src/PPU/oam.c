@@ -16,16 +16,18 @@ void initialize_sprite_store(void) {
 SpriteStore *get_sprite_store(void) { return &sprite_store; }
 
 clock_cycles_t try_oam_dma_transfer(void) {
+    static uint8_t current_oam_byte = 0;
+    if (current_oam_byte == OAM_SIZE) {
+        current_oam_byte %= OAM_SIZE;
+        set_oam_dma_transfer(false);
+    }
     if (!get_oam_dma_transfer()) {
         return 0;
     }
     uint16_t start = (uint16_t)(get_memory_byte(DMA) << 8);
-    for (uint16_t i = 0; i < OAM_SIZE; i++) {
-        privileged_set_memory_byte(OAM_START + i, get_memory_byte(start + i));
-    }
-
-    set_oam_dma_transfer(false);
-    return 160;
+    privileged_set_memory_byte(OAM_START + current_oam_byte, get_memory_byte(start + current_oam_byte));
+    current_oam_byte++;
+    return FOUR_CLOCKS;
 }
 
 typedef struct Object {

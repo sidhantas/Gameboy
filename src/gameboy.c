@@ -66,7 +66,6 @@ int main(int argc, char **argv) {
     end_ppu();
     end_cpu();
     pthread_join(cpu_id, NULL);
-    cleanup();
     return 0;
 }
 

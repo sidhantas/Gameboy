@@ -62,9 +62,13 @@ void *start_cpu(void *arg) {
 
         pthread_mutex_lock(&dots_mutex);
         if (!is_halted()) {
-            clock_cycles_t (*func)(uint8_t *) = fetch_instruction();
-            clocks += execute_instruction(func);
-            clocks += try_oam_dma_transfer();
+            clock_cycles_t clocks_from_dma_transfer = try_oam_dma_transfer();
+            if(!clocks_from_dma_transfer) {
+                clock_cycles_t (*func)(uint8_t *) = fetch_instruction();
+                clocks += execute_instruction(func);
+            } else {
+                clocks += clocks_from_dma_transfer;
+            }
         } else {
             clocks += 4;
         }

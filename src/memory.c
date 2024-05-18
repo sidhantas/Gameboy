@@ -288,6 +288,7 @@ static void handle_io_write(uint16_t address, uint8_t byte) {
                 ppu.line_dots = 0;
             }
             io_ram[address_offset] = byte;
+            return;
         }
         case DMA:
             io_ram[address_offset] = byte;
