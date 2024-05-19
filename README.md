@@ -28,6 +28,7 @@ If you get an error "No dmg present" recompile with `CFLAGS += -D SKIP_BOOT` in 
 
 * Any games that don't use "No MBC", MBC1, or MBC3 will not work. However, it is fairly trivial to add an additional MBC if I find a game that I want to play with an unimplemented MBC (Copy MBC1 and refer to [this page](https://gbdev.io/pandocs/MBCs.html))
 * STOP instruction has not been implemented mostly because I can't find a game that uses it anywhere
+* Audio (I am not doing this anytime soon lol)
 
 ## Features that could be greatly improved
 * Rendering is insanely slow because I'm refetching the tile for each pixel even if the pixel is in the same tile as the previous one and for every pixel I'm searching through all objects that could possibly exist
@@ -36,6 +37,7 @@ If you get an error "No dmg present" recompile with `CFLAGS += -D SKIP_BOOT` in 
 * Timer circuit is nowhere near perfect
 * Setting and resetting flags is slow because I'm making a separate function call for each one (up to 4) per instruction, could probably get it down to one function
 * There are functions in place to make the PPU run on it's own thread. However, when doing this I found that it lagged behind too many clock cycles for many games and didn't work and adding locks/condvars for each mode would slow it down too much. Updating the frame in the actual window is done through the main thread, however
+* SKIP_BOOT does not work on every game for some reason that I can't figure out so it's best to just have the bootrom
 
 ## Tested Games
 * Donkey Kong World
