@@ -20,6 +20,9 @@ In terminal run:
 ```
 If you get an error "No dmg present" recompile with `CFLAGS += -D SKIP_BOOT` in Makefile or get a DMG bootrom that you "legally" got from your original Nintendo Gameboy (or go [here](https://gbdev.gg8.se/files/roms/bootroms/) and download "dmg_boot.bin") and name it "dmg.bin" and put it in the top level directory
 
+### Saves
+* Saves are made in a "save" directory in the top of the project and they have .sav extensions
+* Saving is done when quitting the emulator
 
 ## Unimplemented features
 
@@ -33,3 +36,11 @@ If you get an error "No dmg present" recompile with `CFLAGS += -D SKIP_BOOT` in 
 * Timer circuit is nowhere near perfect
 * Setting and resetting flags is slow because I'm making a separate function call for each one (up to 4) per instruction, could probably get it down to one function
 * There are functions in place to make the PPU run on it's own thread. However, when doing this I found that it lagged behind too many clock cycles for many games and didn't work and adding locks/condvars for each mode would slow it down too much. Updating the frame in the actual window is done through the main thread, however
+
+## Tested Games
+* Donkey Kong World
+* Tetris
+* Super Mario Land
+* Super Mario Land 2
+* Pokemon Red
+* Legend of Zelda - Link's Awakening
