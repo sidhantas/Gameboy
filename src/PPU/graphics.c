@@ -6,7 +6,7 @@
 #include "decoder.h"
 #include "hardware.h"
 #include "ppu.h"
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <ncurses.h>
 #include <unistd.h>
 

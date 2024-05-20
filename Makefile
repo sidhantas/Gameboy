@@ -1,8 +1,8 @@
 CC=clang
-CFLAGS=-Wall -g -Wextra -pedantic -Wconversion -std=c1x  -D_THREAD_SAFE -I/opt/homebrew/include -I/opt/homebrew/include/SDL2 -I./include 
+CFLAGS=-Wall -g -Wextra -pedantic -Wconversion -std=c1x -I./include $$(sdl2-config --cflags)
 #CFLAGS += -D SKIP_BOOT 
-CFLAGS += -D ENABLE_DEBUGGER
-LDFLAGS= -lncurses -pthread  -L/opt/homebrew/lib -lSDL2
+LDFLAGS= -pthread $$(sdl2-config --libs) $$(pkg-config --libs ncurses)
+#CFLAGS += -D ENABLE_DEBUGGER
 SRC_DIR := src
 OBJ_DIR := obj
 BIN_DIR := .
@@ -15,7 +15,6 @@ DIRECTORIES := $(sort $(dir $(OBJ_FILES)))
 .PHONY: all
 
 all: $(EXE)
-
 
 run: 
 	make all && ./$(EXE) -g Tetris.gb

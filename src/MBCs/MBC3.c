@@ -6,6 +6,7 @@
 #include <string.h>
 #include <sys/_types/_pid_t.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #define MAX_ROM_BANKS 0x80
 
