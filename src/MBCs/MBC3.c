@@ -51,7 +51,6 @@ MBC initialize_mbc3(CartridgeHeader ch) {
 
     max_rom_banks = ch.rom_banks & 0xFF;
     max_ram_banks = ch.ram_banks;
-    printf("Max Ram Banks: %d", max_ram_banks);
     rom_banks = (uint8_t **)malloc(sizeof(uint8_t *) * max_rom_banks);
     if (!rom_banks) {
         fprintf(stderr, "Unable to allocate memory for ROM Banks");

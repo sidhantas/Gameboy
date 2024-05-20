@@ -87,8 +87,9 @@ void main_loop(void) {
                         case SDL_SCANCODE_N: instructions_left += 1; break;
                         case SDL_SCANCODE_M: instructions_left += 100; break;
                         case SDL_SCANCODE_B: instructions_left += 1000; break;
+#ifdef ENABLE_DEBUGGER
                         case SDL_SCANCODE_O: toggle_step_mode(); break;
-                        case SDL_SCANCODE_G: tracer_dump(&t); break;
+#endif
                         case SDL_SCANCODE_W: reset_joypad_state(UP); break;
                         case SDL_SCANCODE_A: reset_joypad_state(LEFT); break;
                         case SDL_SCANCODE_S: reset_joypad_state(DOWN); break;

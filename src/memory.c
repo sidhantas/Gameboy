@@ -61,6 +61,10 @@ void initialize_memory(CartridgeHeader ch) {
                     ch.cartridge_type);
             exit(1);
     }
+
+#ifdef SKIP_BOOT
+    privileged_set_memory_byte(LCDC, 0x80);
+#endif
 }
 
 void destroy_memory(void) {

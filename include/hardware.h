@@ -1,5 +1,4 @@
 #pragma once
-#include "instruction_tracer.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -95,7 +94,6 @@ typedef enum JoypadButtons {
   START
 } joypad_t;
 
-extern Tracer t;
 
 void initialize_hardware(void);
 void destroy_hardware(void);
@@ -139,7 +137,6 @@ uint8_t get_ime_flag(void);
 void set_ime_flag(bool val);
 uint64_t get_instruction_count(void);
 void clear_instruction(void);
-void dump_tracer(void);
 void stack_push_u16(uint16_t val);
 uint16_t stack_pop_u16(void);
 uint8_t stack_pop_u8(void);

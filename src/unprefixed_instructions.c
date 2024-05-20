@@ -972,11 +972,8 @@ clock_cycles_t CALL_C_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
         return TWENTY_FOUR_CLOCKS;
     }
 
-    return TWELVE_CLOCKS;
-
     set_decoded_instruction("CALL C, 0x%X", jump_addr);
-
-    return -1;
+    return TWELVE_CLOCKS;
 }
 
 clock_cycles_t SBC_A_IMM(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {

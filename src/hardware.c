@@ -1,5 +1,4 @@
 #include "hardware.h"
-#include "interrupts.h"
 #include "utils.h"
 #include <stdarg.h>
 #include <stdint.h>
@@ -8,7 +7,6 @@
 #include <string.h>
 
 static Hardware hardware;
-Tracer t;
 
 #define TRACER_SIZE 50
 
@@ -212,8 +210,6 @@ bool get_oam_dma_transfer(void) { return hardware.oam_dma_started; }
 void set_oam_dma_transfer(bool oam_dma_transfer_is_enabled) {
     hardware.oam_dma_started = oam_dma_transfer_is_enabled;
 }
-
-void dump_tracer(void) { tracer_dump(&t); }
 
 void set_halted(bool halt_state) { hardware.is_halted = halt_state; }
 
