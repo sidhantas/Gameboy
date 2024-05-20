@@ -66,6 +66,7 @@ int main(int argc, char **argv) {
     end_ppu();
     end_cpu();
     pthread_join(cpu_id, NULL);
+    save_data();
     return 0;
 }
 
@@ -81,7 +82,6 @@ void main_loop(void) {
         while (SDL_PollEvent(&e)) {
             switch (e.type) {
                 case SDL_QUIT:
-                    save_data();
                     end_main_loop = true;
                     break;
                 case SDL_KEYDOWN:

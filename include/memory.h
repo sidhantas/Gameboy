@@ -22,6 +22,13 @@ typedef struct {
   void (*destroy_memory)(void);
 } MBC;
 
+struct RTC {
+  uint8_t seconds;
+  uint8_t minutes;
+  uint8_t hours;
+  uint8_t DL;
+  uint8_t DH;
+};
 
 enum MEMORY_MAP {
   ROM_BANK_00_BASE = 0x0000,
@@ -67,15 +74,15 @@ enum IO_REGISTERS {
   IE = 0xFFFF
 };
 
-
 void delete_mbc(MBC **mbc);
 MBC initialize_mbc0(void);
 MBC initialize_mbc1(CartridgeHeader ch);
+MBC initialize_mbc3(CartridgeHeader ch);
 
-
-uint8_t get_banking_mode(void);
-uint8_t get_ram_bank(void);
 uint8_t update_stat_register(uint8_t byte);
 void save_data(void);
 void load_save_data(char *save_location_file_name);
 void destroy_memory(void);
+struct RTC *get_rtc(void);
+struct RTC *get_current_rtc(void);
+struct RTC *get_latched_rtc(void);

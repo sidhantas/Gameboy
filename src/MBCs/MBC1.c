@@ -114,7 +114,7 @@ static uint8_t get_rom_bank_01(void) {
     return selected_rom_bank;
 }
 
-uint8_t get_ram_bank(void) {
+static uint8_t get_ram_bank(void) {
     if (bank_mode_select == 0 || is_large_cartridge || max_ram_banks == 1) {
         return 0;
     }
@@ -198,4 +198,3 @@ static void mbc1_load_save_data(FILE *save_location) {
     }
 }
 
-uint8_t get_banking_mode(void) { return bank_mode_select; }

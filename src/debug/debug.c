@@ -306,12 +306,13 @@ static void print_cpu_window(WINDOW *cpu_win) {
  //   mvwprintwhcenter(cpu_win, 16, 0, WIDTH, "Previous Decode:");
  //   mvwprintwhcenter(cpu_win, 17, 0, WIDTH, "%-22s", "");
  //   mvwprintwhcenter(cpu_win, 17, 0, WIDTH, "%s", get_previous_decoded_instruction());
-    //mvwprintwhcenter(cpu_win, 16, 0, WIDTH, "Requested interrupts");
-    //mvwprintwhcenter(cpu_win, 17, 0, WIDTH, "0x%0.2x", get_memory_byte(IE) & get_memory_byte(IF));
-    mvwprintwhcenter(cpu_win, 14, 0, WIDTH, "BANK Mode: ");
-    mvwprintwhcenter(cpu_win, 15, 0, WIDTH, "0x%0.2x", get_banking_mode());
-    mvwprintwhcenter(cpu_win, 16, 0, WIDTH, "RAM BANK: ");
-    mvwprintwhcenter(cpu_win, 17, 0, WIDTH, "0x%0.2x", get_ram_bank());
+    mvwprintwhcenter(cpu_win, 14, 0, WIDTH, "Current RTC");
+    mvwprintwhcenter(cpu_win, 15, 0, WIDTH, "0x%0.2x 0x%0.2x", get_current_rtc()->minutes, get_current_rtc()->seconds);
+    mvwprintwhcenter(cpu_win, 16, 0, WIDTH, "RTC");
+    mvwprintwhcenter(cpu_win, 17, 0, WIDTH, "0x%0.2x 0x%0.2x", get_rtc()->minutes, get_rtc()->seconds);
+
+    mvwprintwhcenter(cpu_win, 18, 0, WIDTH, "Latched RTC");
+    mvwprintwhcenter(cpu_win, 19, 0, WIDTH, "0x%0.2x 0x%0.2x", get_latched_rtc()->minutes, get_latched_rtc()->seconds);
     wrefresh(cpu_win);
 }
 
