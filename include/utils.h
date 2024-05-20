@@ -24,7 +24,6 @@ uint8_t get_crumb(uint8_t byte, uint8_t crumb);
 uint8_t get_bit(uint8_t byte, uint8_t bit);
 void set_bit(uint8_t *byte, uint8_t bit);
 void reset_bit(uint8_t *byte, uint8_t bit);
-struct timeval time_diff(struct timeval start, struct timeval end);
 int8_t uint8_to_int8(uint8_t n);
 void u16_to_two_u8s(uint16_t val, uint8_t *b1, uint8_t *b2);
 uint32_t crc32b(const uint8_t *str, uint32_t *current_hash);

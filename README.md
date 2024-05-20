@@ -1,6 +1,6 @@
 # Gameboy
 
-Gameboy Emulator written for MacOS, but likely compiles on Linux as well if dependencies are set up or with minor tweaks
+Gameboy Emulator written for MacOS, but works on Linux as well and will run on Windows with WSL2 if you satisfy [these](https://learn.microsoft.com/en-us/windows/wsl/tutorials/gui-apps) requirements
 
 ## Dependencies
 * SDL2 (make sure `sdl2-config --cflags --libs` returns directories in terminal)

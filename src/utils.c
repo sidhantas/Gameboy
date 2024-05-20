@@ -90,17 +90,6 @@ inline uint8_t get_bit(uint8_t byte, uint8_t bit) {
 inline void set_bit(uint8_t *byte, uint8_t bit) { *byte |= (0x01 << bit); }
 inline void reset_bit(uint8_t *byte, uint8_t bit) { *byte &= ~(0x01 << bit); }
 
-struct timeval time_diff(struct timeval start, struct timeval end) {
-    struct timeval diff;
-    diff.tv_sec = end.tv_sec - start.tv_sec;
-    if (end.tv_usec < start.tv_usec) {
-        diff.tv_usec = 1000000 + end.tv_usec - start.tv_usec;
-    } else {
-        diff.tv_usec = end.tv_usec - start.tv_usec;
-    }
-    return diff;
-}
-
 int8_t uint8_to_int8(uint8_t n) { return *(int8_t *)&n; }
 
 uint32_t crc32b(const uint8_t *str, uint32_t *current_hash) {

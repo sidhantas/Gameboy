@@ -106,8 +106,8 @@ void set_memory_byte(uint16_t address, uint8_t byte);
 uint8_t get_flag(flags_t flag);
 void set_flag(flags_t flag);
 void reset_flag(flags_t flag);
-void set_display_pixel(uint_fast8_t x, uint_fast8_t y,
-                       uint_fast32_t pixel_color);
+void set_display_pixel(uint8_t x, uint8_t y,
+                       uint32_t pixel_color);
 uint32_t *get_display_buffer(void);
 void set_register(reg_t dst, uint8_t val);
 uint8_t get_register(reg_t src);
