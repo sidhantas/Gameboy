@@ -1,10 +1,10 @@
 #include "interrupts.h"
 #include "cpu.h"
 #include "hardware.h"
+#include "memory.h"
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include "memory.h"
 
 interrupts_t get_highest_priority_interrupt(void);
 void reset_interrupt_flag(interrupts_t interrupt);
@@ -70,6 +70,4 @@ uint16_t get_interrupt_handler(interrupts_t interrupt) {
     }
 }
 
-uint32_t *get_serviced_interrupts(void) {
-    return serviced_interrupts;
-}
+uint32_t *get_serviced_interrupts(void) { return serviced_interrupts; }

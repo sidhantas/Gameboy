@@ -44,7 +44,6 @@ static void destroy_mbc0(void) {
         free(ram);
         ram = NULL;
     }
-
 }
 
 static uint32_t mbc0_load_rom(FILE *cartridge) {

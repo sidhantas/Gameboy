@@ -1,6 +1,5 @@
 #include "cpu.h"
 #include "decoder.h"
-#include "graphics.h"
 #include "hardware.h"
 #include "interrupts.h"
 #include "memory.h"
@@ -9,14 +8,12 @@
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
-#include <pthread.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/_types/_useconds_t.h>
-#include <sys/time.h>
+#if defined(__APPLE__) || defined(__unix__)
 #include <time.h>
 #include <unistd.h>
+#endif
 
 bool step_mode = false;
 bool close_cpu = false;
@@ -60,10 +57,12 @@ void *start_cpu(void *arg) {
         }
         clocks += handle_interrupts();
 
+#if defined(__APPLE__) || defined(__unix__)
         pthread_mutex_lock(&dots_mutex);
+#endif
         if (!is_halted()) {
             clock_cycles_t clocks_from_dma_transfer = try_oam_dma_transfer();
-            if(!clocks_from_dma_transfer) {
+            if (!clocks_from_dma_transfer) {
                 clock_cycles_t (*func)(uint8_t *) = fetch_instruction();
                 clocks += execute_instruction(func);
             } else {
@@ -73,7 +72,9 @@ void *start_cpu(void *arg) {
             clocks += 4;
         }
 
+#if defined(__APPLE__) || defined(__unix__)
         pthread_mutex_unlock(&dots_mutex);
+#endif
         update_timer(clocks);
         run_ppu((uint16_t)clocks);
         exec_count += (uint32_t)clocks;

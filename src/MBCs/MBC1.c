@@ -186,7 +186,6 @@ static void mbc1_save_data(FILE *save_location) {
     for (uint16_t i = 0; i < max_ram_banks; i++) {
         fwrite(ram_banks[i], 1, RAM_BANK_SIZE, save_location);
     }
-    
 }
 
 static void mbc1_load_save_data(FILE *save_location) {
@@ -197,4 +196,3 @@ static void mbc1_load_save_data(FILE *save_location) {
         fread(ram_banks[i], 1, RAM_BANK_SIZE, save_location);
     }
 }
-

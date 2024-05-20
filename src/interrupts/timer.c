@@ -1,6 +1,6 @@
 #include "hardware.h"
-#include "memory.h"
 #include "interrupts.h"
+#include "memory.h"
 #include "utils.h"
 
 static void update_DIV_register(clock_cycles_t clocks);
@@ -44,7 +44,6 @@ void update_TIMA_register(clock_cycles_t clocks) {
         }
         privileged_set_memory_byte(TIMA, (uint8_t)TIMA_value);
     }
-
 }
 void update_DIV_register(clock_cycles_t clocks) {
     static uint16_t DIV_progress = 0;

@@ -1,17 +1,15 @@
 #include "hardware.h"
-#include "memory.h"
 #include "interrupts.h"
+#include "memory.h"
 #include "utils.h"
 
 Joypad joy;
 
-void initialize_io(void) {
-    joy.inputs = 0xFF;
-}
+void initialize_io(void) { joy.inputs = 0xFF; }
 
 uint8_t get_joypad_state(void) { return joy.inputs; }
 
-void set_joypad_state(joypad_t button) { 
+void set_joypad_state(joypad_t button) {
     set_bit(&joy.inputs, (uint8_t)button);
 }
 

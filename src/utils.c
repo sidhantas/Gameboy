@@ -103,7 +103,6 @@ struct timeval time_diff(struct timeval start, struct timeval end) {
 
 int8_t uint8_to_int8(uint8_t n) { return *(int8_t *)&n; }
 
-
 uint32_t crc32b(const uint8_t *str, uint32_t *current_hash) {
     // Source: https://stackoverflow.com/a/21001712
     unsigned int byte, crc, mask;

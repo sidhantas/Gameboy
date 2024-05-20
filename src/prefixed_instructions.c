@@ -10,7 +10,7 @@ clock_cycles_t BIT_B_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     uint8_t bit = (OPCODE >> 3) & 0x7;
 
     uint8_t check_bit = get_bit(get_register(src), bit);
-    check_bit ?  reset_flag(Z_FLAG) : set_flag(Z_FLAG);
+    check_bit ? reset_flag(Z_FLAG) : set_flag(Z_FLAG);
     reset_flag(N_FLAG);
     set_flag(H_FLAG);
     set_decoded_instruction("BIT %d, %c, %d", bit, REGISTER_CHAR(src),
@@ -104,7 +104,6 @@ clock_cycles_t RRC_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     set_memory_byte(get_long_reg(HL), result);
 
     set_decoded_instruction("RRC (HL)");
-    
 
     return SIXTEEN_CLOCKS;
 }
@@ -248,7 +247,7 @@ clock_cycles_t SRL_R(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     uint8_t reg_val = get_register(src);
     uint8_t bit0 = reg_val & 0x01;
     uint8_t result = reg_val >> 1;
-    result ?   reset_flag(Z_FLAG) : set_flag(Z_FLAG);
+    result ? reset_flag(Z_FLAG) : set_flag(Z_FLAG);
     reset_flag(N_FLAG);
     reset_flag(H_FLAG);
     bit0 ? set_flag(C_FLAG) : reset_flag(C_FLAG);
@@ -262,7 +261,7 @@ clock_cycles_t SRL_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     uint8_t HL_val = get_memory_byte(get_long_reg(HL));
     uint8_t bit0 = HL_val & 0x01;
     uint8_t result = HL_val >> 1;
-    result ?   reset_flag(Z_FLAG) : set_flag(Z_FLAG);
+    result ? reset_flag(Z_FLAG) : set_flag(Z_FLAG);
     reset_flag(N_FLAG);
     reset_flag(H_FLAG);
     bit0 ? set_flag(C_FLAG) : reset_flag(C_FLAG);
@@ -276,7 +275,7 @@ clock_cycles_t BIT_B_DEREF_HL(uint8_t instruction[MAX_INSTRUCTION_SIZE]) {
     uint8_t bit = (OPCODE >> 3) & 0x7;
 
     uint8_t check_bit = get_bit(get_memory_byte(get_long_reg(HL)), bit);
-    check_bit ?  reset_flag(Z_FLAG) : set_flag(Z_FLAG);
+    check_bit ? reset_flag(Z_FLAG) : set_flag(Z_FLAG);
     reset_flag(N_FLAG);
     set_flag(H_FLAG);
     set_decoded_instruction("BIT %d, (HL), %d", bit, check_bit);

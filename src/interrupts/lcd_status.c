@@ -1,6 +1,6 @@
 #include "hardware.h"
-#include "memory.h"
 #include "interrupts.h"
+#include "memory.h"
 #include "utils.h"
 
 static uint8_t stat_line = 0;
@@ -23,12 +23,10 @@ void clear_stat_source(stat_interrupts_t stat_source) {
     reset_bit(&stat_line, (uint8_t)stat_source);
 }
 
-uint8_t get_stat_line(void) {
-    return stat_line;
-}
+uint8_t get_stat_line(void) { return stat_line; }
 
 uint8_t update_stat_register(uint8_t byte) {
-    //stat_line &= byte;
+    // stat_line &= byte;
     return ((byte) & 0x78);
 }
 

@@ -106,7 +106,7 @@ static void update_rtc(uint8_t seconds) {
                 set_bit(&rtc.DH, 7);
                 reset_bit(&rtc.DH, 0);
             } else {
-               set_bit(&rtc.DH, 0);
+                set_bit(&rtc.DH, 0);
             }
         }
     }

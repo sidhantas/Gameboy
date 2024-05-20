@@ -51,8 +51,7 @@ void initialize_memory(CartridgeHeader ch) {
         case 0x10:
         case 0x11:
         case 0x12:
-        case 0x13: mbc = initialize_mbc3(ch);
-                   return;
+        case 0x13: mbc = initialize_mbc3(ch); return;
         default:
             fprintf(stderr, "Cartridge type not implemented: %d\n",
                     ch.cartridge_type);
@@ -340,6 +339,6 @@ void load_save_data(char *save_location_file_name) {
     }
     if (mbc.load_save_data) {
         mbc.load_save_data(save_location);
-        printf("Save Data loaded: %s\n",save_location_file_name);
+        printf("Save Data loaded: %s\n", save_location_file_name);
     }
 }

@@ -17,7 +17,6 @@ SDL_Renderer *renderer;
 SDL_Texture *texture;
 SDL_Window *window;
 
-
 void open_window(void) {
     SDL_Init(SDL_INIT_VIDEO);
     window = SDL_CreateWindow(
@@ -38,7 +37,7 @@ void close_window(void) {
     SDL_Quit();
 }
 
-void update_window_title(char * title) {
+void update_window_title(char *title) {
     char title_buffer[MAX_TITLE_SIZE + 1];
     strncpy(title_buffer, title, MAX_TITLE_SIZE);
     title_buffer[MAX_TITLE_SIZE] = '\0';

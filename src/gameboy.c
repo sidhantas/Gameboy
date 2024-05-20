@@ -81,9 +81,7 @@ void main_loop(void) {
     while (!end_main_loop) {
         while (SDL_PollEvent(&e)) {
             switch (e.type) {
-                case SDL_QUIT:
-                    end_main_loop = true;
-                    break;
+                case SDL_QUIT: end_main_loop = true; break;
                 case SDL_KEYDOWN:
                     switch (e.key.keysym.scancode) {
                         case SDL_SCANCODE_N: instructions_left += 1; break;

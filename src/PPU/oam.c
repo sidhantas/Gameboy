@@ -25,7 +25,8 @@ clock_cycles_t try_oam_dma_transfer(void) {
         return 0;
     }
     uint16_t start = (uint16_t)(get_memory_byte(DMA) << 8);
-    privileged_set_memory_byte(OAM_START + current_oam_byte, get_memory_byte(start + current_oam_byte));
+    privileged_set_memory_byte(OAM_START + current_oam_byte,
+                               get_memory_byte(start + current_oam_byte));
     current_oam_byte++;
     return FOUR_CLOCKS;
 }

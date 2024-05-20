@@ -13,7 +13,8 @@ Tracer t;
 #define TRACER_SIZE 50
 
 void initialize_hardware(void) {
-    hardware.display_buffer = calloc(DISPLAY_WIDTH * DISPLAY_HEIGHT, sizeof(uint32_t));
+    hardware.display_buffer =
+        calloc(DISPLAY_WIDTH * DISPLAY_HEIGHT, sizeof(uint32_t));
     if (!(hardware.display_buffer)) {
         fprintf(stderr, "Unable to allocate memory for display buff\n");
     }
@@ -50,7 +51,6 @@ void destroy_hardware(void) {
     }
     return;
 }
-
 
 uint8_t get_flag(flags_t flag) {
     const uint8_t FLAGS_REGISTER = hardware.registers[F];
@@ -105,8 +105,7 @@ uint8_t stack_pop_u8(void) {
 
 uint16_t get_sp(void) { return hardware.sp; }
 
-void set_display_pixel(uint8_t x, uint8_t y,
-                       uint32_t pixel_color) {
+void set_display_pixel(uint8_t x, uint8_t y, uint32_t pixel_color) {
     hardware.display_buffer[y * DISPLAY_WIDTH + x] = pixel_color;
 }
 
@@ -137,7 +136,6 @@ void set_long_reg_u16(long_reg_t long_reg, uint16_t val) {
     u16_to_two_u8s(val, &b1, &b2);
     set_long_reg(long_reg, b1, b2);
 }
-
 
 void set_long_reg(long_reg_t long_reg, uint8_t b1, uint8_t b2) {
     switch (long_reg) {
@@ -209,18 +207,14 @@ uint8_t get_mode(void) { return hardware.mode; }
 uint8_t get_ime_flag(void) { return hardware.ime_flag; }
 void set_ime_flag(bool val) { hardware.ime_flag = val; }
 
-bool get_oam_dma_transfer(void) {
-    return hardware.oam_dma_started;
-}
+bool get_oam_dma_transfer(void) { return hardware.oam_dma_started; }
 
-void set_oam_dma_transfer(bool oam_dma_transfer_is_enabled) { hardware.oam_dma_started = oam_dma_transfer_is_enabled; }
+void set_oam_dma_transfer(bool oam_dma_transfer_is_enabled) {
+    hardware.oam_dma_started = oam_dma_transfer_is_enabled;
+}
 
 void dump_tracer(void) { tracer_dump(&t); }
 
-void set_halted(bool halt_state) {
-    hardware.is_halted = halt_state;
-}
+void set_halted(bool halt_state) { hardware.is_halted = halt_state; }
 
-bool is_halted(void) {
-    return hardware.is_halted;
-}
+bool is_halted(void) { return hardware.is_halted; }

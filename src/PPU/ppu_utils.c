@@ -88,7 +88,8 @@ uint8_t get_obj_pixel(uint8_t x_pixel) {
 static inline uint16_t get_tile_start(uint8_t relative_tile_address) {
     int32_t tile_start;
     if (get_bit(get_memory_byte(LCDC), 4) == 1) {
-        tile_start = ADDRESS_MODE_0_BP + (uint16_t)(relative_tile_address) * 0x10;
+        tile_start =
+            ADDRESS_MODE_0_BP + (uint16_t)(relative_tile_address) * 0x10;
     } else {
         tile_start =
             ADDRESS_MODE_1_BP + uint8_to_int8(relative_tile_address) * 0x10;
