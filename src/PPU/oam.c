@@ -24,9 +24,9 @@ clock_cycles_t try_oam_dma_transfer(void) {
     if (!get_oam_dma_transfer()) {
         return 0;
     }
-    uint16_t start = (uint16_t)(get_memory_byte(DMA) << 8);
+    uint16_t start = (uint16_t)(privileged_get_memory_byte(DMA) << 8);
     privileged_set_memory_byte(OAM_START + current_oam_byte,
-                               get_memory_byte(start + current_oam_byte));
+                               privileged_get_memory_byte(start + current_oam_byte));
     current_oam_byte++;
     return FOUR_CLOCKS;
 }
@@ -41,10 +41,10 @@ typedef struct Object {
 object_t get_object(uint16_t object_index) {
     uint16_t object_address = object_index * 4 + OAM_START;
     object_t obj = {
-        get_memory_byte(object_address),
-        get_memory_byte(object_address + 1),
-        get_memory_byte(object_address + 2),
-        get_memory_byte(object_address + 3),
+        privileged_get_memory_byte(object_address),
+        privileged_get_memory_byte(object_address + 1),
+        privileged_get_memory_byte(object_address + 2),
+        privileged_get_memory_byte(object_address + 3),
     };
     return obj;
 }
@@ -59,8 +59,8 @@ void add_sprite(uint16_t object_no) {
         return;
     }
     object_t obj = get_object(object_no);
-    uint8_t obj_h = get_bit(get_memory_byte(LCDC), 2) ? 16 : 8;
-    uint16_t current_draw_height = get_memory_byte(LCDY) + 16;
+    uint8_t obj_h = get_bit(privileged_get_memory_byte(LCDC), 2) ? 16 : 8;
+    uint16_t current_draw_height = privileged_get_memory_byte(LCDY) + 16;
 
     if (obj.y_pos > current_draw_height ||
         current_draw_height >= obj.y_pos + obj_h) {
@@ -86,7 +86,7 @@ void add_sprite(uint16_t object_no) {
     sprite_store.selected_objects[sprite_store.length].tile_start =
         get_tile_row_address(tile_index);
     sprite_store.selected_objects[sprite_store.length].y =
-        get_memory_byte(LCDY) - obj.y_pos % obj_h;
+        privileged_get_memory_byte(LCDY) - obj.y_pos % obj_h;
     sprite_store.selected_objects[sprite_store.length].x_flipped =
         get_bit(obj.attribute_flags, 5);
     sprite_store.selected_objects[sprite_store.length].y_flipped = y_flipped;

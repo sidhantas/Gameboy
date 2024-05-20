@@ -3,9 +3,12 @@
 #include "hardware.h"
 #include "ppu.h"
 #include "utils.h"
+#include <errno.h>
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 static MBC mbc;
 static bool dmg_mapped = false;
@@ -14,6 +17,7 @@ static uint8_t *vram = NULL;
 static uint8_t *wram = NULL;
 static uint8_t *oam = NULL;
 static uint8_t *io_ram = NULL;
+#define SAVE_DIR "saves"
 static char save_location_filename[MAX_SAVE_DATA_NAME_SIZE];
 
 static CartridgeHeader decode_cartridge_header(FILE *rom);
@@ -145,15 +149,17 @@ void load_rom(FILE *rom) {
     CartridgeHeader ch = decode_cartridge_header(rom);
     initialize_memory(ch);
     uint32_t hash = mbc.load_rom(rom);
-    snprintf(save_location_filename, MAX_SAVE_DATA_NAME_SIZE - 1, "%s-%" PRIu32,
-             ch.title, hash);
+    snprintf(save_location_filename, MAX_SAVE_DATA_NAME_SIZE - 1,
+             SAVE_DIR "/%s-%" PRIu32 ".sav", ch.title, hash);
     save_location_filename[MAX_SAVE_DATA_NAME_SIZE - 1] = '\0';
     load_save_data(save_location_filename);
     map_dmg();
 }
 
 void privileged_set_memory_byte(uint16_t address, uint8_t byte) {
-    if (address >= OAM_BASE && address < PROHIBITED_BASE) {
+    if (address >= VRAM_BASE && address < EX_RAM_BASE) {
+        vram[address - VRAM_BASE] = byte;
+    } else if (address >= OAM_BASE && address < PROHIBITED_BASE) {
         oam[address - OAM_BASE] = byte;
     } else if (address >= IO_RAM_BASE && address <= IE) {
         io_ram[address - IO_RAM_BASE] = byte;
@@ -164,7 +170,9 @@ void privileged_set_memory_byte(uint16_t address, uint8_t byte) {
 }
 
 uint8_t privileged_get_memory_byte(uint16_t address) {
-    if (address >= OAM_BASE && address < PROHIBITED_BASE) {
+    if (address >= VRAM_BASE && address < EX_RAM_BASE) {
+        return vram[address - VRAM_BASE];
+    } else if (address >= OAM_BASE && address < PROHIBITED_BASE) {
         return oam[address - OAM_BASE];
     } else if (address >= IO_RAM_BASE && address <= IE) {
         return io_ram[address - IO_RAM_BASE];
@@ -233,6 +241,9 @@ uint8_t get_memory_byte(uint16_t address) {
     } else if (address >= ROM_BANK_NN_BASE && address < VRAM_BASE) {
         return mbc.get_memory_byte(address);
     } else if (address >= VRAM_BASE && address < EX_RAM_BASE) {
+        if (ppu.mode == 3) {
+            return 0xFF;
+        }
         return vram[address - VRAM_BASE];
     } else if (address >= EX_RAM_BASE && address < WRAM_BASE) {
         return mbc.get_memory_byte(address);
@@ -241,6 +252,9 @@ uint8_t get_memory_byte(uint16_t address) {
     } else if (address >= ECHO_RAM_BASE && address < OAM_BASE) {
         return wram[address - 0x2000 - WRAM_BASE];
     } else if (address >= OAM_BASE && address < PROHIBITED_BASE) {
+        if (ppu.mode == 2 || ppu.mode == 3) {
+            return 0xFF;
+        }
         return oam[address - OAM_BASE];
     } else if (address >= PROHIBITED_BASE && address < IO_RAM_BASE) {
         uint8_t current_mode = get_mode();
@@ -309,6 +323,9 @@ void set_memory_byte(uint16_t address, uint8_t byte) {
     } else if (address >= ROM_BANK_NN_BASE && address < VRAM_BASE) {
         mbc.set_memory_byte(address, byte);
     } else if (address >= VRAM_BASE && address < EX_RAM_BASE) {
+        if (ppu.mode == 3) {
+            return;
+        }
         vram[address - VRAM_BASE] = byte;
     } else if (address >= EX_RAM_BASE && address < WRAM_BASE) {
         mbc.set_memory_byte(address, byte);
@@ -317,6 +334,9 @@ void set_memory_byte(uint16_t address, uint8_t byte) {
     } else if (address >= ECHO_RAM_BASE && address < OAM_BASE) {
         wram[address - 0x2000 - WRAM_BASE] = byte;
     } else if (address >= OAM_BASE && address < PROHIBITED_BASE) {
+        if (ppu.mode == 2 || ppu.mode == 3) {
+            return;
+        }
         oam[address - OAM_BASE] = byte;
     } else if (address >= PROHIBITED_BASE && address < IO_RAM_BASE) {
         return;
@@ -326,6 +346,10 @@ void set_memory_byte(uint16_t address, uint8_t byte) {
 }
 
 void save_data(void) {
+    struct stat st = {0};
+    if (stat(SAVE_DIR, &st) == -1) {
+        mkdir(SAVE_DIR, 0700);
+    }
     FILE *save_location = fopen(save_location_filename, "w");
     if (mbc.save_data) {
         mbc.save_data(save_location);
@@ -339,6 +363,5 @@ void load_save_data(char *save_location_file_name) {
     }
     if (mbc.load_save_data) {
         mbc.load_save_data(save_location);
-        printf("Save Data loaded: %s\n", save_location_file_name);
     }
 }

@@ -71,13 +71,13 @@ bool (*get_current_mode_func(void))(void) {
 
 void run_ppu(uint16_t dots) {
     bool executed;
-    if (!get_bit(get_memory_byte(LCDC), 7)) {
+    if (!get_bit(privileged_get_memory_byte(LCDC), 7)) {
         return;
     }
     ppu.available_dots += dots;
     do {
-        uint8_t lcd_status = get_memory_byte(STAT);
-        if (privileged_get_memory_byte(LYC) == get_memory_byte(LCDY)) {
+        uint8_t lcd_status = privileged_get_memory_byte(STAT);
+        if (privileged_get_memory_byte(LYC) == privileged_get_memory_byte(LCDY)) {
             set_bit(&lcd_status, 2);
             privileged_set_memory_byte(STAT, lcd_status);
             trigger_stat_source(LYC_INT);
@@ -109,7 +109,7 @@ static bool execute_mode_2(void) {
         return false;
     }
     add_sprite(object_index++);
-    const uint8_t wy = get_memory_byte(WY);
+    const uint8_t wy = privileged_get_memory_byte(WY);
     if (wy == ppu.current_scan_line) {
         window_enabled = true;
     }
@@ -125,9 +125,9 @@ static bool execute_mode_2(void) {
 static bool execute_mode_3(void) {
     uint16_t penalty_dots = 0;
     if (ppu.line_x == 0) {
-        penalty_dots += get_memory_byte(SCX) % 8;
+        penalty_dots += privileged_get_memory_byte(SCX) % 8;
     }
-    if (ppu.line_x == get_memory_byte(WX) - 7) {
+    if (ppu.line_x == privileged_get_memory_byte(WX) - 7) {
         penalty_dots += 6;
     }
     // wait an extra dot for the pixel;
@@ -135,10 +135,10 @@ static bool execute_mode_3(void) {
         return false;
     }
     uint8_t pixel = 0;
-    if (get_bit(get_memory_byte(LCDC), 0)) {
+    if (get_bit(privileged_get_memory_byte(LCDC), 0)) {
         pixel = get_bg_pixel(ppu.line_x, ppu.current_scan_line);
-        const uint8_t wx = get_memory_byte(WX);
-        if (get_bit(get_memory_byte(LCDC), 5) && ppu.line_x >= (wx - 7) &&
+        const uint8_t wx = privileged_get_memory_byte(WX);
+        if (get_bit(privileged_get_memory_byte(LCDC), 5) && ppu.line_x >= (wx - 7) &&
             window_enabled) {
             pixel = get_win_pixel(ppu.line_x, ppu.current_window_line);
             ppu.window_rendered = true;
@@ -202,7 +202,7 @@ static bool execute_mode_1(void) {
 static void increase_scan_line(void) {
     ppu.current_scan_line += 1;
     ppu.current_scan_line %= SCAN_LINES;
-    set_memory_byte(LCDY, ppu.current_scan_line);
+    privileged_set_memory_byte(LCDY, ppu.current_scan_line);
     if (ppu.window_rendered == true) {
         ppu.current_window_line++;
         ppu.window_rendered = false;
@@ -229,7 +229,7 @@ static void set_ppu_mode(uint8_t mode) {
         clear_stat_source(old_mode_stat_source);
     }
 
-    uint8_t lcd_status = get_memory_byte(STAT);
+    uint8_t lcd_status = privileged_get_memory_byte(STAT);
     lcd_status &= ~(0x03);
     privileged_set_memory_byte(STAT, lcd_status | mode);
     ppu.mode = mode;
