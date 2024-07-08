@@ -1,7 +1,7 @@
 CC=clang
 CFLAGS=-Wall -g -Wextra -pedantic -Wconversion -std=c1x -I./include $$(sdl2-config --cflags)
-CFLAGS += -D SKIP_BOOT 
-LDFLAGS= -pthread $$(sdl2-config --libs) $$(pkg-config --libs ncurses)
+#CFLAGS += -D SKIP_BOOT 
+LDFLAGS=-pthread $$(sdl2-config --libs) $$(pkg-config --libs ncurses)
 #CFLAGS += -D ENABLE_DEBUGGER
 SRC_DIR := src
 OBJ_DIR := obj
@@ -15,9 +15,6 @@ DIRECTORIES := $(sort $(dir $(OBJ_FILES)))
 .PHONY: all
 
 all: $(EXE)
-
-run: 
-	make all && ./$(EXE) -g Tetris.gb
 
 $(EXE): $(OBJ_FILES) | $(BIN_DIR)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@

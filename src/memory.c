@@ -63,7 +63,34 @@ void initialize_memory(CartridgeHeader ch) {
     }
 
 #ifdef SKIP_BOOT
-    privileged_set_memory_byte(LCDC, 0x80);
+    privileged_set_memory_byte(JOYP, 0xCF);
+    privileged_set_memory_byte(SC, 0x7E);
+    privileged_set_memory_byte(DIV, 0xAB);
+    privileged_set_memory_byte(TAC, 0xF8);
+    privileged_set_memory_byte(IF, 0xE1);
+    privileged_set_memory_byte(NR10, 0x80);
+    privileged_set_memory_byte(NR11, 0xBF);
+    privileged_set_memory_byte(NR12, 0xF3);
+    privileged_set_memory_byte(NR13, 0xFF);
+    privileged_set_memory_byte(NR14, 0xBF);
+    privileged_set_memory_byte(NR21, 0x3F);
+    privileged_set_memory_byte(NR22, 0x00);
+    privileged_set_memory_byte(NR23, 0xFF);
+    privileged_set_memory_byte(NR24, 0xBF);
+    privileged_set_memory_byte(NR30, 0x7F);
+    privileged_set_memory_byte(NR31, 0xFF);
+    privileged_set_memory_byte(NR32, 0x9F);
+    privileged_set_memory_byte(NR33, 0xFF);
+    privileged_set_memory_byte(NR34, 0xBF);
+    privileged_set_memory_byte(NR41, 0xFF);
+    privileged_set_memory_byte(NR44, 0xBF);
+    privileged_set_memory_byte(NR50, 0x77);
+    privileged_set_memory_byte(NR51, 0xF3);
+    privileged_set_memory_byte(NR52, 0xF1);
+    privileged_set_memory_byte(LCDC, 0x91);
+    privileged_set_memory_byte(STAT, 0x85);
+    privileged_set_memory_byte(DMA, 0xFF);
+    privileged_set_memory_byte(BGP, 0xFC);
 #endif
 }
 
